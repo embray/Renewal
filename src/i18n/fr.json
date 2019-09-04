@@ -1,0 +1,89 @@
+{
+  "concept_welcome" : "Bienvenue dans Renewal",
+  "concept_welcome_explain" : "une plateforme d'évaluation pour les systèmes de recommandations d'actualité",
+  "concept_discover" : "Découvrir",
+  "concept_discover_explain" : "explorer les actualités en fonction de votre centre d'intérêt",
+  "concept_sn" : "Utilise vos réseaux sociaux",
+  "concept_sn_explain" : "cliquez ici pour plus d'informations",
+  "concept_skip" : "Passer / Se connecter",
+
+  "opening_email" : "Connexion avec votre email",
+  "opening_or" : "Ou connectez-vous avec",
+
+  "form_email" : "Email",
+  "form_password" : "Mot de passe",
+  "form_password_confirm" : "Confirmer votre mot de passe",
+  "form_buttton_login" : "S'identifier",
+  "form_buttton_create" : "Créer un compte",
+  "form_link_registed" : "Pas encore inscrit?",
+  "form_link_account" : "Vous avez déjà un compte?",
+
+  "settings_header" : "Paramètres",
+  "settings_title" : "Préserver votre confiance et votre vie privée",
+  "settings_title_explain" : " Afin d'assurer une plus grande transparence au sujet des données que Renewal collecte vous concernant, de l'usage qui en est fait et des moyens à votre disposition pour contrôler vos données personnelles.",
+  "settings_section_sensors" : "Gestion des capteurs",
+  "settings_section_sensors_explain" : "Certaines articles sont basées sur l'analyse fine de votre comportement au sein de l'application et necessite un accès aux différents capteurs.",
+
+  "sensor_location" : "Position",
+  "sensor_pedometer" : "Podomètre",
+  "sensor_gyroscope" : "Gyroscope",
+  "sensor_accelerometer" : "Accéléromètre",
+  "sensor_magnetometer" : "Magnétomètre",
+  "sensor_network" : "Nature du réseaux",
+
+  "settings_section_recommendations" : "Gestion des recommandations",
+  "settings_section_recommendations_explain" : "Certains articles sont basées sur ce que vous faites ailleurs. Mais vous verrez toujours des articles sur votre utilisation au sein de l'application.",
+
+  "settings_section_recommendations_activity" : "Basé sur votre activité",
+  "settings_section_recommendations_activity_explain" : " Certaines recommandation d'articles sont basées sur activité en ligne sur les réseaux sociaux .",
+  "settings_section_recommendations_access" : "Conservation et accès aux informations",
+  "settings_section_recommendations_access_explain" : "La conservation d'informations ou l'accès à des informations déjà conservées sur votre appareil, par exemple des identifiants de l'appareil.",
+  "settings_section_recommendations_target" : "Ciblage et mesure de contenu",
+  "settings_section_recommendations_target_explain" : "La collecte d’informations associé à celles rassemblées précédemment afin de sélectionner et diffuser des contenus à votre égard, puis évaluer leur diffusion ainsi que leur efficacité.",
+  "settings_section_recommendations_notification" : "Notifications",
+
+  "settings_section_more_information" : "Plus d'inforation",
+  "settings_section_more_information_assistance" : "Assistance",
+  "settings_section_more_information_privacy" : "Politique de confidentialité",
+  "settings_section_more_information_condition_of_service" : "Condition de Service",
+  "settings_section_more_information_legal" : "Juridique(autres)",
+  "settings_button_request_my_data" : "Demander mes données",
+
+  "settings_popup_location" :"Localisation désctivée",
+  "settings_popup_location_explain" :"Pour afficher les articles d'actualité local. Autorisez l'accès à Renewal depuis les paramètres de votre terminal",
+  "settings_popup_pedometer" :"Podometre désctivée",
+  "settings_popup_pedometer_explain" :"Le podometre permet d'analyser plus finement votre comportement. Vous pouvez configurer dans les réglages",
+  "settings_popup_notification" :"Autorisez-vous Renewal à vous envoyer des notifications ? ",
+  "settings_popup_notification_explain" :"Les notifications peuvent inclure des alertes, des sons er des pastilles. Vous pouvez configurer dans les réglages",
+
+  "settings_popup_cancel" : "Annuler",
+  "settings_popup_refuse" : "Refuser",
+  "settings_popup_gosettings" : "Accéder aux paramètres",
+  "settings_popup_allow" : "Autoriser",
+
+  "side_menu_recommendation" : "Recommandation d'article",
+  "side_menu_fav" : "Favoris",
+  "side_menu_history" : "Historique",
+  "side_menu_account" : "Mon compte",
+  "side_menu_concept" : "Le concept",
+
+  "account_sex" : "Sexe",
+  "account_birth" : "Date",
+  "account_location" : "Position",
+  "account_location_popup" : "configurez votre emplacement",
+  "account_email" : "Email",
+  "account_email_popup" : "configurez votre adresse mail",
+  "account_phone" : "Téléphone",
+  "account_phone_popup" : "configurez votre numéro de téléphone",
+  "account_social_network" : "Connectez-vous avec vos réseau sociaux",
+  "account_button_disconnect" : "Deconnexion",
+  
+  "wv_opinion" : "Ton avis sur l'article :",
+  "wv_share" : "Partage l'article",
+  "wv_recommendations" : "Recommandations d'articles :",
+
+  "no_connection" : "Pas de connexion Internet",
+
+  "hello world": "bonjour le monde",
+  "greeting": "Bonjour!"
+}

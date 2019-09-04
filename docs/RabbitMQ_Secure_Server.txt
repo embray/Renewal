@@ -1,0 +1,6 @@
+On Linux:
+# Turn on server
+sudo service rabbitmq-server start
+
+# Enable management
+sudo rabbitmq-plugins enable rabbitmq_management

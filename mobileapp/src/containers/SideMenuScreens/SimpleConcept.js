@@ -24,26 +24,28 @@ const SCREEN_WIDTH  = Dimensions.get('window').width
 
 const styles = StyleSheet.create({
   wrapper: {
-    backgroundColor : 'orange'
+    backgroundColor: 'orange',
   },
   slide1: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#67daff',
-
+    paddingTop: Constants.statusBarHeight * 2
   },
   slide2: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#03a9f4',
+    paddingTop: Constants.statusBarHeight * 2
   },
   slide3: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#007ac1',
+    paddingTop: Constants.statusBarHeight * 2
   },
   text: {
     color: '#fff',

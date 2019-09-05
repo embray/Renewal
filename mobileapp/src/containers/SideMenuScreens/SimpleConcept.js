@@ -11,7 +11,7 @@ import {
   AsyncStorage,
   ActivityIndicator
 } from 'react-native';
-import { Font, AppLoading, ScreenOrientation } from 'expo';
+import { Font, AppLoading, ScreenOrientation, Constants } from 'expo';
 import { Container, Header, Left, Body, Right, Button, Icon, Title, Footer, FooterTab } from 'native-base';
 import s1 from '../../images/slide1.png'
 import s2 from '../../images/slidey.png'

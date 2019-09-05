@@ -17,8 +17,8 @@ import {
   AsyncStorage,
   Linking
 } from 'react-native'; 
-import { AuthSession, Constants,Font  } from 'expo';
-import {Actions} from 'react-native-router-flux';
+import { AuthSession, Constants, Font, Facebook, Google } from 'expo';
+import { Actions } from 'react-native-router-flux';
 import { Container, Header, Title, Content, Footer, FooterTab, Left,Button, Right, Body, Icon, Text, List, ListItem, CardItem, Card, Switch } from 'native-base';
 import SideMenu from 'react-native-side-menu';
 import Menu from '../SideMenu/Menu';
@@ -96,7 +96,7 @@ export default class MonCompte extends Component {
   }
   
   async logInFB() {
-    const { type, token } = await Expo.Facebook.logInWithReadPermissionsAsync('2073630512892455', {
+    const { type, token } = await Facebook.logInWithReadPermissionsAsync('2073630512892455', {
         permissions: ['public_profile','email','user_birthday', 'user_friends'],
       });
     if (type === 'success') {
@@ -149,7 +149,7 @@ export default class MonCompte extends Component {
   }
   async  signInWithGoogleAsync() {
     try {
-      const result = await Expo.Google.logInAsync({
+      const result = await Google.logInAsync({
         androidClientId: '18527368615-6muuu4pvirifog1ufdei401tsgivm55f.apps.googleusercontent.com',
         iosClientId: '18527368615-5rkmhp6aum543q94mlrsrftio5naue04.apps.googleusercontent.com',
         scopes: ['profile', 'email'],
@@ -372,7 +372,7 @@ export default class MonCompte extends Component {
       
       
       
-      <View style={{justifyContent: 'center', flex:1, backgroundColor : "#212121",paddingTop: Platform.OS === 'ios' ? 0 : Expo.Constants.statusBarHeight}}>
+      <View style={{justifyContent: 'center', flex:1, backgroundColor : "#212121",paddingTop: Platform.OS === 'ios' ? 0 : Constants.statusBarHeight}}>
       
       
       <Content  style={{backgroundColor:'#212121'}} >

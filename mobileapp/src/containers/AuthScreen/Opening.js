@@ -1,12 +1,11 @@
 import React, { Component } from 'react'
 import { StyleSheet, Alert,AsyncStorage,ActivityIndicator, TouchableOpacity, Image, Text} from 'react-native'
 import { View } from 'react-native-animatable'
-import { AuthSession, Constants, Font  } from 'expo';
+import { AuthSession, Constants, Font, Facebook, Google } from 'expo';
 import {Actions} from 'react-native-router-flux';
 import CustomButton from '../../components/CustomButton'
 import metrics from '../../config/metrics'
 const FB_APP_ID = '2073630512892455';
-import Expo from "expo";
 import I18n from 'ex-react-native-i18n';
 I18n.fallbacks = true
 
@@ -24,7 +23,7 @@ export default class Opening extends Component {
     }
   }
   async componentWillMount() {
-    await Expo.Font.loadAsync({
+    await Font.loadAsync({
       Roboto: require("native-base/Fonts/Roboto.ttf"),
       Roboto_medium: require("native-base/Fonts/Roboto_medium.ttf"),
       Ionicons: require("@expo/vector-icons/fonts/Ionicons.ttf"),
@@ -41,7 +40,7 @@ export default class Opening extends Component {
     this.setState({isLoading:false})
   }
   async logInFB() {
-    const { type, token } = await Expo.Facebook.logInWithReadPermissionsAsync('2073630512892455', {
+    const { type, token } = await Facebook.logInWithReadPermissionsAsync('2073630512892455', {
         permissions: ['public_profile','email','user_birthday', 'user_friends'],
       });
     if (type === 'success') {
@@ -92,7 +91,7 @@ export default class Opening extends Component {
   }
   async  signInWithGoogleAsync() {
     try {
-      const result = await Expo.Google.logInAsync({
+      const result = await Google.logInAsync({
         androidClientId: '18527368615-6muuu4pvirifog1ufdei401tsgivm55f.apps.googleusercontent.com',
         iosClientId: '18527368615-5rkmhp6aum543q94mlrsrftio5naue04.apps.googleusercontent.com',
         scopes: ['profile', 'email'],

@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import Constants from 'expo';
 import {
     StyleSheet,
     ImageBackground,
@@ -430,7 +431,7 @@ export default class MessageWebView extends React.Component {
                 menuPosition={'left'}
                 onChange={isOpen => this.updateMenuState(isOpen)}
             >
-                <View  style={{justifyContent: 'center', flex:1, backgroundColor : "#212121", paddingTop: Platform.OS === 'ios' ? 0 : Expo.Constants.statusBarHeight}} >
+                <View  style={{justifyContent: 'center', flex:1, backgroundColor : "#212121", paddingTop: Platform.OS === 'ios' ? 0 : Constants.statusBarHeight}} >
                 <Header style={{backgroundColor: '#212121'}}>
                 <StatusBar barStyle="light-content"/>
                 <Left style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }}>

@@ -1,4 +1,5 @@
 import React from 'react';
+import Constants from 'expo';
 import PropTypes from 'prop-types';
 import {
   Dimensions,
@@ -30,7 +31,7 @@ function onPressItem(item){
 }
 export default function Menu({ onItemSelected }) { 
   return (
-    <Container style={{backgroundColor:'#212121', paddingTop: Platform.OS === 'ios' ? 0 : Expo.Constants.statusBarHeight}}>
+    <Container style={{backgroundColor:'#212121', paddingTop: Platform.OS === 'ios' ? 0 : Constants.statusBarHeight}}>
         <Header style={styles.header}>
           <Left>
               {/*

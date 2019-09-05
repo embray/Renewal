@@ -1,7 +1,6 @@
-import Expo from 'expo';
 import React, { Component } from 'react';
 import { Platform, Text, View, StyleSheet } from 'react-native';
-import { Constants, Location, Permissions } from 'expo';
+import { Constants, Location, Permissions, MapView, registerRootComponent } from 'expo';
 
 const GEOLOCATION_OPTIONS = { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000, timeInterval: 300};
 
@@ -28,7 +27,7 @@ export default class App extends Component {
   render() {
     return (
       
-        <Expo.MapView
+        <MapView
           style={{ flex: 1 }}
           showsUserLocation={true}
           region={this.state.region}
@@ -39,6 +38,6 @@ export default class App extends Component {
   }
 }
 
-Expo.registerRootComponent(App);
+registerRootComponent(App);
 
 //https://docs.expo.io/versions/latest/sdk/location

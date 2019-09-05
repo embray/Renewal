@@ -1,4 +1,4 @@
-import Expo, { SQLite, Font, AppLoading, Accelerometer, Gyroscope, Magnetometer, Location } from 'expo';
+import { SQLite, Font, AppLoading, Accelerometer, Gyroscope, Magnetometer, Location, ScreenOrientation, Constants } from 'expo';
 import React, { Component } from 'react';
 import { 
   AppState,
@@ -175,7 +175,7 @@ export default class Project extends Component {
     /*if(this.state.isConnected === false){
       return <View style={{flex:1}} ><MiniOfflineSign /></View>
     }*/
-    Expo.ScreenOrientation.allow(Expo.ScreenOrientation.Orientation.ALL);
+    ScreenOrientation.allowAsync(ScreenOrientation.Orientation.ALL);
     switch(this.props.navigation.state.params.screen){
       case "Favorite" :
         return (
@@ -289,7 +289,7 @@ export default class Project extends Component {
         isOpen={this.state.isOpen}
         onChange={isOpen => this.updateMenuState(isOpen)}
       >
-      <View style={{ justifyContent: 'center', flex:1,backgroundColor : "#212121",paddingTop: Platform.OS === 'ios' ? 0 : Expo.Constants.statusBarHeight}} >
+      <View style={{ justifyContent: 'center', flex:1,backgroundColor : "#212121",paddingTop: Platform.OS === 'ios' ? 0 : Constants.statusBarHeight}} >
         <Header style={{backgroundColor: '#212121'}}>
           <StatusBar barStyle="light-content"/>
           <Left>

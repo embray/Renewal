@@ -11,7 +11,7 @@ import {
   AsyncStorage,
   ActivityIndicator
 } from 'react-native';
-import Expo, { Font, AppLoading } from 'expo';
+import { Font, AppLoading, ScreenOrientation } from 'expo';
 import { Container, Header, Left, Body, Right, Button, Icon, Title, Footer, FooterTab } from 'native-base';
 import s1 from '../../images/slide1.png'
 import s2 from '../../images/slidey.png'
@@ -104,7 +104,7 @@ export default class SwiperConcept extends Component {
     }
 
     async componentDidMount(){
-        Expo.ScreenOrientation.allow(Expo.ScreenOrientation.Orientation.PORTRAIT);
+        ScreenOrientation.allowAsync(ScreenOrientation.Orientation.PORTRAIT);
         await Font.loadAsync({
           Roboto: require("native-base/Fonts/Roboto.ttf"),
           Roboto_medium: require("native-base/Fonts/Roboto_medium.ttf"),
@@ -141,7 +141,7 @@ export default class SwiperConcept extends Component {
         await I18n.initAsync();
         
         setTimeout(() => this.setState({ isLoading:false }))//this.setState({isLoading:false})
-        Expo.ScreenOrientation.allow(Expo.ScreenOrientation.Orientation.PORTRAIT);
+        ScreenOrientation.allowAsync(ScreenOrientation.Orientation.PORTRAIT);
     }
     _initAsyncStorage = async () =>{
       //AsyncStorage.removeItem('infoGeoloc',(error, result));

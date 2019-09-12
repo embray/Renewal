@@ -31,5 +31,8 @@
     "react-native-timer": "^1.3.3",
     "react-native-tree-picker": "^0.2.3",
     "react-navigation": "^1.5.11"
+  },
+  "devDependencies": {
+    "babel-plugin-dotenv": "^0.1.1"
   }
 }

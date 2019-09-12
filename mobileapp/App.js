@@ -33,6 +33,13 @@ import {
 
 
 import Routes from './src/Routes';
+import Config from './config';
+
+
+if (Config.debug) {
+    console.log(`Config: ${JSON.stringify(Config)}`);
+}
+
 
 export default class App extends Component<{}> {
   render() {

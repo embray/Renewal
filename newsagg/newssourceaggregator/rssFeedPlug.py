@@ -17,6 +17,9 @@ class RssFeedPlug:
             raise RuntimeError("No source provided for RSS feed")
         self.type += source
 
+    def __str__(self):
+        return f'RSS feed {self.source}'
+
     def getConstantFeed(self):
         while 1:
             data = feedparser.parse(self.source)

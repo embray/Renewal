@@ -1,9 +1,8 @@
-import sys, os
-sys.path.append("/".join(os.path.abspath(__file__).split("/")[0:-2]))
-from parser import Parser
-from parser import RequiredDataStruct
-from copy import copy
 import json
+
+from copy import copy
+
+from .parser import Parser, RequiredDataStruct
 
 
 class RssParser(Parser):

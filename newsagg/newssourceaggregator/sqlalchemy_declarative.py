@@ -1,6 +1,5 @@
-import sys, os
-sys.path.append("/".join(os.path.abspath(__file__).split("/")[0:-2]))
-from sqlalchemy import Column, ForeignKey, Integer, String, Boolean
+from sqlalchemy import (Column, ForeignKey, Integer, String, Boolean,
+                        create_engine)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker

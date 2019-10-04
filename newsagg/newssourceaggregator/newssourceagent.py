@@ -1,18 +1,21 @@
-import sys, os
-sys.path.append("/".join(os.path.abspath(__file__).split("/")[0:-2]))
-from rssparser import RequiredDataStruct
-from rssFeedPlug import RssFeedPlug
-from newssender import NewsSender
-from rssparser import RssParser
-from systemtools.basics import *
-from time import sleep
-import threading
-import datetime
-import time
-import json
+import argparse
 import csv
+import datetime
+import json
+import logging
+import os.path as pth
+import threading
+import time
+from time import sleep
 
-CFG_FILE_PATH="./parserconfig.json"
+from . import DATA_DIR
+from .rssparser import RequiredDataStruct
+from .rssFeedPlug import RssFeedPlug
+from .newssender import NewsSender
+from .rssparser import RssParser
+from .utils import traverse_dict
+
+
 
 
 class NewsSourceAgent:
@@ -33,12 +36,13 @@ class NewsSourceAgent:
             for section in unparsedData.entries:
                 self.fullData.append(RequiredDataStruct())
                 timeID = time.time()
-                date = datetime.datetime.   fromtimestamp(timeID)
+                date = datetime.datetime.fromtimestamp(timeID)
                 self.fullData[-1].crawling_timestamp = date
                 self.fullData[-1].agent = self.source.type
                 for key in klist:
                     if key in section:
-                        self.fullData[-1].setItem(key, getDictSubElement(section, klist[key]))
+                        element = traverse_dict(section, keywords)
+                        self.fullData[-1].setItem(key, element)
 
             indexlist = []
             for struct in self.fullData:

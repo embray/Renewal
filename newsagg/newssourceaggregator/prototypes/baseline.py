@@ -1,11 +1,11 @@
-import sys, os
-sys.path.append("/".join(os.path.abspath(__file__).split("/")[0:-2]))
 import json
 import random
-from newssender import NewsSender
-from newsreceiver import NewsReceiver
-from databasetools.mongo import MongoCollection
-from api import MAX_PACKAGE_SIZE
+
+
+from ..api import MAX_PACKAGE_SIZE
+from ..databasetools.mongo import MongoCollection
+from ..newssender import NewsSender
+from ..newsreceiver import NewsReceiver
 
 
 # LA BASELINE N'A PAS ACCES A LA DB ELLE FAIT DES CALLS API ET ENVOIE LA REPONSE VIA DES QUEUES RABBITMQ

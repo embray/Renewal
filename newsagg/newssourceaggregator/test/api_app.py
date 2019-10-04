@@ -1,14 +1,14 @@
-import sys, os
-sys.path.append("/".join(os.path.abspath(__file__).split("/")[0:-2]))
 import string
 import random
+
 from flask import Flask
 from flask_restful import Resource, Api
-from databasetools.mongo import MongoCollection
 from passlib.context import CryptContext
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy_declarative import Base, User
+
+from ..databasetools.mongo import MongoCollection
+from ..sqlalchemy_declarative import Base, User
 
 __version__ = "0.0.3" # Added proper status code
 __verbose__ = False

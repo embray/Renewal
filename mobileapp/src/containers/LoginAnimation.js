@@ -18,10 +18,11 @@ import {
     AsyncStorage
 } from "react-native";
 import { View } from 'react-native-animatable';
-import HomeScreen from './HomeScreen/HomeScreen'
-import AuthScreen from './AuthScreen'
 import Expo, { AppLoading } from 'expo';
 import { SQLite } from 'expo-sqlite';
+import HomeScreen from './HomeScreen/HomeScreen'
+import AuthScreen from './AuthScreen'
+import Config from '../../config';
 const SCREEN_HEIGHT = Dimensions.get('window').height
 const SCREEN_WIDTH  = Dimensions.get('window').width
 const SCREEN_WIDTH_CUSTOM_PADDING = SCREEN_WIDTH*0.43;
@@ -43,8 +44,9 @@ export default class WebV extends Component {
     this.setState({ loading: false });
   }
   _simulateLogin = (username, password) => {
+    let authURI = `${Config.api.renewalURI}/auth/${username}/${password}`;
     this.setState({ isLoading: true })
-    fetch('https://api.renewal-research.com/auth/'+username+'/'+password)
+    fetch(authURI)
       .then((response) => response.json())
       .then((responseJson) => {
         console.log(responseJson)
@@ -65,9 +67,8 @@ export default class WebV extends Component {
   _simulateSignup = async (username, password, fullName) => {
     
     this.setState({ isLoading: true })
-    
-      
-    await fetch('https://api.renewal-research.com/auth/'+username+'/email/'+password, {
+    let authURI = `${Config.api.renewalURI}/auth/${username}/email/${password}`;
+    await fetch(authURI, {
       method: "PUT",
       headers: {
         'Accept': 'application/json',
@@ -78,7 +79,7 @@ export default class WebV extends Component {
         password
       })
     })
-    .then( await fetch('https://api.renewal-research.com/auth/'+username+'/email/'+password, {
+    .then( await fetch(authURI, {
       method: "GET",
       headers: {
         'Accept': 'application/json',

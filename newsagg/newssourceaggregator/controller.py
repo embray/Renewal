@@ -20,12 +20,12 @@ class Controller:
     def callback(self, channel, method, properties, body):
         data = json.loads(body.decode('utf-8'))
         print(data)
-        channel.basic_ack(delivery_tag=method.delivery_tag)
         if data['link'] is not None and data['link'] not in self.collection:
             self.collection.insert({'version': self.version, 'url': data['link'], 'source': data})
         else:
             print("An error has occured while attempting to write to db")
-            print("Link already in colleciton ? : " + data['link'] in self.collection)
+            print("Link already in colleciton ? : ", data['link'] in self.collection)
+        channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
 if __name__ == "__main__":

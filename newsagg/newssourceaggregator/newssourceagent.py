@@ -71,9 +71,6 @@ class NewsSourceAgent:
 
             for struct in self.fullData:
                 if struct.datadict is not None:
-                    if self.source.source == "https://www.judgehype.com/nouvelles.xml":
-                        f = open("./judge.txt", "a")
-                        f.write(struct.datadict['link'] + '\n')
                     log.debug(
                         f'sending entry {struct.datadict} from {self.source}')
                     self.sender.send(json.dumps(struct.datadict))

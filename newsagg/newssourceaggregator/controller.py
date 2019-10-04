@@ -10,7 +10,8 @@ from .newsreceiver import NewsReceiver
 class Controller:
     def __init__(self, host='localhost', receiver=NewsReceiver(), __version__="0.0.1"):
         self.collection = MongoCollection("news_db", "news", indexOn=['url'],
-                                          host=host, user='Ajod', password='8kp^U_R3', version=__version__)
+                                          host=host, #user='Ajod', password='8kp^U_R3',
+                                          version=__version__)
         self.version = __version__
         self.receiver = receiver
 

@@ -378,11 +378,13 @@ if __name__ == '__main__':
     # This collection stores news articles and their data
     # /!\ WARNING : find a way to get the admin username and password out of the code /!\
     collection = MongoCollection("news_db", "news", indexOn=['url'],
-                                 host='localhost', user="hayj", password="renewal42", version=__version__)
+                                 host='localhost', #user="hayj", password="renewal42", version=__version__)
+                                 version=__version__)
 
     # This collection stores all browsing user browsing habits and actions
     eventcollection = MongoCollection("news_db", "events", indexOn=['user_id'],
-                                      host='localhost', user='hayj', password="renewal42", version=__version__)
+                                      host='localhost', #user='hayj', password="renewal42", version=__version__)
+                                      version=__version__)
 
     app = Flask(__name__)
     api = Api(app)
@@ -406,4 +408,5 @@ if __name__ == '__main__':
     api.add_resource(Auth.Test, '/auth/test')
 
     api.add_resource(AppUser.Events, '/user/events/<string:token>/<string:data>')
-    app.run(port=4243, debug=False, host=host)
+    #app.run(port=4243, debug=False, host=host)
+    app.run(port=5000, debug=True)

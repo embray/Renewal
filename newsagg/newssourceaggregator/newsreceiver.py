@@ -17,11 +17,8 @@ class NewsReceiver:
         if not callable(callback):
             raise AttributeError("callback object must be a callable function")
         self.channel.basic_qos(prefetch_count=1)
-        self.channel.basic_consume(callback, queue=self.routing_key, no_ack=False)
+        self.channel.basic_consume(self.routing_key, callback, auto_ack=False)
         self.channel.start_consuming()
 
     def createQueue(self, teamname):
         self.channel.queue_declare(queue=teamname + "_rec_queue", durable=True)
-
-
-nr = NewsReceiver()

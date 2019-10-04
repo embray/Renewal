@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import { Platform, Text, View, StyleSheet } from 'react-native';
-import { Constants, Location, Permissions } from 'expo';
+import * as Permissions from 'expo-permissions';
+import * as Location from 'expo-location';
+import Constants from 'expo-constants';
 
 export default class App extends Component {
   state = {

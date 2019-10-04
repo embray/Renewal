@@ -1,4 +1,8 @@
-import { SQLite, Font, AppLoading, Accelerometer, Gyroscope, Magnetometer, Location, ScreenOrientation, Constants } from 'expo';
+import { AppLoading, ScreenOrientation } from 'expo';
+import Constants from 'expo-constants';
+import * as Location from 'expo-location';
+import { Accelerometer, Gyroscope, Magnetometer } from 'expo-sensors';
+import { SQLite } from 'expo-sqlite';
 import React, { Component } from 'react';
 import { 
   AppState,
@@ -74,10 +78,6 @@ export default class Project extends Component {
   }
   
   async componentDidMount(){
-    await Font.loadAsync({
-      Roboto: require("native-base/Fonts/Roboto.ttf"),
-      Roboto_medium: require("native-base/Fonts/Roboto_medium.ttf")
-    });
     await I18n.initAsync();
     //console.log(this.props)
     //this.setState({ loading: false });
@@ -175,7 +175,7 @@ export default class Project extends Component {
     /*if(this.state.isConnected === false){
       return <View style={{flex:1}} ><MiniOfflineSign /></View>
     }*/
-    ScreenOrientation.allowAsync(ScreenOrientation.Orientation.ALL);
+    ScreenOrientation.lockAsync(ScreenOrientation.Orientation.ALL);
     switch(this.props.navigation.state.params.screen){
       case "Favorite" :
         return (
@@ -318,7 +318,7 @@ export default class Project extends Component {
   }
 }
 
- 
+
 const styles = StyleSheet.create({
   MainContainer :{
     justifyContent: 'center',

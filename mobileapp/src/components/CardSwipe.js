@@ -16,7 +16,7 @@ import {
 import CardStack, { Card } from 'react-native-card-stack-swiper';
 
 
-export default class CardSwipe extends Component<{}> {
+export default class CardSwipe extends Component {
   render() {
     return (
       <View style={{flex:1}}>

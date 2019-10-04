@@ -1,4 +1,5 @@
-import Expo, { SQLite, Font, AppLoading  } from 'expo';
+import Expo, { AppLoading } from 'expo';
+import { SQLite } from 'expo-sqlite';
 import React, { Component } from 'react';
 import { 
   StyleSheet, 
@@ -40,10 +41,6 @@ export default class Favoris extends Component {
     YellowBox.ignoreWarnings(['Warning: componentWillMount is deprecated','Warning: componentWillReceiveProps is deprecated',]);
   }
   async componentDidMount(){
-    await Font.loadAsync({
-      Roboto: require("native-base/Fonts/Roboto.ttf"),
-      Roboto_medium: require("native-base/Fonts/Roboto_medium.ttf"),
-    });
     this.update();
   }
   _onPressOnItem (item) {
@@ -140,7 +137,7 @@ export default class Favoris extends Component {
   
 }
 
- 
+
 const styles = StyleSheet.create({
   MainContainer :{
     justifyContent: 'center',

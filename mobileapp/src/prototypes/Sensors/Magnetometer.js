@@ -1,7 +1,5 @@
 import React from 'react';
-import {
-  Magnetometer,
-} from 'expo';
+import { Magnetometer } from 'expo-sensors';
 import {
   StyleSheet,
   Text,

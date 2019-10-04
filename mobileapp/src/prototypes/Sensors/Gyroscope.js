@@ -1,7 +1,5 @@
 import React from 'react';
-import {
-  Gyroscope,
-} from 'expo';
+import { Gyroscope } from 'expo-sensors';
 import {
   StyleSheet,
   Text,

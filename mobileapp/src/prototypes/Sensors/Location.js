@@ -1,6 +1,11 @@
 import React, { Component } from 'react';
 import { Platform, Text, View, StyleSheet } from 'react-native';
-import { Constants, Location, Permissions, MapView, registerRootComponent } from 'expo';
+import { registerRootComponent } from 'expo';
+
+import MapView from 'react-native-maps';
+import * as Permissions from 'expo-permissions';
+import * as Location from 'expo-location';
+import Constants from 'expo-constants';
 
 const GEOLOCATION_OPTIONS = { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000, timeInterval: 300};
 

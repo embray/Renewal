@@ -20,7 +20,8 @@ import {
 import { View } from 'react-native-animatable';
 import HomeScreen from './HomeScreen/HomeScreen'
 import AuthScreen from './AuthScreen'
-import Expo, { SQLite, Font, AppLoading } from 'expo';
+import Expo, { AppLoading } from 'expo';
+import { SQLite } from 'expo-sqlite';
 const SCREEN_HEIGHT = Dimensions.get('window').height
 const SCREEN_WIDTH  = Dimensions.get('window').width
 const SCREEN_WIDTH_CUSTOM_PADDING = SCREEN_WIDTH*0.43;
@@ -39,10 +40,6 @@ export default class WebV extends Component {
     }
   }
   async componentWillMount() {
-    await Font.loadAsync({
-      Roboto: require("native-base/Fonts/Roboto.ttf"),
-      Roboto_medium: require("native-base/Fonts/Roboto_medium.ttf"),
-    });
     this.setState({ loading: false });
   }
   _simulateLogin = (username, password) => {

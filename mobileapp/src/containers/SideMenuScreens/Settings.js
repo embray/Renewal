@@ -19,7 +19,9 @@ import {
 import {Actions} from 'react-native-router-flux';
 import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Text, List, ListItem, Switch, Separator, Card, CardItem} from 'native-base';
 import SideMenu from 'react-native-side-menu';
-import Expo, { AuthSession, Constants, Font  } from 'expo';
+import Expo, { AuthSession } from 'expo';
+import * as Font from 'expo-font';
+import Constants from 'expo-constants';
 import Menu from '../SideMenu/Menu';
 const screen = Dimensions.get('window');
 
@@ -466,7 +468,7 @@ export default class Param extends Component {
   }
 }
 
- 
+
 const styles = StyleSheet.create({
   MainContainer :{
     justifyContent: 'center',

@@ -1,7 +1,9 @@
 import React, { Component } from 'react'
 import { StyleSheet, Alert,AsyncStorage,ActivityIndicator, TouchableOpacity, Image, Text} from 'react-native'
 import { View } from 'react-native-animatable'
-import { AuthSession, Constants, Font, Facebook, Google } from 'expo';
+import { AuthSession, Google } from 'expo';
+import * as Facebook from 'expo-facebook';
+import Constants from 'expo-constants';
 import {Actions} from 'react-native-router-flux';
 import CustomButton from '../../components/CustomButton'
 import metrics from '../../config/metrics'
@@ -23,11 +25,6 @@ export default class Opening extends Component {
     }
   }
   async componentWillMount() {
-    await Font.loadAsync({
-      Roboto: require("native-base/Fonts/Roboto.ttf"),
-      Roboto_medium: require("native-base/Fonts/Roboto_medium.ttf"),
-      Ionicons: require("@expo/vector-icons/fonts/Ionicons.ttf"),
-    });
     try {
      AsyncStorage.getItem('userInformationBasic', (err, result)=>{
       var json = JSON.parse(result)

@@ -11,7 +11,7 @@ import {
   AsyncStorage,
   ActivityIndicator
 } from 'react-native';
-import Expo, { Font, AppLoading } from 'expo';
+import Expo, { AppLoading } from 'expo';
 import { Container, Header, Left, Body, Right, Button, Icon, Title, Footer, FooterTab } from 'native-base';
 import {Actions} from 'react-native-router-flux';
 import I18n from 'ex-react-native-i18n';
@@ -53,11 +53,6 @@ export default class InitialPath extends Component {
     }
 
     async componentDidMount(){
-        await Font.loadAsync({
-          Roboto: require("native-base/Fonts/Roboto.ttf"),
-          Roboto_medium: require("native-base/Fonts/Roboto_medium.ttf"),
-          Arial: require('native-base/Fonts/Roboto.ttf')
-        });
         try {
             AsyncStorage.getItem('userInformationBasic', (err, result)=>{
                 if(result === null){

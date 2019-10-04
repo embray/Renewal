@@ -16,8 +16,10 @@ import {
   Modal,
   AsyncStorage,
   Linking
-} from 'react-native'; 
-import { AuthSession, Constants, Font, Facebook, Google } from 'expo';
+} from 'react-native';
+import { AuthSession, Google } from 'expo';
+import * as Facebook from 'expo-facebook';
+import Constants from 'expo-constants';
 import { Actions } from 'react-native-router-flux';
 import { Container, Header, Title, Content, Footer, FooterTab, Left,Button, Right, Body, Icon, Text, List, ListItem, CardItem, Card, Switch } from 'native-base';
 import SideMenu from 'react-native-side-menu';
@@ -27,7 +29,7 @@ import DatePicker from 'react-native-datepicker';
 import man from '../../images/man.png'
 import woman from '../../images/girl.png'
 import user from '../../images/user.png'
-const screen = Dimensions.get('window'); 
+const screen = Dimensions.get('window');
 const FB_APP_ID = '2073630512892455';
 const userInformation = [ {
   firstName : "Empty",
@@ -70,10 +72,6 @@ export default class MonCompte extends Component {
   async componentDidMount(){
     console.log(userInformation)
     await I18n.initAsync();
-    await Font.loadAsync({
-      Roboto: require("native-base/Fonts/Roboto.ttf"),
-      Roboto_medium: require("native-base/Fonts/Roboto_medium.ttf"),
-    });
     try {
 
       //AsyncStorage.setItem('userInformationBasic', JSON.stringify(userInformation[0]));
@@ -678,7 +676,7 @@ export default class MonCompte extends Component {
   }
 }
 
- 
+
 const styles = StyleSheet.create({
   MainContainer :{
     justifyContent: 'center',
@@ -753,7 +751,7 @@ const styles = StyleSheet.create({
  * https://react-native.canny.io/feature-requests/p/scrollview-animation-events-eg-onscrollanimationend
  */
 
- //  twitter icon
+//  twitter icon
 const TWITTER_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAAA8CAMAAAANIilAAAABvFBMVEUAAAAA//8AnuwAnOsAneoAm+oAm+oAm+oAm+oAm+kAnuwAmf8An+0AqtUAku0AnesAm+oAm+oAnesAqv8An+oAnuoAneoAnOkAmOoAm+oAm+oAn98AnOoAm+oAm+oAmuoAm+oAmekAnOsAm+sAmeYAnusAm+oAnOoAme0AnOoAnesAp+0Av/8Am+oAm+sAmuoAn+oAm+oAnOoAgP8Am+sAm+oAmuoAm+oAmusAmucAnOwAm+oAmusAm+oAm+oAm+kAmusAougAnOsAmukAn+wAm+sAnesAmeoAnekAmewAm+oAnOkAl+cAm+oAm+oAmukAn+sAmukAn+0Am+oAmOoAmesAm+oAm+oAm+kAme4AmesAm+oAjuMAmusAmuwAm+kAm+oAmuoAsesAm+0Am+oAneoAm+wAmusAm+oAm+oAm+gAnewAm+oAle0Am+oAm+oAmeYAmeoAmukAoOcAmuoAm+oAm+wAmuoAneoAnOkAgP8Am+oAm+oAn+8An+wAmusAnuwAs+YAmegAm+oAm+oAm+oAmuwAm+oAm+kAnesAmuoAmukAm+sAnukAnusAm+oAmuoAnOsAmukAqv9m+G5fAAAAlHRSTlMAAUSj3/v625IuNwVVBg6Z//J1Axhft5ol9ZEIrP7P8eIjZJcKdOU+RoO0HQTjtblK3VUCM/dg/a8rXesm9vSkTAtnaJ/gom5GKGNdINz4U1hRRdc+gPDm+R5L0wnQnUXzVg04uoVSW6HuIZGFHd7WFDxHK7P8eIbFsQRhrhBQtJAKN0prnKLvjBowjn8igenQfkQGdD8A7wAAAXRJREFUSMdjYBgFo2AUDCXAyMTMwsrGzsEJ5nBx41HKw4smwMfPKgAGgkLCIqJi4nj0SkhKoRotLSMAA7Jy8gIKing0KwkIKKsgC6gKIAM1dREN3Jo1gSq0tBF8HV1kvax6+moG+DULGBoZw/gmAqjA1Ay/s4HA3MISyrdC1WtthC9ebGwhquzsHRxBfCdUzc74Y9UFrtDVzd3D0wtVszd+zT6+KKr9UDX749UbEBgULIAbhODVHCoQFo5bb0QkXs1RAvhAtDFezTGx+DTHEchD8Ql4NCcSyoGJYTj1siQRzL/JKeY4NKcSzvxp6RmSWPVmZhHWnI3L1TlEFDu5edj15hcQU2gVqmHTa1pEXJFXXFKKqbmM2ALTuLC8Ak1vZRXRxa1xtS6q3ppaYrXG1NWjai1taCRCG6dJU3NLqy+ak10DGImx07LNFCOk2js6iXVyVzcLai7s6SWlbnIs6rOIbi8ViOifIDNx0uTRynoUjIIRAgALIFStaR5YjgAAAABJRU5ErkJggg==";
 
 //  facebook icon

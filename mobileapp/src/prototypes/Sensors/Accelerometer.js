@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, NetInfo } from 'react-native';
-import { Accelerometer } from 'expo';
+import { Accelerometer } from 'expo-sensors';
 
 export default class AccelerometerSensor extends React.Component {
   state = {

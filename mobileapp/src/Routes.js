@@ -28,7 +28,7 @@ import Location from './prototypes/Sensors/Location';
 import Magnetometer from './prototypes/Sensors/Magnetometer';
 import Pedometer from './prototypes/Sensors/PedometerSensor';
 
-export default class Routes extends Component<{}> {
+export default class Routes extends Component {
 	render() {
 		return(
 			<Router>

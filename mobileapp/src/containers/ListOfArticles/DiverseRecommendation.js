@@ -1,4 +1,5 @@
-import Expo, { SQLite, Font, AppLoading  } from 'expo';
+import Expo, { AppLoading } from 'expo';
+import { SQLite } from 'expo-sqlite';
 import React, { Component } from 'react';
 import { 
   StyleSheet, 
@@ -270,12 +271,6 @@ export default class Project extends Component {
       ]);
   }
   async componentDidMount(){
-    await Font.loadAsync({
-      Roboto: require("native-base/Fonts/Roboto.ttf"),
-      Roboto_medium: require("native-base/Fonts/Roboto_medium.ttf"),
-    });
-    
-    
     await this._initSqlTable();
     await this.webCall();
     
@@ -774,7 +769,7 @@ export default class Project extends Component {
    );
   }
 }
- 
+
 const styles = StyleSheet.create({
  
 MainContainer :{

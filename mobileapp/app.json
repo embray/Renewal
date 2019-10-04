@@ -4,7 +4,7 @@
     "description": "A evaluation platform for news recommender systems",
     "slug": "renewal",
     "privacy": "public",
-    "sdkVersion": "32.0.0",
+    "sdkVersion": "33.0.0",
     "platforms": ["ios", "android"],
     "version": "1.0.0",
     "icon": "./assets/icon.png",

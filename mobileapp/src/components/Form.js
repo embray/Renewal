@@ -8,9 +8,7 @@ import {
   Alert
 } from 'react-native';
 
-export default class Logo extends Component<{}> {
-
-  
+export default class Logo extends Component {
 	render(){
 		return(
 			<View style={styles.container}>

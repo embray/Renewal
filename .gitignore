@@ -5,6 +5,9 @@ dist/
 _trash/
 trash/
 
+# Vim
+*.sw[opn]
+
 # Misc files:
 *.sh
 !README.md

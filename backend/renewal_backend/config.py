@@ -15,10 +15,12 @@ mongodb = {
     'renewal_db': 'renewal',
     'collections': {
         'feeds': {
-            'indices': [('url', {'unique': True})]
+            'indices': [('url', {'unique': True})],
+            'schema': schemas.FEED,
          },
-        'resources': {
-            'indices': [('url', {'unique': True})]
+        'articles': {
+            'indices': [('url', {'unique': True})],
+            'schema': schemas.ARTICLE
         }
     }
 }
@@ -34,8 +36,8 @@ broker = {
         },
         # generic resources which may become articles
         # when sucessfully scraped
-        'resources': {
-            'name': 'resources',
+        'articles': {
+            'name': 'articles',
             'type': 'direct'
         }
     }

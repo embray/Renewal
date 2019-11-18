@@ -1,8 +1,8 @@
 import asyncio
-import functools
 import logging
 import hashlib
 import time
+from functools import partial
 from http.client import OK, NOT_MODIFIED
 
 from aio_pika.patterns import NackMessage
@@ -16,7 +16,7 @@ log = logging.getLogger('feed_crawler')
 
 
 class FeedCrawler(Agent):
-    async def crawl_feed(self, *, feed, resource_producer=None,
+    async def crawl_feed(self, *, feed, article_producer=None,
                          feed_producer=None):
         log.info(f'crawling {feed["type"]} feed {feed["url"]}')
 
@@ -56,17 +56,17 @@ class FeedCrawler(Agent):
             if not link:
                 continue
 
-            if resource_producer is not None:
-                await resource_producer.proxy.new_resource(
-                        resource={'url': link, 'lang': lang})
+            if article_producer is not None:
+                await article_producer.proxy.save_article(
+                        article={'url': link, 'lang': lang})
 
-        # Following a successful crawl, update the source's last_scraped
+        # Following a successful crawl, update the source's last_crawled
         # timestamp, along with a few other stats
         if feed_producer is not None:
             await feed_producer.proxy.update_feed(
                     feed=dict_slice(feed, 'url', 'type'),
-                    updates={'$currentDate': {'last_scraped': True},
-                             '$inc': {'times_scraped': 1}})
+                    updates={'$currentDate': {'last_crawled': True},
+                             '$inc': {'times_crawled': 1}})
 
     async def start_crawl_feed_worker(self, connection):
         feed_producer = await self.create_producer(connection, 'feeds')
@@ -75,10 +75,10 @@ class FeedCrawler(Agent):
         # Create a worker to handle new sources produced by the controller
         # TODO: This is similar-enough to code in the Controller that we
         # could probably generalize this.
-        resource_producer = await self.create_producer(connection, 'resources')
-        worker = functools.partial(self.crawl_feed,
-                                   resource_producer=resource_producer,
-                                   feed_producer=feed_producer)
+        article_producer = await self.create_producer(connection, 'articles')
+        worker = partial(self.crawl_feed,
+                         article_producer=article_producer,
+                         feed_producer=feed_producer)
         await feed_producer.create_worker(
                 'crawl_feed', worker, auto_delete=True)
 
@@ -171,7 +171,7 @@ class FeedCrawler(Agent):
         # regularly erroring sources
 
         # If given, update the last time the source was successfully
-        # *retrieved* (as opposed to last_scraped)
+        # *retrieved* (as opposed to last_crawled)
         resource = await self.retrieve_resource(
                 feed, only_if_modified=True,
                 timeout=self.config.feed_crawler.retrieve_timeout)
@@ -185,6 +185,10 @@ class FeedCrawler(Agent):
             # TODO: This code pertains to retrieving *any* type of resource
             # and should be moved into retrieve_resource, but after we make
             # further updates to make a generic update_resource task...
+            # TODO: I don't think we should be sending MongoDB commands as
+            # messages; it should be something more generic--probably a
+            # specific message indicating that a resource was accessed (as
+            # opposed to crawled which is the case in crawl_feed).
             updates = {'$currentDate': {'last_accessed': True},
                        '$inc': {'times_accessed': 1}}
             set_fields = dict_slice(resource, 'etag', 'last_modified', 'sha1',

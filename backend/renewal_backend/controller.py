@@ -29,23 +29,26 @@ class Controller(Agent, MongoMixin):
         # bottleneck.
         filt = {}
         if since is not None:
-            filt = {'$or': [{'last_scraped': {'$exists': False}},
-                            {'last_scraped': {'$lte': since}}]}
+            filt = {'$or': [{'last_crawled': {'$exists': False}},
+                            {'last_crawled': {'$lte': since}}]}
 
         feeds = self.db['feeds'].find(filt)
         for feed in feeds:
             log.info(f'producing {feed["type"]} feed at {feed["url"]}')
             await producer.proxy.crawl_feed(feed=feed)
 
-    async def insert_resource(self, *, resource):
-        log.info(f'inserting new resource into the resources collection: '
+    async def save_article(self, *, article):
+        self.insert_resource(collection='articles', resource=article)
+
+    def insert_resource(self, *, collection, resource):
+        log.info(f'inserting new resource into the {collection} collection: '
                  f'{resource}')
         # TODO: Do we want to check if the URL already exists?  And if so do
         # we allow new item crawlers to crawl a URL before checking if we've
         # already seen it before?
         # Right now if the URL does not exist we upsert it, and if so we
         # increase the number of times it's been seen.
-        self.db['resources'].update_one(
+        self.db[collection].update_one(
                 {'url': resource['url']},
                 {'$set': {'url': resource['url'], 'lang': resource['lang']},
                  '$inc': {'times_seen': 1}},
@@ -81,18 +84,10 @@ class Controller(Agent, MongoMixin):
             await self.queue_feeds(producer, since=since)
             await asyncio.sleep(self.config.controller.feeds_refresh_rate)
 
-    async def start_new_resource_worker(self, connection):
-        producer = await self.create_producer(connection, 'resources')
-
-        # Create a worker to handle new URLs produced from source workers
-        # TODO: For now this is inserting into a collection called 'resources'
-        # but in practice this should probably be changed to
-        # 'articles'--although I intend to define a generic "resource" type
-        # which can be a feed or an article, the code here is specifically for
-        # handling new *article* resources (a subclass of "resource", in a
-        # manner of speaking).
+    async def start_save_article_worker(self, connection):
+        producer = await self.create_producer(connection, 'articles')
         await producer.create_worker(
-                'new_resource', self.insert_resource, auto_delete=True)
+                'save_article', self.save_article, auto_delete=True)
 
     async def start_update_feed_worker(self, connection):
         """
@@ -100,7 +95,7 @@ class Controller(Agent, MongoMixin):
         routing key "update_source".
 
         Currently this is used by source crawler agents to signify when they
-        have successfully crawled a source by setting the last_scraped field
+        have successfully crawled a source by setting the last_crawled field
         on the source.
 
         TODO: This can also be used to signal error conditions on sources.
@@ -113,7 +108,7 @@ class Controller(Agent, MongoMixin):
 
     async def start_loop(self, connection):
         await self.start_update_feed_worker(connection)
-        await self.start_new_resource_worker(connection)
+        await self.start_save_article_worker(connection)
         # Should run forever
         await self.start_feed_producer(connection)
 

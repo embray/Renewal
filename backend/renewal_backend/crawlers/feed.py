@@ -2,6 +2,8 @@ import asyncio
 import logging
 import hashlib
 import time
+# For parsing/formatting HTTP-date format
+from email.utils import parsedate_to_datetime, format_datetime
 from functools import partial
 from http.client import OK, NOT_MODIFIED
 
@@ -118,7 +120,7 @@ class FeedCrawler(Agent):
                 headers['If-None-Match'] = etag
 
             if last_modified:
-                headers['If-Modified-Since'] = last_modified
+                headers['If-Modified-Since'] = format_datetime(last_modified)
 
         try:
             async with ClientSession() as session:
@@ -131,10 +133,15 @@ class FeedCrawler(Agent):
                         raise NackMessage()
 
                     try:
-                        for header in ['ETag', 'Last-Modified']:
+                        for header, xform in [
+                                ('ETag', None),
+                                ('Last-Modified', parsedate_to_datetime)]:
                             if header in resp.headers:
                                 key = header.lower().replace('-', '_')
-                                new_resource[key] = resp.headers[header]
+                                value = resp.headers[header]
+                                value = (value if xform is None
+                                               else xform(value))
+                                new_resource[key] = value
 
                         text = await resp.text()
                         sha1 = hashlib.sha1(text.encode('utf-8')).hexdigest()

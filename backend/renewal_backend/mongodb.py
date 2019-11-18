@@ -38,3 +38,13 @@ class MongoMixin:
                         keys, kwargs = index
 
                     self.db[collection_name].create_index(keys, **kwargs)
+
+            # Install the collection schema, if any, as well as validation
+            # level (default: moderate)
+            if 'schema' in options:
+                self.db.command({
+                    'collMod': collection_name,
+                    'validator': {'$jsonSchema': options['schema']},
+                    'validationLevel': options.get('validation_level',
+                                                   'moderate')
+                })

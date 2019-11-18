@@ -100,6 +100,50 @@ def dict_slice(d, *keys, allow_missing=False):
     return s
 
 
+def dict_merge(d, *f):
+    """
+    Return a copy of `dict` ``d``, with updates applied to it from zero or more
+    dicts in ``f``.
+
+    If ``d2`` is a nested `dict` then updates are applied partially, so that
+    rather than completely replacing the value of the same key in ``d1``, it
+    just applies a `dict.update` to value of that key in ``d1``.  If there is
+    a conflict (e.g. the same key in each `dict` does not correspond to the
+    same type) then that value is replaced entirely.
+
+    Examples
+    --------
+
+    >>> from renewal_backend.utils import dict_merge
+    >>> d1 = {}
+    >>> d2 = dict_merge(d1); d2
+    {}
+    >>> d1 is d2
+    False
+    >>> dict_merge({}, {'a': 1})
+    {'a': 1}
+    >>> dict_merge({'a': 1, 'b': 2}, {'a': 2, 'c': 3})
+    {'a': 2, 'b': 2, 'c': 3}
+    >>> dict_merge({'a': 1, 'b': 2}, {'a': 2}, {'a': 3, 'c': 4})
+    {'a': 3, 'b': 2, 'c': 4}
+    >>> dict_merge({'a': {'b': {'c': 1, 'd': 2}}}, {'a': {'b': {'c': 2}}})
+    {'a': {'b': {'c': 2, 'd': 2}}}
+    >>> dict_merge({'a': {'b': 1}}, {'a': 2})
+    {'a': 2}
+    """
+
+    d = d.copy()
+    for d2 in f:
+        for k, v in d2.items():
+            u = d.get(k)
+            if isinstance(u, dict) and isinstance(v, dict):
+                d[k] = dict_merge(u, v)
+            else:
+                d[k] = v
+
+    return d
+
+
 class AttrDict(dict):
     """
     `dict` subclass allowing lookup by attribute.

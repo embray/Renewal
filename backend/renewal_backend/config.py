@@ -7,6 +7,9 @@ This is just the default configuration; all of this can be overridden by a
 config file.
 """
 
+
+from . import schemas
+
 # TODO: For now this is just a static configuration / defaults, but it will
 # later be modifiable via a config file.
 

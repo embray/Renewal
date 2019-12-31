@@ -8,8 +8,11 @@ from .utils import Producer, load_config
 
 
 class Agent(metaclass=abc.ABCMeta):
-    def __init__(self, config):
+    def __init__(self, config, log=None):
         self.config = config
+        if log is None:
+            log = logging.getLogger()
+        self.log = log
         super().__init__()
 
     @abc.abstractmethod
@@ -26,7 +29,7 @@ class Agent(metaclass=abc.ABCMeta):
                 style='{',
                 format='[{levelname}][{name}][{asctime}] {message}')
 
-        agent = cls(load_config())
+        agent = cls(load_config(), log=logging.getLogger(cls.__name__))
         loop = asyncio.get_event_loop()
         connection = loop.run_until_complete(agent.connect_broker())
         try:

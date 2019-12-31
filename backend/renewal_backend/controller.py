@@ -9,14 +9,12 @@ the last refresh interval.
 import asyncio
 import logging
 from datetime import datetime, timedelta
+from functools import partial
 
 from bson import ObjectId
 
 from .agent import Agent
 from .mongodb import MongoMixin
-
-
-log = logging.getLogger('controller')
 
 
 class Controller(Agent, MongoMixin):
@@ -34,41 +32,57 @@ class Controller(Agent, MongoMixin):
 
         feeds = self.db['feeds'].find(filt)
         for feed in feeds:
-            log.info(f'producing {feed["type"]} feed at {feed["url"]}')
-            await producer.proxy.crawl_feed(feed=feed)
+            self.log.info(f'producing {feed["type"]} feed at {feed["url"]}')
+            await producer.proxy.crawl_feed(resource=feed)
 
-    async def save_article(self, *, article):
-        self.insert_resource(collection='articles', resource=article)
-
-    def insert_resource(self, *, collection, resource):
-        log.info(f'inserting new resource into the {collection} collection: '
-                 f'{resource}')
+    async def save_article(self, *, article, article_producer):
+        self.log.info(f'inserting article into the articles collection: '
+                      f'{article}')
         # TODO: Do we want to check if the URL already exists?  And if so do
         # we allow new item crawlers to crawl a URL before checking if we've
         # already seen it before?
         # Right now if the URL does not exist we upsert it, and if so we
         # increase the number of times it's been seen.
-        self.db[collection].update_one(
-                {'url': resource['url']},
-                {'$set': {'url': resource['url'], 'lang': resource['lang']},
-                 '$inc': {'times_seen': 1}},
+        r = self.db['articles'].update_one(
+                {'url': article['url']},
+                {
+                    '$set': {'url': article['url'], 'lang': article['lang']},
+                    '$inc': {'times_seen': 1},
+                    '$currentDate': {'last_seen': 'date'}
+                },
                 upsert=True)
 
-    def update_resource(self, *, collection, resource, updates):
+        if r.modified_count != 0:
+            self.log.info('updated existing article')
+        else:
+            self.log.info('inserted new article')
+            # Send new article to the crawlers
+            await article_producer.proxy.crawl_article(article=article)
+
+    def update_resource(self, *, collection, resource, type, values={}):
         """
         Update the given resource, which should be specified by its URL.
 
         The collection which the resource is found must be specified (e.g.
         'feeds' or 'articles').
+
+        The update ``type`` is currently either ``'accessed'`` or
+        ``'crawled'``.
         """
 
-        log.info(f'updating {collection} resource {resource["url"]}: '
-                 f'{updates}')
-        self.db[collection].update_one(resource, updates)
+        self.log.info(f'updating {collection} resource {resource["url"]}: '
+                      f'with {values}')
+        updates = {}
+        if values:
+            updates['$set'] = values
 
-    async def update_feed(self, *, feed, updates):
-        return self.update_resource(
-                collection='feeds', resource=feed, updates=updates)
+        if type in ['accessed', 'crawled']:
+            updates['$inc'] = {f'times_{type}': 1}
+        else:
+            # TODO: Ignore this, or raise an error?
+            pass
+
+        self.db[collection].update_one(resource, updates)
 
     async def start_feed_producer(self, connection):
         # This channel is dedicated to queuing sources onto
@@ -89,25 +103,35 @@ class Controller(Agent, MongoMixin):
         await producer.create_worker(
                 'save_article', self.save_article, auto_delete=True)
 
-    async def start_update_feed_worker(self, connection):
+    async def start_update_resource_worker(self, connection, exchange,
+                                           collection):
         """
-        Handles messages on a queue bound to the "sources" exchange with
-        routing key "update_source".
+        Handles messages on a queue bound to the "feeds" exchange with
+        routing key "update_resource".
 
         Currently this is used by source crawler agents to signify when they
         have successfully crawled a source by setting the last_crawled field
         on the source.
 
         TODO: This can also be used to signal error conditions on sources.
+        NOTE: This has been generalized for handling article updates as well;
+        the docstring should be rewritten.
         """
 
-        producer = await self.create_producer(connection, 'feeds')
-
+        producer = await self.create_producer(connection, exchange)
+        worker = partial(self.update_resource, collection=collection)
+        # TODO: I think it might be confusing to have a single
+        # "update_resource" method used for all types of resources (feeds and
+        # articles).  Currently there is no need for separate methods to
+        # update feeds vs. articles, but it will likely make sense to have that
+        # soon.
         await producer.create_worker(
-                'update_feed', self.update_feed, auto_delete=True)
+                'update_resource', worker, auto_delete=True)
 
     async def start_loop(self, connection):
-        await self.start_update_feed_worker(connection)
+        await self.start_update_resource_worker(connection, 'feeds', 'feeds')
+        await self.start_update_resource_worker(connection, 'articles',
+                'articles')
         await self.start_save_article_worker(connection)
         # Should run forever
         await self.start_feed_producer(connection)

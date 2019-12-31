@@ -43,7 +43,7 @@ RESOURCE = {
         'times_accessed': {
             'description':
                 "Number of times the resource was successfully accessed.",
-            'bsonType': 'long',
+            'bsonType': 'int',
             'minimum': 0,
             # NOTE: Not supported by MongoDB
             #'default': 0
@@ -54,11 +54,11 @@ RESOURCE = {
                 "links.",
             'bsonType': 'date'
         },
-        'times_accessed': {
+        'times_crawled': {
             'description':
                 "Number of times the resource was successfully crawled for "
                 "links.",
-            'bsonType': 'long',
+            'bsonType': 'int',
             'minimum': 0,
             # NOTE: Not supported by MongoDB
             #'default': 0
@@ -100,6 +100,19 @@ FEED = dict_merge(RESOURCE, {
 })
 
 
-# TODO: Currently the schema for an article is no different from that of a
-# generic resource, but eventually that will change.
-ARTICLE = dict_merge(RESOURCE)
+ARTICLE = dict_merge(RESOURCE, {
+    'properties': {
+        'times_seen': {
+            'description':
+                "Number of times this article's URL has been seen by the "
+                "controller (i.e. sent to it by a feed crawler).",
+            'bsonType': 'int',
+            'minimum': 0
+        },
+        'last_seen': {
+            'description':
+                "Last time this article was seen by the controller.",
+            'bsonType': 'date'
+        }
+    }
+})

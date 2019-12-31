@@ -35,7 +35,7 @@ class Controller(Agent, MongoMixin):
             self.log.info(f'producing {feed["type"]} feed at {feed["url"]}')
             await producer.proxy.crawl_feed(resource=feed)
 
-    async def save_article(self, *, article, article_producer):
+    async def save_article(self, *, article, article_producer=None):
         self.log.info(f'inserting article into the articles collection: '
                       f'{article}')
         # TODO: Do we want to check if the URL already exists?  And if so do
@@ -48,7 +48,7 @@ class Controller(Agent, MongoMixin):
                 {
                     '$set': {'url': article['url'], 'lang': article['lang']},
                     '$inc': {'times_seen': 1},
-                    '$currentDate': {'last_seen': 'date'}
+                    '$currentDate': {'last_seen': True}
                 },
                 upsert=True)
 
@@ -57,7 +57,8 @@ class Controller(Agent, MongoMixin):
         else:
             self.log.info('inserted new article')
             # Send new article to the crawlers
-            await article_producer.proxy.crawl_article(article=article)
+            if article_producer is not None:
+                await article_producer.proxy.crawl_article(article=article)
 
     def update_resource(self, *, collection, resource, type, values={}):
         """
@@ -100,8 +101,8 @@ class Controller(Agent, MongoMixin):
 
     async def start_save_article_worker(self, connection):
         producer = await self.create_producer(connection, 'articles')
-        await producer.create_worker(
-                'save_article', self.save_article, auto_delete=True)
+        worker = partial(self.save_article, article_producer=producer)
+        await producer.create_worker('save_article', worker, auto_delete=True)
 
     async def start_update_resource_worker(self, connection, exchange,
                                            collection):

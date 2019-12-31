@@ -21,6 +21,13 @@ class ResourceCrawler(Agent):
     SOURCE_KEY = abc.abstractproperty()
     RESULT_EXCHANGE = None
 
+    def get_exchanges(self):
+        exchanges = [self.SOURCE_EXCHANGE]
+        if self.RESULT_EXCHANGE is not None:
+            exchanges.append(self.RESULT_EXCHANGE)
+
+        return exchanges
+
     @abc.abstractmethod
     async def crawl(self, resource, contents, result_producer=None):
         """

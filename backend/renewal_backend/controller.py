@@ -18,9 +18,9 @@ from .mongodb import MongoMixin
 
 
 class Controller(Agent, MongoMixin):
-    # TODO: We need a centralized configuration for all exchanges, so that
-    # every agent that needs to call declare_exchange does so with the same
-    # settings for each exchange.
+    def get_exchanges(self):
+        return ['feeds', 'articles']
+
     async def queue_feeds(self, producer, since=None):
         # TODO: MonogoDB queries are blocking for now; we could try replacing
         # this with the async MonogoDB backend if this appears to be a

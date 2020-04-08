@@ -1,17 +1,17 @@
 import Expo, { AppLoading } from 'expo';
-import { SQLite } from 'expo-sqlite';
+import * as SQLite from 'expo-sqlite';
 import React, { Component } from 'react';
-import { 
-  StyleSheet, 
-  Platform, 
+import {
+  StyleSheet,
+  Platform,
   Dimensions,
   PixelRatio,
-  View, 
-  ActivityIndicator, 
-  FlatList, 
-  Image, 
-  TouchableOpacity, 
-  Alert, 
+  View,
+  ActivityIndicator,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  Alert,
   YellowBox,
 } from 'react-native';
 import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Text, List, ListItem } from 'native-base';

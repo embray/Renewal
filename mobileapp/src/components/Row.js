@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import {
+  Dimensions,
   ImageBackground,              // Renders background image
   StyleSheet,         // CSS-like styles
   Text,               // Renders text
@@ -7,11 +8,10 @@ import {
   TouchableOpacity,   // Handles row presses
   View                // Container component
 } from 'react-native';
-import Dimensions from 'Dimensions';
 import { Icon } from 'native-base'
 import {
   StackNavigator,
-  NavigationActions 
+  NavigationActions
 } from 'react-navigation';
 // Detect screen size to calculate row height
 const screen = Dimensions.get('window');

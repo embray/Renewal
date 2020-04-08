@@ -18,7 +18,6 @@ import {
   Linking
 } from 'react-native';
 import { AuthSession, Google } from 'expo';
-import * as Facebook from 'expo-facebook';
 import Constants from 'expo-constants';
 import { Actions } from 'react-native-router-flux';
 import { Container, Header, Title, Content, Footer, FooterTab, Left,Button, Right, Body, Icon, Text, List, ListItem, CardItem, Card, Switch } from 'native-base';
@@ -94,9 +93,12 @@ export default class MonCompte extends Component {
   }
   
   async logInFB() {
+    /* TODO: Deactivated this for now.  Will be using Firebase for Facebook login
     const { type, token } = await Facebook.logInWithReadPermissionsAsync('2073630512892455', {
         permissions: ['public_profile','email','user_birthday', 'user_friends'],
       });
+    */
+    const type = 'success'; const token = 'dummy';
     if (type === 'success') {
       // Get the user's name using Facebook's Graph API
       const response = await fetch(

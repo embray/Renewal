@@ -2,7 +2,6 @@ import React, { Component } from 'react'
 import { StyleSheet, Alert, AsyncStorage, ActivityIndicator, TouchableOpacity, Image, Text } from 'react-native'
 import { View } from 'react-native-animatable'
 import { AuthSession, Google } from 'expo';
-import * as Facebook from 'expo-facebook';
 import Constants from 'expo-constants';
 import {Actions} from 'react-native-router-flux';
 import QueryString from 'query-string';
@@ -43,10 +42,13 @@ export default class Opening extends Component {
     this.setState({isLoading:false})
   }
   async logInFB() {
+    const { type, token } = {type: 'success', token: 'dummy'};
+    /* TODO: Disabled fore now; facebook login will be handled by firebase
     const { type, token } = await Facebook.logInWithReadPermissionsAsync(
       Config.auth.facebook.appId, {
         permissions: ['public_profile', 'email', 'user_birthday', 'user_friends'],
     });
+    */
     if (type === 'success') {
       // Get the user's name using Facebook's Graph API
       // TODO: It looks like this call isn't even used...

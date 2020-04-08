@@ -1,20 +1,22 @@
-import { AppLoading, ScreenOrientation } from 'expo';
+import { AppLoading } from 'expo';
 import Constants from 'expo-constants';
 import * as Location from 'expo-location';
+import * as ScreenOrientation from 'expo-screen-orientation';
+import { OrientationLock } from 'expo-screen-orientation';
 import { Accelerometer, Gyroscope, Magnetometer } from 'expo-sensors';
-import { SQLite } from 'expo-sqlite';
+import * as SQLite from 'expo-sqlite';
 import React, { Component } from 'react';
-import { 
+import {
   AppState,
-  StyleSheet, 
-  Platform, 
-  View, 
-  ActivityIndicator, 
-  FlatList, 
+  StyleSheet,
+  Platform,
+  View,
+  ActivityIndicator,
+  FlatList,
   Image,
-  Alert, 
-  YellowBox, 
-  TouchableOpacity, 
+  Alert,
+  YellowBox,
+  TouchableOpacity,
   Dimensions,
   StatusBar,
   NetInfo,
@@ -175,7 +177,7 @@ export default class Project extends Component {
     /*if(this.state.isConnected === false){
       return <View style={{flex:1}} ><MiniOfflineSign /></View>
     }*/
-    ScreenOrientation.lockAsync(ScreenOrientation.Orientation.ALL);
+    ScreenOrientation.lockAsync(OrientationLock.ALL);
     switch(this.props.navigation.state.params.screen){
       case "Favorite" :
         return (

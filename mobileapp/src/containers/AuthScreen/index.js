@@ -7,7 +7,8 @@ import metrics from '../../config/metrics'
 import Opening from './Opening'
 import SignupForm from './SignupForm'
 import LoginForm from './LoginForm'
-import { ScreenOrientation } from "expo";
+import * as ScreenOrientation from 'expo-screen-orientation';
+import { OrientationLock } from 'expo-screen-orientation';
 const IMAGE_WIDTH = metrics.DEVICE_WIDTH * 0.8
 
 if (Platform.OS === 'android') UIManager.setLayoutAnimationEnabledExperimental(true)
@@ -50,7 +51,7 @@ export default class AuthScreen extends Component {
   }
 
   async componentWillMount() {
-    ScreenOrientation.lockAsync(ScreenOrientation.Orientation.PORTRAIT);
+    ScreenOrientation.lockAsync(OrientationLock.PORTRAIT);
   }
   componentWillUpdate (nextProps) {
     // If the user has logged/signed up succesfully start the hide animation
@@ -59,7 +60,7 @@ export default class AuthScreen extends Component {
     }
   }
   async componentWillUnmount(){
-    ScreenOrientation.lockAsync(ScreenOrientation.Orientation.ALL);
+    ScreenOrientation.lockAsync(OrientationLock.ALL);
   }
 
   _hideAuthScreen = async () => {

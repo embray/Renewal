@@ -11,7 +11,9 @@ import {
   AsyncStorage,
   ActivityIndicator
 } from 'react-native';
-import { AppLoading, ScreenOrientation } from 'expo';
+import { AppLoading } from 'expo';
+import * as ScreenOrientation from 'expo-screen-orientation';
+import { OrientationLock } from 'expo-screen-orientation';
 import Constants from 'expo-constants';
 import { Container, Header, Left, Body, Right, Button, Icon, Title, Footer, FooterTab } from 'native-base';
 import s1 from '../../images/slide1.png'
@@ -107,7 +109,7 @@ export default class SwiperConcept extends Component {
     }
 
     async componentDidMount(){
-        ScreenOrientation.lockAsync(ScreenOrientation.Orientation.PORTRAIT);
+        ScreenOrientation.lockAsync(OrientationLock.PORTRAIT);
         try {
           //AsyncStorage.setItem('userInformationBasic', JSON.stringify(userInformation[0]));
           AsyncStorage.getItem('userInformationBasic', (err, result)=>{
@@ -139,7 +141,7 @@ export default class SwiperConcept extends Component {
         await I18n.initAsync();
         
         setTimeout(() => this.setState({ isLoading:false }))//this.setState({isLoading:false})
-        ScreenOrientation.lockAsync(ScreenOrientation.Orientation.PORTRAIT);
+        ScreenOrientation.lockAsync(OrientationLock.PORTRAIT);
     }
     _initAsyncStorage = async () =>{
       //AsyncStorage.removeItem('infoGeoloc',(error, result));

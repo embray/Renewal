@@ -96,11 +96,11 @@ export default class AuthScreen extends Component {
           <View>
           </View>
         ) : (
-          <Text  
+          <Text
             onPress={()=>this.setState({visibleForm: null})} style={{color: 'black', width :'10%', paddingLeft: '3%', alignItems: 'center', justifyContent: 'center',color:"red"}}  > X </Text>
-        
+
         )}
-            
+
         <Image
           animation={'bounceIn'}
           duration={1200}

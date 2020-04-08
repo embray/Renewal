@@ -65,10 +65,10 @@ export default class Project extends Component {
   constructor(props) {
     super(props);
     this.toggle = this.toggle.bind(this);
-    this.state = { 
+    this.state = {
       appState: AppState.currentState,
-      isLoading: true, 
-      isOpen: false, 
+      isLoading: true,
+      isOpen: false,
       refreshing: true,
       selectedItem: null,
       items: null,
@@ -76,9 +76,9 @@ export default class Project extends Component {
       token : undefined
     }
     YellowBox.ignoreWarnings(['Warning: componentWillMount is deprecated','Warning: componentWillReceiveProps is deprecated','Warning: Can only update a mounted or mounting component']);
-   
+
   }
-  
+
   async componentDidMount(){
     await I18n.initAsync();
     //console.log(this.props)
@@ -144,25 +144,25 @@ export default class Project extends Component {
     /*
     let userData = null;
     console.log(this.props)
-    someData === null ? 
+    someData === null ?
       userData = "[{Event : "+something+", timestamp :"+Date.now()+"}]"
       :
      userData="[{Event : "+something+", timestamp :"+Date.now()+","+someData+"}]";
      const urlConst = 'https://api.renewal-research.com/user/events/'+this.state.token+'/'+userData;
-     
+
      console.log(urlConst)
      fetch('https://api.renewal-research.com/user/events/'+this.state.token+'/'+userData, {
       method: "POST",
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
-      },   
+      },
       body:JSON.stringify({
         something,
         userData
       })
     })*/
-    
+
   }
   onMenuItemSelected = item =>{
     this.setState({
@@ -187,24 +187,24 @@ export default class Project extends Component {
         return (
           <History />
         );
-      case "Account" : 
+      case "Account" :
         return (
           <Account />
         );
-      case "SimpleConcept" : 
+      case "SimpleConcept" :
         return (
           <Concept />
         );
-      case "Settings" : 
+      case "Settings" :
         return (
           <Settings />
         );
-      default : 
+      default :
         return (
           <DiverseRecommendation />
           //this.state.isConnected === false ? <View style={{flex:1}}><View style={{height:30}}><MiniOfflineSign /></View><DiverseRecommendation /></View> : <DiverseRecommendation />
         );
-      
+
     }
     return null;
   }
@@ -228,7 +228,7 @@ export default class Project extends Component {
             <Title style={{color:'white'}}>{I18n.t('side_menu_history')}</Title>
           </Body>
         );
-      case "Account" : 
+      case "Account" :
         return (
           <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
             <Button transparent>
@@ -237,7 +237,7 @@ export default class Project extends Component {
             <Title style={{color:'white'}}>{I18n.t('side_menu_account')}</Title>
           </Body>
         );
-      case "SimpleConcept" : 
+      case "SimpleConcept" :
         return (
           <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
             <Button transparent>
@@ -245,9 +245,9 @@ export default class Project extends Component {
             </Button>
             <Title style={{color:'white'}}>{I18n.t('side_menu_concept')}</Title>
           </Body>
-          
+
         );
-      case "Settings" : 
+      case "Settings" :
         return (
           <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
             <Button transparent>
@@ -256,7 +256,7 @@ export default class Project extends Component {
             <Title style={{color:'white'}}>{I18n.t('side_menu_account')}</Title>
           </Body>
         );
-      default : 
+      default :
         return (
           <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
             <Button transparent>
@@ -265,16 +265,16 @@ export default class Project extends Component {
             <Title style={{color:'white'}}>RENEWAL</Title>
           </Body>
       );
-      
+
     }
     return null;
   }
-  
+
   render() {
     let content = this.contentSwitch();
     let contentHeader = this.contentHeaderSwitch();
-    
-    
+
+
     const menu = <Menu onItemSelected={this.onMenuItemSelected} />;
     //console.log(this.state.selectedItem)
 
@@ -304,15 +304,15 @@ export default class Project extends Component {
           </Right>
         </Header>
         <View style={{flex:1}}>
-        { 
-          this.state.isConnected === false 
-            ? 
-              <View style={{height:30}}><MiniOfflineSign /></View> 
-            : 
+        {
+          this.state.isConnected === false
+            ?
+              <View style={{height:30}}><MiniOfflineSign /></View>
+            :
             <View></View>
         }
         {content}
-        
+
         </View>
       </View>
       </SideMenu>
@@ -327,17 +327,17 @@ const styles = StyleSheet.create({
     flex:1,
     backgroundColor : "white"
     //margin: 5,
-    //marginTop: (Platform.OS === 'ios') ? 20 : 0,  
+    //marginTop: (Platform.OS === 'ios') ? 20 : 0,
   },
   imageView: {
     height: screen.height / 5,
 
     margin: 7,
     borderRadius : 7,
-    justifyContent: 'center', 
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  textView: { 
+  textView: {
     textAlignVertical:'center',
     textAlign: 'center',
     padding:10,
@@ -365,6 +365,6 @@ const styles = StyleSheet.create({
     width : '100%',
     position: 'absolute',
   },
-  offlineText: { 
+  offlineText: {
     color: '#fff', }
 });

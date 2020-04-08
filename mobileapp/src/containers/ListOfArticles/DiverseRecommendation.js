@@ -42,8 +42,8 @@ const demoDataNews = [
     image: 'https://dyw7ncnq1en5l.cloudfront.net/optim/news/73/73481/microsoft-loves-linux-1-750x422.jpg',
     url: 'https://www.lesnumeriques.com/appli-logiciel/microsoft-devoile-nouvel-os-base-sur-linux-n73481.html',
     isSaved:0,
-    isRejected : 0  
- 
+    isRejected : 0
+
   },
   {
     title: 'WhatsApp est désormais (officiellement) interdit aux moins de 16 ans dans l’UE',
@@ -84,7 +84,7 @@ const demoDataNews = [
     url: 'http://www.leparisien.fr/info-paris-ile-de-france-oise/transports/preavis-de-greve-a-la-ratp-trafic-legerement-perturbe-ce-jeudi-18-04-2018-7670484.php',
     isSaved:0,
     isRejected : 0
-  
+
   },
    {
     title: 'Le code d’un téléphone peut être exigé en garde à vue',
@@ -247,7 +247,7 @@ const demoDataNewsLoadMore = [
 export default class Project extends Component {
   constructor(props) {
     super(props);
-    var {height, width} = Dimensions.get('window'); 
+    var {height, width} = Dimensions.get('window');
       this.state = {
         height : screen.height > screen.width ? screen.height : screen.width,
         width : screen.width > screen.height ? screen.width : screen.height,
@@ -258,7 +258,7 @@ export default class Project extends Component {
         nbItemPerPage : 5,
         newscastSavedState : null,
         refreshing: false,
-        token : null, 
+        token : null,
         sizeImageRatio : 210,
         sizeViewRatio : 150,
         ratio : PixelRatio.get(),
@@ -273,7 +273,7 @@ export default class Project extends Component {
   async componentDidMount(){
     await this._initSqlTable();
     await this.webCall();
-    
+
     await this._updateSelectedItems()
     try {
       AsyncStorage.getItem('token', (err, result)=>{
@@ -286,7 +286,7 @@ export default class Project extends Component {
      }
     this.fetchEvent("launch",null)
     Dimensions.addEventListener('change', () => {
-      //var {height, width} = Dimensions.get('window'); 
+      //var {height, width} = Dimensions.get('window');
       var deviceHeight = Dimensions.get('window').height;
       var deviceWidth = Dimensions.get('window').width;
       this.setState({
@@ -302,11 +302,11 @@ export default class Project extends Component {
     //this.getMoviesFromApi();
     //this.getNewsFromApi();
    // await this._generateDisplayItems()
-  
+
   }
-  
+
   fetchEvent =  async (something, someData)=>{
-    return someData === null ? 
+    return someData === null ?
       console.log("[{Event : "+something+", timestamp :"+Date.now()+"}]")
       :
       console.log("[{Event : "+something+", timestamp :"+Date.now()+","+someData+"}]")
@@ -342,7 +342,7 @@ export default class Project extends Component {
           if(this.state.newscastSavedState[i].url === this.state.displayDataSource[j].url ){
             //console.log("it's match!")
             display[j].isSaved = 1
-    
+
           }
         }
       }
@@ -361,7 +361,7 @@ export default class Project extends Component {
   }
   _onPressOnItem (item) {
     console.log(item)
-    
+
     let pack = {
       title: item.title,
       url:item.url,
@@ -431,7 +431,7 @@ export default class Project extends Component {
       this.setState({
         page : this.state.page+1,
         displayDataSource : pack
-      }) 
+      })
     }
     this._updateSelectedItems()
   }*/
@@ -470,11 +470,11 @@ export default class Project extends Component {
       displayDataSource : display
     })
 
-    display[index].isSaved ? 
+    display[index].isSaved ?
       await this.executeSql('insert into newscastSaved (done, title, image, url ) values (0, ?, ?, ?)', [display[index].title, display[index].image, display[index].url])
       :
       await this.executeSql('delete from newscastSaved  where title = ?', [display[index].title])
-    display[index].isSaved ? 
+    display[index].isSaved ?
       this.fetchEvent('savedNews'," title : "+display[index].title+", url : "+display[index].url)
       :
       this.fetchEvent('unsavedNews'," title : "+display[index].title+", url : "+display[index].url)
@@ -486,7 +486,7 @@ export default class Project extends Component {
     this.setState({
       displayDataSource : display
     })
-    display[index].isRejected ? 
+    display[index].isRejected ?
       this.fetchEvent('rejectNews'," title : "+display[index].title+", url : "+display[index].url)
       :
       this.fetchEvent('unrejectNews'," title : "+display[index].title+", url : "+display[index].url)
@@ -519,12 +519,12 @@ export default class Project extends Component {
         console.error(error);
         }
     }
-  
-  renderItem=({item, index, nativeEvent}) => (        
+
+  renderItem=({item, index, nativeEvent}) => (
     <View  onPressItem={this._onPressItem}  >
       <View style={{flex:1, backgroundColor: item.isRejected ? "#484848" : "#fff"}}>
         <TouchableOpacity onPress={item.isRejected? console.log("item isRejected") : this._onPressOnItem.bind(this, item)} >
-          <Image source = {{ uri: item.image }} 
+          <Image source = {{ uri: item.image }}
             style={{
               //height: this.state.height / 5,
               height : PixelRatio.roundToNearestPixel(70),//94.5,//135,
@@ -532,13 +532,13 @@ export default class Project extends Component {
               opacity: item.isRejected ? 0.3:1,
               margin: 1,
               borderRadius : 7,
-              justifyContent: 'center', 
+              justifyContent: 'center',
               alignItems: 'center',
-              
-            }}//style={styles.imageView} 
+
+            }}//style={styles.imageView}
             onPress={this._onPressOnItem.bind(this, item)
             //onPress={this._onScrollItem(nativeEvent)
-            
+
             }
              />
         </TouchableOpacity>
@@ -552,13 +552,13 @@ export default class Project extends Component {
           <Icon name={item.isRejected ? "ios-checkmark" :"ios-close"}  style={{color: 'black', width :'10%', paddingLeft: '3%', alignItems: 'center', justifyContent: 'center',color: item.isRejected ? "green" :"red"}}   onPress={()=>this._toggleReject( { item, index } )} />
         </View>
       </View>
-    </View>   
+    </View>
   )
-  renderItemLandscape=({item, index, nativeEvent}) => (        
+  renderItemLandscape=({item, index, nativeEvent}) => (
     <View  onPressItem={this._onPressItem}  >
       <View style={{flex:1, flexDirection: 'row', backgroundColor: item.isRejected ? "#484848" : "#fff"}}>
         <TouchableOpacity onPress={item.isRejected? console.log("item isRejected") : this._onPressOnItem.bind(this, item)} >
-          <Image source = {{ uri: item.image }} 
+          <Image source = {{ uri: item.image }}
             style={{
               //height: this.state.height / 8,
               height: 90,
@@ -566,13 +566,13 @@ export default class Project extends Component {
               opacity: item.isRejected ? 0.3:1,
               margin: 1,
               borderRadius : 7,
-              justifyContent: 'center', 
+              justifyContent: 'center',
               alignItems: 'center',
-              
-            }}//style={styles.imageView} 
+
+            }}//style={styles.imageView}
             onPress={this._onPressOnItem.bind(this, item)
             //onPress={this._onScrollItem(nativeEvent)
-            
+
             }
              />
         </TouchableOpacity>
@@ -585,7 +585,7 @@ export default class Project extends Component {
           </View>
         </View>
       </View>
-    </View>   
+    </View>
   )
   getItemLayout= (data, index) => (
     {length: (screen.height / 17) + (screen.height / 5), offset: (screen.height / 17) + (screen.height / 5) * index, index}
@@ -610,15 +610,15 @@ export default class Project extends Component {
     currentItemIndex--;
     return {
         index : currentItemIndex,
-        title : this.state.displayDataSource[currentItemIndex].title, 
-        url : this.state.displayDataSource[currentItemIndex].url, 
+        title : this.state.displayDataSource[currentItemIndex].title,
+        url : this.state.displayDataSource[currentItemIndex].url,
         percent : p+"%"
       };
   }
   percentageCalculatorBottom= async(sizeOneNews, position, sizeGlobalDisplay)=>{
     if(position < sizeGlobalDisplay) {
       let currentItemIndex = (position/sizeOneNews+"").split('.')[0];
-    
+
     let positionEndItem = currentItemIndex*sizeOneNews
     //console.log(sizeOneNews)=
     //console.log("##################")
@@ -631,21 +631,21 @@ export default class Project extends Component {
     currentItemIndex--;
     return {
         index : currentItemIndex,
-        title : this.state.displayDataSource[currentItemIndex].title, 
-        url : this.state.displayDataSource[currentItemIndex].url, 
+        title : this.state.displayDataSource[currentItemIndex].title,
+        url : this.state.displayDataSource[currentItemIndex].url,
         percent : p+"%"
       };
     }else{
       return null
     }
-    
+
   }
   _onScrollItem = async (nativeEvent) => {
     //console.log("##### detect scroll item ####")
     const sizeGlobalDisplay = nativeEvent.contentSize.height;
     const displayLenght = this.state.displayDataSource.length;
     //let tailleItem =  (screen.height / 17) + (screen.height / 5) + .5 > sizeGlobalDisplay/displayLenght ? (screen.height / 17) + (screen.height / 5) + .5 : sizeGlobalDisplay/displayLenght;
-    let tailleItem = sizeGlobalDisplay/displayLenght; 
+    let tailleItem = sizeGlobalDisplay/displayLenght;
     const tailleEcran = nativeEvent.layoutMeasurement.height;
     //console.log("taille ecran"+ tailleEcran);
     //console.log("Taille item"+tailleItem);
@@ -669,12 +669,12 @@ export default class Project extends Component {
       )
     }
     paquet.push(itemBottom)
-    
+
     console.log(paquet)
     //console.log(tailleEcran/tailleItem)
-    
+
   }
-  
+
   FlatListItemSeparator = () => {
       return (
         <View
@@ -725,10 +725,10 @@ export default class Project extends Component {
       );
     }
 
-    
+
     return (
 
-      
+
       <FlatList
           data={ this.state.displayDataSource }
           debug={this.state.debug}
@@ -744,15 +744,15 @@ export default class Project extends Component {
           onEndReached={({ distanceFromEnd }) => {
             this._ItemLoadMore();
          }}
-         
+
           ref={ (el) => this._flatList = el }
-          
-        
+
+
 
           onLayout={ ({nativeEvent}) => {
             //console.log("onLayout")
             //console.log(nativeEvent)
-            Platform.OS === 'ios' ? 
+            Platform.OS === 'ios' ?
             this._flatList.scrollToOffset({
               offset: 1,
               animated: false
@@ -765,26 +765,26 @@ export default class Project extends Component {
             this._onScrollItem(nativeEvent);
           }}
           />
-        
+
    );
   }
 }
 
 const styles = StyleSheet.create({
- 
+
 MainContainer :{
- 
+
     justifyContent: 'center',
     flex:1,
     marginTop: (Platform.OS === 'ios') ? 20 : 0,
- 
+
 },
 imageView: {
   height: screen.height / 5,
 
   margin: 7,
   borderRadius : 7,
-  justifyContent: 'center', 
+  justifyContent: 'center',
   alignItems: 'center',
 },
 offlineContainer: {
@@ -798,7 +798,7 @@ offlineContainer: {
   top: 30
 },
 offlineText: { color: '#fff' },
-textView: { 
+textView: {
   textAlignVertical:'center',
   textAlign: 'center',
   padding:10,
@@ -808,7 +808,7 @@ textView: {
   padding:0
 
 },
-textViewLandscape: { 
+textViewLandscape: {
     //width: screen.height < screen.width ?  screen.width/1.6 : screen.height/2,
     width: '63%',
     textAlignVertical:'center',
@@ -822,7 +822,7 @@ textViewLandscape: {
     paddingRight : 10,
     //padding : 30,
 
-    color: '#000', 
+    color: '#000',
    // backgroundColor : 'yellow'
 
 },
@@ -835,5 +835,5 @@ iconStyle:{
   paddingTop : 0,
   paddingBottom : 0
 },
- 
+
 });

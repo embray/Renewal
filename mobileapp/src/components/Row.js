@@ -20,7 +20,7 @@ export default class Row extends React.Component {
     static navigationOptions = {
       title: "Row"
     }
-    
+
     // Extract movie and onPress props passed from List component
     render({ movie, onPress } = this.props) {
       // Extract values from movie object
@@ -31,22 +31,22 @@ export default class Row extends React.Component {
           style={styles.row}>
         // Row press handler
         <TouchableOpacity
-          
+
           // Call onPress function passed from List component when pressed
           onPress={onPress}
           //onPress={() => {this.props.rootNavigation.navigation.navigate('Vide');
           //}}
-        
+
           // Dim row a little bit when pressed
           activeOpacity={0.7}
-          
+
           //onPress={() => this.props.navigation.navigate("Vide", {screen: "Vide"})}>
           >
           {/* Background image */}
           <ImageBackground source={{uri: image}}  style={styles.imageStyle} blurRadius={0}>
             {/* Title */}
           </ImageBackground>
-          
+
         </TouchableOpacity>
           <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width:screen.width, height : (screen.height/5)/2.5, backgroundColor:'white' }}>
           <Text  adjustsFontSizeToFitWidth={true} style={styles.text}  >{title.toUpperCase()}</Text>

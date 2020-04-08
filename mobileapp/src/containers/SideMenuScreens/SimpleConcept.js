@@ -65,7 +65,7 @@ let settings = [
   accelerometer : true,
   magnetometer : true,
   networks : true,
-  activity : true, 
+  activity : true,
   access :true,
   target:true,
   notification : true
@@ -116,7 +116,7 @@ export default class SwiperConcept extends Component {
             console.log(result)
 
             if(result === null){
-              //if user not connected, we need to init async storage 
+              //if user not connected, we need to init async storage
               console.log("c'est vide")
               this._initAsyncStorage();
             }else{
@@ -133,13 +133,13 @@ export default class SwiperConcept extends Component {
 
 
           })
-          
-          
+
+
         } catch (error) {
           // Error saving data
         }
         await I18n.initAsync();
-        
+
         setTimeout(() => this.setState({ isLoading:false }))//this.setState({isLoading:false})
         ScreenOrientation.lockAsync(OrientationLock.PORTRAIT);
     }
@@ -156,7 +156,7 @@ export default class SwiperConcept extends Component {
       //console.log(infoGeoloc[0])
       AsyncStorage.setItem('infoGeoloc', JSON.stringify(infoGeoloc[0]));
 
-    } 
+    }
 
 
 
@@ -176,21 +176,21 @@ export default class SwiperConcept extends Component {
     return (
       <Swiper style={styles.wrapper} loop={!this.state.isConnected? true:false} showsButtons={true} autoplay={!this.state.isConnected? true:false} showsPagination={false} >
         <View style={styles.slide1}>
-            
+
                 <TouchableOpacity onPress={() => this._skipConcept()}>
                     <Text style={{color: '#fff'}}> {!this.state.isConnected? I18n.t('concept_skip'): ""} </Text>
                 </TouchableOpacity>
-            
-            <Image style={ this.state.isConnected? {width:SCREEN_WIDTH, height:SCREEN_HEIGHT*3.5/5} : {width:SCREEN_WIDTH}} source={s1}/> 
+
+            <Image style={ this.state.isConnected? {width:SCREEN_WIDTH, height:SCREEN_HEIGHT*3.5/5} : {width:SCREEN_WIDTH}} source={s1}/>
             <Text style={styles.text}>{I18n.t('concept_welcome')}</Text>
             <Text style={{color:'#fff', textAlign: 'center'}}> {I18n.t('concept_welcome_explain')}</Text>
-            
+
         </View>
         <View style={styles.slide2}>
             <TouchableOpacity onPress={() => this._skipConcept()}>
                 <Text style={{color: '#fff'}}> {!this.state.isConnected? I18n.t('concept_skip'): ""} </Text>
             </TouchableOpacity>
-            <Image style={ this.state.isConnected? {width:SCREEN_WIDTH, height:SCREEN_HEIGHT*3.5/5} : {width:SCREEN_WIDTH}} source={s2}/> 
+            <Image style={ this.state.isConnected? {width:SCREEN_WIDTH, height:SCREEN_HEIGHT*3.5/5} : {width:SCREEN_WIDTH}} source={s2}/>
             <Text style={styles.text}>{I18n.t('concept_discover')}</Text>
             <Text style={{color:'#fff', textAlign: 'center'}}> {I18n.t('concept_discover_explain')} </Text>
         </View>
@@ -198,7 +198,7 @@ export default class SwiperConcept extends Component {
             <TouchableOpacity onPress={() => this._skipConcept()}>
                 <Text style={{color: '#fff'}}> {!this.state.isConnected? I18n.t('concept_skip'): ""} </Text>
             </TouchableOpacity>
-            <Image style={ this.state.isConnected? {width:SCREEN_WIDTH, height:SCREEN_HEIGHT*3.5/5} : {width:SCREEN_WIDTH}} source={s3}/> 
+            <Image style={ this.state.isConnected? {width:SCREEN_WIDTH, height:SCREEN_HEIGHT*3.5/5} : {width:SCREEN_WIDTH}} source={s3}/>
             <Text style={styles.text}>{I18n.t('concept_sn')} </Text>
             <TouchableOpacity onPress={() => this._toggleModal()}>
                 <Text style={{color:'#fff', textAlign: 'center'}}> {I18n.t('concept_sn_explain')} </Text>
@@ -212,7 +212,7 @@ export default class SwiperConcept extends Component {
                 <Container >
         <Header style={{backgroundColor:'#212121',}}>
           <Left>
-            
+
           </Left>
           <Body>
             <Title style={{ color: 'white'}}>RENEWAL</Title>
@@ -226,29 +226,29 @@ export default class SwiperConcept extends Component {
         <Text>
                     Comment sont utilisées mes données ?
 
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras auctor dictum auctor. 
-                    Aliquam sagittis orci eu tristique fermentum. Fusce in dictum metus. 
-                    Sed mollis facilisis quam, at dignissim felis maximus a. Morbi quis pellentesque lectus. 
-                    Aliquam laoreet massa at nibh mattis, in fermentum leo viverra. 
-                    Praesent molestie lectus congue tristique dictum. Integer viverra consequat convallis. 
-                    Donec condimentum, nulla in porta consectetur, dui risus molestie arcu, id faucibus diam felis vel lectus. 
-                    Sed venenatis lorem ex, ut sagittis ligula interdum vel. Integer sodales odio ex, eu fermentum quam luctus malesuada. 
-                    Proin eget est quis sem ultrices placerat. Suspendisse potenti. Praesent mollis vitae magna eget luctus. 
-                    Aliquam consectetur sem nec velit tincidunt efficitur. Praesent leo sem, fringilla at nibh vel, lobortis consectetur velit. 
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras auctor dictum auctor.
+                    Aliquam sagittis orci eu tristique fermentum. Fusce in dictum metus.
+                    Sed mollis facilisis quam, at dignissim felis maximus a. Morbi quis pellentesque lectus.
+                    Aliquam laoreet massa at nibh mattis, in fermentum leo viverra.
+                    Praesent molestie lectus congue tristique dictum. Integer viverra consequat convallis.
+                    Donec condimentum, nulla in porta consectetur, dui risus molestie arcu, id faucibus diam felis vel lectus.
+                    Sed venenatis lorem ex, ut sagittis ligula interdum vel. Integer sodales odio ex, eu fermentum quam luctus malesuada.
+                    Proin eget est quis sem ultrices placerat. Suspendisse potenti. Praesent mollis vitae magna eget luctus.
+                    Aliquam consectetur sem nec velit tincidunt efficitur. Praesent leo sem, fringilla at nibh vel, lobortis consectetur velit.
                 </Text>
                 <Footer style={{backgroundColor:'#212121'}}>
           <FooterTab>
           <Button full danger  onPress={() =>this._toggleModal()} ><Text style={{ color: 'white'}}> Close </Text></Button>
           </FooterTab>
           </Footer>
-                
+
       </Container>
-                
+
             </Modal>
         </View>
-        
+
       </Swiper>
-      
+
     );
   }
 }

@@ -1,16 +1,16 @@
 import Expo, { AppLoading } from 'expo';
 import * as SQLite from 'expo-sqlite';
 import React, { Component } from 'react';
-import { 
-  StyleSheet, 
-  Platform, 
-  View, 
-  ActivityIndicator, 
-  FlatList, 
+import {
+  StyleSheet,
+  Platform,
+  View,
+  ActivityIndicator,
+  FlatList,
   Image,
-  Alert, 
-  YellowBox, 
-  TouchableOpacity, 
+  Alert,
+  YellowBox,
+  TouchableOpacity,
   Dimensions,
   StatusBar
 } from 'react-native';
@@ -30,10 +30,10 @@ I18n.translations = {
 export default class Favoris extends Component {
   constructor(props) {
     super(props);
-    this.state = { 
-      isLoading: true, 
-      isOpen: false, 
-      selectedItem: 'favoris', 
+    this.state = {
+      isLoading: true,
+      isOpen: false,
+      selectedItem: 'favoris',
       //items:null,
       newscastSavedState:null,
       refreshing: false
@@ -50,10 +50,10 @@ export default class Favoris extends Component {
       previous : "Favorite"
     }
     Actions.webview(pack)
-  }  
+  }
 
-  
- 
+
+
   FlatListItemSeparator = () => {
     return (
       <View
@@ -73,7 +73,7 @@ export default class Favoris extends Component {
           data={ this.state.newscastSavedState }
           extraData={this.state}
           ItemSeparatorComponent = {this.FlatListItemSeparator}
-          renderItem={({item, index}) => 
+          renderItem={({item, index}) =>
           <View style={{backgroundColor:'white'}}>
             <TouchableOpacity onPress={()=> this._onPressOnItem(item)} >
               <Image source = {{ uri: item.image }} style={styles.imageView}/>
@@ -92,7 +92,7 @@ export default class Favoris extends Component {
             </TouchableOpacity>
                   <Icon name='ios-close' style={styles.iconStyle}  onPress={() => this.remove(item).then(this.update())} />
             </View>
-            
+
         </View>
           }
           keyExtractor={(item, index) => index.toString()}
@@ -112,7 +112,7 @@ export default class Favoris extends Component {
     console.log("je suis dans update")
     await this.executeSql('select * from newscastSaved', []).then(newscastSavedState => this.setState({newscastSavedState})  );
     this.setState({
-      refreshing: false, 
+      refreshing: false,
       isLoading : false,
     })
 
@@ -132,9 +132,9 @@ export default class Favoris extends Component {
         this.update();
       }
     );
-   
+
   };
-  
+
 }
 
 
@@ -144,18 +144,18 @@ const styles = StyleSheet.create({
     flex:1,
     backgroundColor : "white"
     //margin: 5,
-    //marginTop: (Platform.OS === 'ios') ? 20 : 0,  
+    //marginTop: (Platform.OS === 'ios') ? 20 : 0,
   },
   imageView: {
     height: screen.height / 5,
 
     margin: 7,
     borderRadius : 7,
-    justifyContent: 'center', 
+    justifyContent: 'center',
     alignItems: 'center',
-   // tintColor: 'gray', 
+   // tintColor: 'gray',
   },
-  textView: { 
+  textView: {
     textAlignVertical:'center',
     textAlign: 'center',
     padding:10,

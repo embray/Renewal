@@ -1,14 +1,14 @@
 import React, { Component } from 'react';
-import { 
-  StyleSheet, 
-  Platform, 
-  View, 
-  ActivityIndicator, 
-  FlatList, 
+import {
+  StyleSheet,
+  Platform,
+  View,
+  ActivityIndicator,
+  FlatList,
   Image,
-  Alert, 
-  YellowBox, 
-  TouchableOpacity, 
+  Alert,
+  YellowBox,
+  TouchableOpacity,
   TouchableHighlight,
   Dimensions,
   StatusBar,
@@ -58,7 +58,7 @@ I18n.translations = {
 export default class MonCompte extends Component {
   constructor(props) {
     super(props);
-    this.state = { isLoading: true, isOpen: false, selectedItem: 'compte', visible:false, userInfo: null,modalVisible: false, user: null,isVisible: false, 
+    this.state = { isLoading: true, isOpen: false, selectedItem: 'compte', visible:false, userInfo: null,modalVisible: false, user: null,isVisible: false,
     dialogLocationIsVisible: false,
     dialogPhoneIsVisible: false,
     authUrl: null,
@@ -66,7 +66,7 @@ export default class MonCompte extends Component {
     date:"01-01-1949"
     }
     YellowBox.ignoreWarnings(['Warning: componentWillMount is deprecated','Warning: componentWillReceiveProps is deprecated',]);
-    
+
   }
   async componentDidMount(){
     console.log(userInformation)
@@ -85,13 +85,13 @@ export default class MonCompte extends Component {
 
       })
       //AsyncStorage.removeItem('settings',(error, result));
-      
+
     } catch (error) {
       // Error saving data
     }
-    
+
   }
-  
+
   async logInFB() {
     /* TODO: Deactivated this for now.  Will be using Firebase for Facebook login
     const { type, token } = await Facebook.logInWithReadPermissionsAsync('2073630512892455', {
@@ -116,7 +116,7 @@ export default class MonCompte extends Component {
         //this.setState({ userInfo });
         //console.log(userInfo)
         this.updateWithFacebook(userInfo)
-        
+
     }
   }
   updateWithFacebook(userInfo){
@@ -126,21 +126,21 @@ export default class MonCompte extends Component {
     u.firstName = u.firstName === "Empty" ? userInfo.name.split(" ")[0] : u.lastName;
     u.lastName = u.lastName === "Empty" ? userInfo.name.split(" ")[1] : u.lastName;
 
-    
+
     u.email = u.email === "Empty" ? userInfo.email : u.email;
-    
+
     u.image = u.image === "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Empty_set.svg/500px-Empty_set.svg.png" ? userInfo.picture.data.url : u.image;
     u.birth = u.birth === "01-01-1949" ? userInfo.birthday.split("/")[1]+"-"+userInfo.birthday.split("/")[0]+"-"+userInfo.birthday.split("/")[2] : u.birth;
     u.facebook = 1;
     u.mail=1;
-    
+
     this.setState({
       userInformationBasic : u,
     });
     console.log(u)
     try {
       AsyncStorage.setItem('userInformationBasic', JSON.stringify(this.state.userInformationBasic));
-      
+
     } catch (error) {
       // Error saving data
       console.log("error")
@@ -181,7 +181,7 @@ export default class MonCompte extends Component {
     console.log(u)
     try {
       AsyncStorage.setItem('userInformationBasic', JSON.stringify(this.state.userInformationBasic));
-      
+
     } catch (error) {
       // Error saving data
       console.log("error")
@@ -190,7 +190,7 @@ export default class MonCompte extends Component {
   loginG = async () => {
     const result = await this.signInWithGoogleAsync()
   }
- 
+
   handleChangeSex(sx) {
     const u = this.state.userInformationBasic;
     u.sex = sx;
@@ -218,7 +218,7 @@ export default class MonCompte extends Component {
     const u = this.state.userInformationBasic;
     u.birth = date;
     this.update(u);
-   
+
   }
   handleChangePhone(){
     console.log(this.state.dialogText)
@@ -237,7 +237,7 @@ export default class MonCompte extends Component {
     });
     try {
       AsyncStorage.setItem('userInformationBasic', JSON.stringify(u));
-      
+
     } catch (error) {
       // Error saving data
     }
@@ -247,7 +247,7 @@ export default class MonCompte extends Component {
       ' https://api.twitter.com/oauth/access_token' +
       `?client_id=6LDZxejcMqpxKqo7wWZgZQWIo` +
       `&client_secret=Ez5Y9aAAfuauGM7etMmLAq7Du8omuXE3W6MbMa1XHwQ9AK6WEH`;
-  
+
     return fetch(url, {
       method: 'POST',
       headers: {
@@ -256,7 +256,7 @@ export default class MonCompte extends Component {
       },
     }).then(res => res.json());
   }
-  
+
   signInWithTwitterAsync = async () => {
     let redirectUrl = AuthSession.getRedirectUrl();
     console.log(redirectUrl)
@@ -281,7 +281,7 @@ export default class MonCompte extends Component {
   };
 
   loginTwitter= ()=>{
-    
+
   }
   signInWithTwitterAsync2 = async () => {
     let redirectUrl = AuthSession.getRedirectUrl();
@@ -307,7 +307,7 @@ export default class MonCompte extends Component {
     });
     this.setState({ result });
   };  */
-  } 
+  }
 
   ShareMessage=()=>
     {
@@ -316,13 +316,13 @@ export default class MonCompte extends Component {
               title: "React Native",
               message: "Hello world,",
               url: "http://facebook.github.io/react-native/",
-              subject: "Share Link" //  for email 
+              subject: "Share Link" //  for email
               //message:"message to share"
-            
+
             }).then(result => console.log(result)).catch(errorMsg => console.log(errorMsg));
     }
 
- 
+
   _renderUserInfo = () => {
     return (
       <View style={{ alignItems: 'center' }}>
@@ -344,7 +344,7 @@ export default class MonCompte extends Component {
       this.setState({userInformationBasic : json, isLoading: false })
       })
       //AsyncStorage.removeItem('settings',(error, result));
-      
+
     } catch (error) {
       // Error saving data
     }*/
@@ -368,16 +368,16 @@ export default class MonCompte extends Component {
       );
     }
     return (
-      
-      
-      
-      
+
+
+
+
       <View style={{justifyContent: 'center', flex:1, backgroundColor : "#212121",paddingTop: Platform.OS === 'ios' ? 0 : Constants.statusBarHeight}}>
-      
-      
+
+
       <Content  style={{backgroundColor:'#212121'}} >
-      
-      
+
+
         <View style={styles.container}>
         <TouchableOpacity  >
             <Image
@@ -389,14 +389,14 @@ export default class MonCompte extends Component {
               width:150
             }}
             />
-          
+
         </TouchableOpacity>
         <Card style={{flex: 1, width:'100%'}}>
           <CardItem header bordered>
-           
+
             <Text>{this.state.userInformationBasic.firstName}  {this.state.userInformationBasic.lastName.toUpperCase()}</Text>
-         
-              
+
+
           </CardItem>
           <CardItem bordered style={{marginRight:0,paddingRight:0}} >
           <List style={{flex: 1, width:'100%', marginRight:0,paddingRight:0}}>
@@ -443,9 +443,9 @@ export default class MonCompte extends Component {
           cancelBtnText="Cancel"
           showIcon={false}
           customStyles={{
-           
+
             dateIcon: {
-             
+
             },
             dateInput: {
               marginLeft: 115,
@@ -456,10 +456,10 @@ export default class MonCompte extends Component {
             dateText:{
               fontWeight: 'bold',
               padding:0,
-              margin:0, 
+              margin:0,
               color:'grey'
             }
-            
+
             // ... You can check the source to find the other keys.
           }}
           onDateChange={(date) => this.handleChangeDate(date) }
@@ -489,7 +489,7 @@ export default class MonCompte extends Component {
               </Body>
               <TouchableHighlight
                 onPress={() =>this.setState({dialogLocationIsVisible : !this.state.dialogLocationIsVisible}) }>
-                  
+
               <Right>
                 <Text>{this.state.userInformationBasic.location}</Text>
                 <Icon name="arrow-forward" />
@@ -516,13 +516,13 @@ export default class MonCompte extends Component {
               </Body>
               <TouchableHighlight
                 onPress={() =>this.setState({dialogEmailIsVisible : !this.state.dialogEmailIsVisible}) }>
-                  
+
                 <Right>
                 <Text>{this.state.userInformationBasic.email}</Text>
                 <Icon name="arrow-forward" />
               </Right>
               </TouchableHighlight>
-              
+
             </ListItem>
             <Dialog.Container visible={this.state.dialogPhoneIsVisible}>
               <Dialog.Title>Phone</Dialog.Title>
@@ -543,10 +543,10 @@ export default class MonCompte extends Component {
                 <Text>{I18n.t('account_phone')}</Text>
               </Body>
               {/*<TouchableHighlight onPress={() =>this.setState({dialogPhoneIsVisible : !this.state.dialogPhoneIsVisible}) >
-               */} 
+               */}
                <TouchableHighlight
                 onPress={() =>this.setState({dialogPhoneIsVisible : !this.state.dialogPhoneIsVisible}) }>
-                  
+
               <Right>
                 <Text>{this.state.userInformationBasic.phone}</Text>
                 <Icon name="arrow-forward" />
@@ -575,7 +575,7 @@ export default class MonCompte extends Component {
               <TouchableOpacity >
                 <Icon name={this.state.userInformationBasic.mail == 0 ? 'close-circle' : 'checkmark-circle'} style={{color: this.state.userInformationBasic.mail === 0 ? 'red' : 'green'}} />
               </TouchableOpacity>
-                
+
               </Right>
             </ListItem>
             <ListItem icon>
@@ -596,11 +596,11 @@ export default class MonCompte extends Component {
                 onPress={()=>   this.state.userInformationBasic.google === 1 ? console.log() :this.signInWithGoogleAsync()}>
                 <Icon name={this.state.userInformationBasic.google == 0 ? 'close-circle' : 'checkmark-circle'} style={{color: this.state.userInformationBasic.google === 0 ? 'red' : 'green'}} />
                 </TouchableOpacity>
-                
+
               </Right>
             </ListItem>
             <ListItem icon >
-            
+
               <Left>
               <TouchableOpacity
                 onPress={()=> this.state.userInformationBasic.facebook === 1 ? console.log() : this.logInFB()}>
@@ -612,16 +612,16 @@ export default class MonCompte extends Component {
                 onPress={()=> this.state.userInformationBasic.facebook === 1 ? console.log() : this.logInFB()}>
                 <Text>Facebook</Text>
                 </TouchableOpacity>
-                
+
               </Body>
               <Right>
               <TouchableOpacity
                 onPress={()=> this.state.userInformationBasic.facebook === 1 ? console.log() : this.logInFB()}>
                 <Icon name={this.state.userInformationBasic.facebook == 0 ? 'close-circle' : 'checkmark-circle'} style={{color: this.state.userInformationBasic.facebook === 0 ? 'red' : 'green'}}/>
                 </TouchableOpacity>
-                
+
               </Right>
-              
+
             </ListItem>
             <ListItem icon >
               <Left>
@@ -642,7 +642,7 @@ export default class MonCompte extends Component {
                 )} >
                 <Text>Twitter</Text>
                 </TouchableOpacity>
-                
+
               </Body>
               <Right>
                 <TouchableOpacity
@@ -651,14 +651,14 @@ export default class MonCompte extends Component {
                 </TouchableOpacity>
               </Right>
             </ListItem>
-            
+
           </List>
           </CardItem>
           </Card>
-          <Button block danger onPress={()=>this.disconnect()} >  
+          <Button block danger onPress={()=>this.disconnect()} >
             <Text>{I18n.t('account_button_disconnect')} </Text>
           </Button>
-          
+
         </View>
         {!this.state.userInfo ? (
           <View>
@@ -666,13 +666,13 @@ export default class MonCompte extends Component {
         ) : (
           this._renderUserInfo()
         )}
- 
-        
+
+
 
 
 
       </Content>
-        
+
       </View>
    );
   }
@@ -685,17 +685,17 @@ const styles = StyleSheet.create({
     flex:1,
     backgroundColor : "white"
     //margin: 5,
-    //marginTop: (Platform.OS === 'ios') ? 20 : 0,  
+    //marginTop: (Platform.OS === 'ios') ? 20 : 0,
   },
   imageView: {
     height: screen.height / 5,
 
     margin: 7,
     borderRadius : 7,
-    justifyContent: 'center', 
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  textView: { 
+  textView: {
     textAlignVertical:'center',
     textAlign: 'center',
     padding:10,
@@ -743,8 +743,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold"
   },
   listItemStyle :{
-    flex: 1, 
-    width:'100%',  
+    flex: 1,
+    width:'100%',
     marginLeft:0, paddingLeft:0, marginRight:0, paddingRight:0
   }
 });

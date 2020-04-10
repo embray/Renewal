@@ -1,21 +1,19 @@
 import React, { Component } from 'react';
-import { 
-  StyleSheet, 
-  Platform, 
-  View, 
-  ActivityIndicator, 
-  FlatList, 
-  Text, 
+import {
+  StyleSheet,
+  Platform,
+  View,
+  ActivityIndicator,
+  FlatList,
+  Text,
   Image,
-  Alert, 
-  YellowBox, 
-  TouchableOpacity, 
+  Alert,
+  TouchableOpacity,
   Dimensions
 } from 'react-native';
 import {Actions} from 'react-native-router-flux';
 import { Icon } from 'native-base';
 import { Button, Header } from 'react-native-elements';
-import SideMenu from 'react-native-side-menu';
 import Menu from '../SideMenu/Menu';
 const screen = Dimensions.get('window');
 const demoDataNews = [
@@ -41,8 +39,8 @@ const demoDataNews = [
     image: 'https://dyw7ncnq1en5l.cloudfront.net/optim/news/73/73481/microsoft-loves-linux-1-750x422.jpg',
     large: 'https://dyw7ncnq1en5l.cloudfront.net/optim/news/73/73481/microsoft-loves-linux-1-750x422.jpg',
     plot: "À Redmond, on a dû beaucoup en rire avant de monter sur scène pour annoncer un système d'exploitation maison basé sur Linux. Le moment quasi historique a eu lieu lors du grand colloque RSA (16-20 avril, San Francisco), spécialement dédié à la sécurité de l'information. Les équipes de Microsoft en ont profité pour présenter une solution complète pour objets connectés et c'est justement là qu'intervient la mise en place d'un OS surprise. Azure Sphere OS, c'est son nom, pourra ainsi équiper tout ce que l'on peut imaginer en solutions connectées pour les entreprises soucieuses de leur sécurité.Le système fait ainsi partie de l'ensemble Azure Sphere, sorte de cercle vertueux réunissant microcontrôleur et système d'exploitation sous l'égide d'une sécurité \"cloud\" chère à Microsoft. C'est donc sur la partie système qu'intervient ce Linux aménagé. Pour le géant américain, il s'agit d'une première en 43 ans, ajoutant faire face à une étape importante pour l'entreprise. Néanmoins, Microsoft s'est déjà rapproché du système créé par Linus Torvalds en accueillant Ubuntu sur le Windows Store ou avec l'intégration de l'interpréteur Bash au sein de Windows 10. ",
-    url: 'https://www.lesnumeriques.com/appli-logiciel/microsoft-devoile-nouvel-os-base-sur-linux-n73481.html'   
- 
+    url: 'https://www.lesnumeriques.com/appli-logiciel/microsoft-devoile-nouvel-os-base-sur-linux-n73481.html'
+
   },
   {
     title: 'WhatsApp est désormais (officiellement) interdit aux moins de 16 ans dans l’UE',
@@ -82,8 +80,8 @@ const demoDataNews = [
     image: 'http://s1.lprs1.fr/images/2018/04/18/7670484_e1b8f7dc-42e1-11e8-9275-09e60a2c58a8-1_1000x625.jpg',
     large: 'http://s1.lprs1.fr/images/2018/04/18/7670484_e1b8f7dc-42e1-11e8-9275-09e60a2c58a8-1_1000x625.jpg',
     plot:"Ce n’est pas un appel à la grève, « mais plutôt une possibilité offerte aux salariés qui le souhaitent d’aller manifester », explique-t-on à l’Unsa RATP.Les trois organisations syndicales de la RATP (CGT, Sud et Unsa) ont déposé un préavis de grève pour cette nouvelle journée de mobilisation de jeudi. Etudiants, personnels hospitaliers ou encore cheminots ont prévu de manifester pour « stopper la régression sociale ».En conséquence, le trafic sera légèrement perturbé sur les RER et bus, et normal sur le reste du réseau RATP.",
-    url: 'http://www.leparisien.fr/info-paris-ile-de-france-oise/transports/preavis-de-greve-a-la-ratp-trafic-legerement-perturbe-ce-jeudi-18-04-2018-7670484.php'  
-  
+    url: 'http://www.leparisien.fr/info-paris-ile-de-france-oise/transports/preavis-de-greve-a-la-ratp-trafic-legerement-perturbe-ce-jeudi-18-04-2018-7670484.php'
+
   },
    {
     title: 'Le code d’un téléphone peut être exigé en garde à vue',
@@ -107,9 +105,9 @@ export default class Project extends Component {
     super(props);
     this.toggle = this.toggle.bind(this);
     this.state = { isLoading: true, isOpen: false, selectedItem: 'About',}
-    YellowBox.ignoreWarnings(['Warning: componentWillMount is deprecated','Warning: componentWillReceiveProps is deprecated',]);
   }
-  //Renewal 
+
+  //Renewal
   GetItem (item) {
     //Alert.alert(item.title);
     let pack = {
@@ -118,7 +116,7 @@ export default class Project extends Component {
         previous : "webview"
     }
     Actions.webview(pack);
-   
+
   }
   FlatListItemSeparator = () => {
     return (
@@ -132,7 +130,7 @@ export default class Project extends Component {
     );
   }
   webCall=()=>{
-    return 
+    return
       fetch('https://reactnativecode.000webhostapp.com/FlowersList.php')
         .then((response) => response.json())
         .then((responseJson) => {
@@ -186,18 +184,18 @@ export default class Project extends Component {
     }
     const menu = <Menu onItemSelected={this.onMenuItemSelected} />;
     return (
-      <View style={styles.MainContainer}> 
+      <View style={styles.MainContainer}>
         <FlatList
           data={ this.state.dataSource }
           ItemSeparatorComponent = {this.FlatListItemSeparator}
           onScrollBeginDrag={()=>console.log("dsf")}
-          renderItem={({item}) => 
+          renderItem={({item}) =>
             <TouchableOpacity onPress={this.GetItem.bind(this, item)} >
               <View style={{flex:1, flexDirection: 'row' }}>
                 <Image source = {{ uri: item.image }} style={styles.imageView} />
                 <Text  style={styles.textView} >{item.title}</Text>
               </View>
-            </TouchableOpacity>   
+            </TouchableOpacity>
           }
           keyExtractor={(item, index) => index.toString()}
           />
@@ -206,24 +204,24 @@ export default class Project extends Component {
   }
 }
 
- 
+
 const styles = StyleSheet.create({
   MainContainer :{
     justifyContent: 'center',
     flex:1,
     backgroundColor : "white"
     //margin: 5,
-    //marginTop: (Platform.OS === 'ios') ? 20 : 0,  
+    //marginTop: (Platform.OS === 'ios') ? 20 : 0,
   },
   imageView: {
     height: screen.height / 8,
     width : screen.width/4,
     margin: 7,
     borderRadius : 7,
-    justifyContent: 'center', 
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  textView: { 
+  textView: {
     width: screen.width-screen.width/4,
     textAlignVertical:'center',
     textAlign: 'left',
@@ -233,7 +231,7 @@ const styles = StyleSheet.create({
 });
 
 /**
- * 
+ *
  * https://medium.com/@elieslama/responsive-design-in-react-native-876ea9cd72a8
  * https://github.com/SoftZen/react-native-bouncy-drawer
  */

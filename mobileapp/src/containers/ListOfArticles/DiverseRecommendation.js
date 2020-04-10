@@ -11,10 +11,9 @@ import {
   FlatList,
   Image,
   TouchableOpacity,
-  Alert,
-  YellowBox,
+  Alert
 } from 'react-native';
-import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Text, List, ListItem } from 'native-base';
+import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Text, List, ListItem, Icon } from 'native-base';
 import {Actions} from 'react-native-router-flux';
 const screen = Dimensions.get('window');
 const db = SQLite.openDatabase('db.db');
@@ -264,12 +263,8 @@ export default class Project extends Component {
         ratio : PixelRatio.get(),
         orientation : height > width ? 'portrait' : 'landscape'
       }
-      YellowBox.ignoreWarnings([
-        'Warning: componentWillMount is deprecated',
-        'Warning: componentWillReceiveProps is deprecated',
-        'TypeError: undefined is not an object'
-      ]);
   }
+
   async componentDidMount(){
     await this._initSqlTable();
     await this.webCall();
@@ -547,9 +542,9 @@ export default class Project extends Component {
 
                       height : Platform.OS === 'ios' ? PixelRatio.roundToNearestPixel(100/PixelRatio.get()) : PixelRatio.roundToNearestPixel(50)
         }}>
-          <Icon name={item.isSaved ? "ios-download" :"ios-download-outline"} style={styles.iconStyle}    onPress={()=>item.isRejected ? console.log("error") :this._toggleFav( { item, index } )} />
+          <Icon name="md-download" style={styles.iconStyle}    onPress={()=>item.isRejected ? console.log("error") :this._toggleFav( { item, index } )} />
           <Text numberOfLines={2} style={styles.textView} onPress={item.isRejected? console.log("item isRejected") :this._onPressOnItem.bind(this, item)}>{item.title}</Text>
-          <Icon name={item.isRejected ? "ios-checkmark" :"ios-close"}  style={{color: 'black', width :'10%', paddingLeft: '3%', alignItems: 'center', justifyContent: 'center',color: item.isRejected ? "green" :"red"}}   onPress={()=>this._toggleReject( { item, index } )} />
+          <Icon name={item.isRejected ? "md-checkmark" : "md-close"}  style={{color: 'black', width :'10%', paddingLeft: '3%', alignItems: 'center', justifyContent: 'center',color: item.isRejected ? "green" :"red"}}   onPress={()=>this._toggleReject( { item, index } )} />
         </View>
       </View>
     </View>
@@ -580,8 +575,8 @@ export default class Project extends Component {
           }}>
           <Text numberOfLines={3} style={styles.textViewLandscape} onPress={item.isRejected? console.log("item isRejected") :this._onPressOnItem.bind(this, item)}>{item.title}</Text>
           <View style={{alignItems: 'center', justifyContent: 'center', flexDirection : 'column'}} >
-            <Icon name={item.isSaved ? "ios-download" :"ios-download-outline"}     onPress={()=>item.isRejected ? console.log("error") :this._toggleFav( { item, index } )} />
-            <Icon name={item.isRejected ? "ios-checkmark" :"ios-close"}  style={{color: 'black', alignItems: 'center', justifyContent: 'center',color: item.isRejected ? "green" :"red"}}   onPress={()=>this._toggleReject( { item, index } )} />
+            <Icon name="md-download" onPress={()=>item.isRejected ? console.log("error") :this._toggleFav( { item, index } )} />
+            <Icon name={item.isRejected ? "md-checkmark" :"md-close"}  style={{color: 'black', alignItems: 'center', justifyContent: 'center',color: item.isRejected ? "green" :"red"}}   onPress={()=>this._toggleReject( { item, index } )} />
           </View>
         </View>
       </View>
@@ -739,6 +734,7 @@ export default class Project extends Component {
           ListFooterComponent={this.renderFooter}
           ItemSeparatorComponent = {this.FlatListItemSeparator}
           renderItem={({item, index, nativeEvent}) => this.state.orientation === 'portrait' ? this.renderItem({item, index, nativeEvent}) : this.renderItemLandscape({item, index, nativeEvent}) }
+          initialNumToRender={5}
           keyExtractor={(item, index) => index.toString()}
           onEndReachedThreshold={0.5}
           onEndReached={({ distanceFromEnd }) => {

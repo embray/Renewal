@@ -14,11 +14,11 @@ export default class App extends Component {
     location: { coords: {latitude: 0, longitude: 0}},
   };
 
-  componentWillMount() {
+  componentDidMount() {
     Location.watchPositionAsync(GEOLOCATION_OPTIONS, this.locationChanged);
   }
 
-  locationChanged = (location) => { 
+  locationChanged = (location) => {
     region = {
       latitude: location.coords.latitude,
       longitude: location.coords.longitude,
@@ -26,19 +26,19 @@ export default class App extends Component {
       longitudeDelta: 0.05,
     },
     this.setState({location, region})
-    console.log("latitude:"+location.coords.latitude+" longitude:"+location.coords.longitude );  
+    console.log("latitude:"+location.coords.latitude+" longitude:"+location.coords.longitude );
   }
 
   render() {
     return (
-      
+
         <MapView
           style={{ flex: 1 }}
           showsUserLocation={true}
           region={this.state.region}
         />
-        
-       
+
+
     );
   }
 }

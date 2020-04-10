@@ -1,28 +1,27 @@
 import React, { Component } from 'react';
-import { 
-  StyleSheet, 
-  Platform, 
-  View, 
-  ActivityIndicator, 
-  FlatList, 
+import {
+  StyleSheet,
+  Platform,
+  View,
+  ActivityIndicator,
+  FlatList,
   Image,
-  Alert, 
-  YellowBox, 
-  TouchableOpacity, 
+  Alert,
+  TouchableOpacity,
   Dimensions,
   StatusBar,
-  AsyncStorage, 
+  AsyncStorage,
   ListView,
   Linking,
   TouchableHighlight
 } from 'react-native';
 import {Actions} from 'react-native-router-flux';
 import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Text, List, ListItem, Switch, Separator, Card, CardItem} from 'native-base';
-import SideMenu from 'react-native-side-menu';
-import Expo, { AuthSession } from 'expo';
-import * as Font from 'expo-font';
+import { AuthSession } from 'expo';
 import Constants from 'expo-constants';
-import Menu from '../SideMenu/Menu';
+import * as Font from 'expo-font';
+import * as Location from 'expo-location';
+import * as Permissions from 'expo-permissions';
 const screen = Dimensions.get('window');
 
 let settings = [
@@ -33,12 +32,14 @@ let settings = [
   accelerometer : true,
   magnetometer : true,
   networks : true,
-  activity : true, 
+  activity : true,
   access :true,
   target:true,
   notification : true
 
 }];
+
+// TODO: Enabling and disabling of settings appears to be pretty broken.
 
 import I18n from 'ex-react-native-i18n';
 I18n.fallbacks = true
@@ -48,7 +49,6 @@ I18n.translations = {
   'fr': require('../../i18n/fr'),
 };
 async function alertIfRemoteNotificationsDisabledAsync() {
-  const { Permissions } = Expo;
   const { status } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
   if (status !== 'granted') {
     alert('Hey! You might want to enable notifications for my app, they are good.');
@@ -56,11 +56,10 @@ async function alertIfRemoteNotificationsDisabledAsync() {
 }
 
 async function getLocationAsync() {
-  const { Location, Permissions } = Expo;
-  const { status } = await Permissions.askAsync(Permissions.LOCATION);
+  const { status } = await Permissions.getAsync(Permissions.LOCATION);
   if (status === 'granted') {
     //return Location.getCurrentPositionAsync({enableHighAccuracy: true});
-    const location = await Expo.Location.getCurrentPositionAsync({
+    const location = await Location.getCurrentPositionAsync({
       enableHighAccuracy: true,
     });
     return location;
@@ -73,7 +72,6 @@ export default class Param extends Component {
   constructor(props) {
     super(props);
     this.state = { isLoading: true, isOpen: false, selectedItem: 'param', location:false, settings:null}
-    YellowBox.ignoreWarnings(['Warning: componentWillMount is deprecated','Warning: componentWillReceiveProps is deprecated',]);
   }
 
   async componentDidMount(){
@@ -93,8 +91,8 @@ export default class Param extends Component {
         //console.log(this.state.settings.location)
 
       })
-      
-      
+
+
     } catch (error) {
       // Error saving data
     }
@@ -103,22 +101,23 @@ export default class Param extends Component {
     await I18n.initAsync();
     this.setState({isLoading:false})
 
-    
+
 
   }
-  
-  
- 
+
+
+
   changeStateLocation(){
     const s = this.state.settings;
     console.log(s)
     s.location = s.location === 0 ? 1:0
     if(s.location===1){
-      Alert.alert( 
+      Alert.alert(
         I18n.t('settings_popup_location'),
         I18n.t('settings_popup_location_explain'),
         [
           {text: I18n.t('settings_popup_cancel'), onPress: () => this.changeStateLocation(), style: 'cancel'},
+          // TODO: This appears to be broken.
           {text: I18n.t('settings_popup_gosettings'), onPress: () => Linking.openURL('app-settings:')},
         ],
         { cancelable: false })
@@ -127,8 +126,7 @@ export default class Param extends Component {
     this.update(s)
   }
   async getLocationAsync() {
-    const { Location, Permissions } = Expo;
-    const { status } = await Permissions.askAsync(Permissions.LOCATION);
+    const { status } = await Permissions.getAsync(Permissions.LOCATION);
     if (status === 'granted') {
       //return Location.getCurrentPositionAsync({enableHighAccuracy: true});
       console.log(Location.getCurrentPositionAsync({enableHighAccuracy: true}))
@@ -138,17 +136,18 @@ export default class Param extends Component {
       return false;
     }
   }
-  
+
   changeStatePedometer(){
     const s = this.state.settings;
     console.log(s)
     s.pedometer = s.pedometer === 0 ? 1:0;
     if(s.pedometer===1){
-      Alert.alert( 
+      Alert.alert(
         I18n.t('settings_popup_pedometer'),
         I18n.t('settings_popup_pedometer_explain'),
         [
           {text: I18n.t('settings_popup_refuse'), onPress: () => this.changeStatePedometer(), style: 'cancel'},
+          // TODO: This appears to be broken.
           {text: I18n.t('settings_popup_allow'), onPress: () => Linking.openURL('app-settings:')},
         ],
         { cancelable: false })
@@ -203,11 +202,12 @@ export default class Param extends Component {
     console.log(s)
     s.notification = s.notification === 0 ? 1:0;
     if(s.notification===1){
-      Alert.alert( 
+      Alert.alert(
         I18n.t('settings_popup_notification'),
         I18n.t('settings_popup_notification_explain'),
         [
           {text: I18n.t('settings_popup_refuse'), onPress: () => this.changeStateNotification(), style: 'cancel'},
+          // TODO: This appears to be broken.
           {text: I18n.t('settings_popup_gosettings'), onPress: () => Linking.openURL('app-settings:')},
         ],
         { cancelable: false })
@@ -240,14 +240,14 @@ export default class Param extends Component {
       );
     }
     return (
-      
-        <View style={{justifyContent: 'center', flex:1, backgroundColor : "#212121",paddingTop: Platform.OS === 'ios' ? 0 : Expo.Constants.statusBarHeight}}>
-          
+
+        <View style={{justifyContent: 'center', flex:1, backgroundColor : "#212121",paddingTop: Platform.OS === 'ios' ? 0 : Constants.statusBarHeight}}>
+
           <Content>
             <List>
               <ListItem itemDivider style={{backgroundColor:'#eeeeee'}}>
                 <Text style={{fontWeight: 'bold'}}>{I18n.t('settings_title')}</Text>
-              </ListItem> 
+              </ListItem>
               <ListItem itemDivider style={{backgroundColor:'#e0e0e0'}}>
                 <Text style={{color:'#a4a4a4', fontSize:14}}>
                   {I18n.t('settings_title_explain')}
@@ -257,12 +257,12 @@ export default class Param extends Component {
                 <Text style={{fontWeight: 'bold'}}>
                   {I18n.t('settings_section_sensors')}
                 </Text>
-              </ListItem> 
+              </ListItem>
               <ListItem itemDivider style={{backgroundColor:'#e0e0e0'}}>
                 <Text style={{color:'#a4a4a4', fontSize:14}}>
                   {I18n.t('settings_section_sensors_explain')}
                 </Text>
-              </ListItem> 
+              </ListItem>
               <List style={{backgroundColor:'#ffffff'}}>
                 <ListItem icon >
                   <Left>
@@ -271,9 +271,8 @@ export default class Param extends Component {
                   <Body>
                   </Body>
                   <Right>
-                    <Switch value={this.state.settings.location === 0 ? false : true} 
+                    <Switch value={this.state.settings.location === 0 ? false : true}
                       onChange={()=>this.changeStateLocation()}
-                      //onChange={()=>Linking.openURL('app-settings:')}
                     />
                   </Right>
                 </ListItem>
@@ -327,14 +326,14 @@ export default class Param extends Component {
                     <Switch value={this.state.settings.networks === 0 ? false : true}   onChange={()=>this.changeStateNetwork()}/>
                   </Right>
                 </ListItem>
-              </List> 
+              </List>
             </List>
-            
+
             {/*coupure*/}
             <ListItem itemDivider style={{backgroundColor:'#eeeeee'}}>
               <Text  style={{fontWeight: 'bold'}}>{I18n.t('settings_section_recommendations')}</Text>
-            </ListItem> 
-             
+            </ListItem>
+
             <ListItem itemDivider icon style={{backgroundColor:'#ffffff'}}>
               <Left>
                 <Text>{I18n.t('settings_section_recommendations_activity')}</Text>
@@ -350,7 +349,7 @@ export default class Param extends Component {
                 <Text style={{color:'#a4a4a4', fontSize:14}}>
                   {I18n.t('settings_section_recommendations_activity_explain')}
                 </Text>
-              </ListItem> 
+              </ListItem>
               <ListItem icon >
                 <Left>
                   <Text>{I18n.t('settings_section_recommendations_access')}</Text>
@@ -394,7 +393,7 @@ export default class Param extends Component {
             </List>
             <ListItem itemDivider style={{backgroundColor:'#eeeeee'}}>
               <Text style={{fontWeight: 'bold'}}>{I18n.t('settings_section_more_information')}</Text>
-            </ListItem> 
+            </ListItem>
             <List style={{backgroundColor:'#ffffff'}}>
             <ListItem icon >
               <Left>
@@ -430,7 +429,7 @@ export default class Param extends Component {
               <Right>
                 <TouchableOpacity  onPress={() => Linking.openURL("https://www.facebook.com/privacy/explanation")}>
                   <Icon name="arrow-forward" />
-                </TouchableOpacity> 
+                </TouchableOpacity>
               </Right>
             </ListItem>
             <ListItem icon >
@@ -441,7 +440,7 @@ export default class Param extends Component {
               </Left>
               <Body>
               </Body>
-              <Right>  
+              <Right>
               </Right>
             </ListItem>
             <ListItem icon >
@@ -459,10 +458,10 @@ export default class Param extends Component {
               </Right>
             </ListItem>
           </List>
-          <Button block danger> 
+          <Button block danger>
             <Text>{I18n.t('settings_button_request_my_data')}</Text>
           </Button>
-        </Content> 
+        </Content>
       </View>
    );
   }
@@ -475,17 +474,17 @@ const styles = StyleSheet.create({
     flex:1,
     backgroundColor : "white"
     //margin: 5,
-    //marginTop: (Platform.OS === 'ios') ? 20 : 0,  
+    //marginTop: (Platform.OS === 'ios') ? 20 : 0,
   },
   imageView: {
     height: screen.height / 5,
 
     margin: 7,
     borderRadius : 7,
-    justifyContent: 'center', 
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  textView: { 
+  textView: {
     textAlignVertical:'center',
     textAlign: 'center',
     padding:10,

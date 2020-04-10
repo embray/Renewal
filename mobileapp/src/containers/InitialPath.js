@@ -46,6 +46,13 @@ const styles = StyleSheet.create({
     textAlign: 'center'
   }
 })
+
+// TODO: This is an empty container that's the first in the the routing stack
+// and then redirects to other parts of the stack depending on whether or not
+// a user is logged in.  Unfortunately, since this part of the stack it's
+// possible to *back* to it despite it just being an empty view.
+// This can and should probably be done away with or, at the very least, make
+// it impossible to go back to it.
 export default class InitialPath extends Component {
     constructor(props) {
         super(props);
@@ -56,7 +63,7 @@ export default class InitialPath extends Component {
         try {
             AsyncStorage.getItem('userInformationBasic', (err, result)=>{
                 if(result === null){
-                    //if user not connected, we need to init async storage 
+                    //if user not connected, we need to init async storage
                     console.log("User not connected")
                     Actions.conceptSwipe();
                 }else{
@@ -68,7 +75,7 @@ export default class InitialPath extends Component {
                         Actions.conceptSwipe();
                     }else{
                         this.setState({isConnected : true})
-                        Actions.screnCenter();
+                        Actions.screenCenter();
                     }
                 }
             })
@@ -77,8 +84,8 @@ export default class InitialPath extends Component {
         }
         this.setState({isLoading:false})
     }
-        
-     
+
+
     render(){
         if (this.state.isLoading) {
             return (
@@ -89,9 +96,9 @@ export default class InitialPath extends Component {
         }else{
             return (
                 <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-                    
+
                 </View>
             );
-        } 
+        }
     }
 }

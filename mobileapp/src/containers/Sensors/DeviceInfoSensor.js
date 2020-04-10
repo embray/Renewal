@@ -1,5 +1,4 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, NetInfo } from 'react-native';
 import Constants from 'expo-constants';
 const deviceInfoSensor = {
     _deviceName : function(){

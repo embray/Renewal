@@ -7,7 +7,6 @@ import {
   FlatList,
   Image,
   Alert,
-  YellowBox,
   TouchableOpacity,
   TouchableHighlight,
   Dimensions,
@@ -21,8 +20,6 @@ import { AuthSession, Google } from 'expo';
 import Constants from 'expo-constants';
 import { Actions } from 'react-native-router-flux';
 import { Container, Header, Title, Content, Footer, FooterTab, Left,Button, Right, Body, Icon, Text, List, ListItem, CardItem, Card, Switch } from 'native-base';
-import SideMenu from 'react-native-side-menu';
-import Menu from '../SideMenu/Menu';
 import Dialog from "react-native-dialog";
 import DatePicker from 'react-native-datepicker';
 import man from '../../images/man.png'
@@ -65,9 +62,8 @@ export default class MonCompte extends Component {
     dialogText : null,
     date:"01-01-1949"
     }
-    YellowBox.ignoreWarnings(['Warning: componentWillMount is deprecated','Warning: componentWillReceiveProps is deprecated',]);
-
   }
+
   async componentDidMount(){
     console.log(userInformation)
     await I18n.initAsync();

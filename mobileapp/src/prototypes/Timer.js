@@ -23,46 +23,11 @@ export default class App extends React.Component {
       showMsg: false
     };
   }
-  componentDidMount(){
-      this.showConsoleLog();
-  }
 
-  componentWillUnmount() {
-    timer.clearTimeout(this);
-  }
-
-    async GetTime() {
-        var date, TimeType, hour, minutes, seconds, fullTime;
-        date = new Date();
-        //time
-        hour = date.getHours(); 
-        minutes = date.getMinutes();
-        // Checking if the minutes value is less then 10 then add 0 before minutes.
-        if(minutes < 10){
-            minutes = '0' + minutes.toString();
-        }
-        seconds = date.getSeconds();
-        if(seconds < 10){
-            seconds = '0' + seconds.toString();
-        }
-        fullTime = hour.toString() + ':' + minutes.toString() + ':' + seconds.toString();
-        //day
-        var day = date.getDate();
-        var month = date.getMonth() + 1;
-        var year = date.getFullYear();
-        await this.setState({
-            time: fullTime,
-            day : day + '-' + month + '-' + year
-        })
-        await console.log(this.state.day+"----"+this.state.time)
-  }
-  showConsoleLog() {
-      this.GetTime()
-      timer.setTimeout(this, 'consolelog', () => this.showConsoleLog(), 2000);
-  }
   recoltData(){
       console.log(this.state.body)
   }
+
   showMsg() {
       timer.clearTimeout('consolelog');
       timer.timeoutExists('consolelog');
@@ -70,9 +35,9 @@ export default class App extends React.Component {
       this, 'hideMsg', () => this.setState({showMsg: false}), 2000
     ));
   }
- 
 
-  
+
+
   render() {
     return (
         <View style={styles.container}>

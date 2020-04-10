@@ -3,10 +3,10 @@ import {Router, Stack, Scene} from 'react-native-router-flux';
 {/*initial path*/}
 import InitialPath from './containers/InitialPath';
 {/*login*/}
-import Loginapp from './containers/LoginAnimation';
+import LoginApp from './containers/LoginAnimation';
 import HomeSreen from './containers/HomeScreen/HomeScreen';
 {/*Home*/}
-import ScrenCenter from './containers/SideMenu/ScreenCenter';
+import ScreenCenter from './containers/SideMenu/ScreenCenter';
 {/*sidemenu*/}
 import DiverseRecommendation from './containers/ListOfArticles/DiverseRecommendation';
 import Favorite from './containers/SideMenuScreens/Favorite';
@@ -18,7 +18,7 @@ import Settings from './containers/SideMenuScreens/Settings';
 import Webview from './containers/WebView/WebView';
 {/*prototypes*/}
 import ListView from './prototypes/ListView/ListView';
-import Details from './prototypes/ListView/Movie';
+import ArticleView from './prototypes/ListView/ArticleView';
 import Timer from './prototypes/Timer';
 {/*sensors*/}
 import Accelerometer from './prototypes/Sensors/Accelerometer';
@@ -33,44 +33,43 @@ export default class Routes extends Component {
 		return(
 			<Router>
 				<Stack key="root" hideNavBar={true}>
-					{/*initial path*/}
-					<Scene key="initialPath" component={InitialPath} title="RENEWAL" initial={true}  panHandlers={null}/>
-					
-					
+					<Scene key="initialPath" component={InitialPath} title="RENEWAL" initial />
+
+
 					{/*concept swipe*/}
-					<Scene key="conceptSwipe" component={SConcept} title="Le Concept" initial={false}  panHandlers={null}/>
+					<Scene key="conceptSwipe" component={SConcept} title="Le Concept" />
 
 					{/*login*/}
-					<Scene key="loginapp" component={Loginapp} title="Loginapp"  initial ={false} panHandlers={null}/> 
+					<Scene key="loginapp" component={LoginApp} title="LoginApp" />
 
 					{/*home*/}
-					<Scene key="screnCenter" component={ScrenCenter} title="RENEWAL"  initial={false} panHandlers={null} />
+					<Scene key="screenCenter" component={ScreenCenter} title="RENEWAL"   />
 					{/* sidemenu */}
-					<Scene key="diverseRecommendation" component={DiverseRecommendation} title="RENEWAL" initial={false} panHandlers={null}/>
-					<Scene key="favorite" component={Favorite} title="Favorite" initial={false} panHandlers={null}/>
-					<Scene key="history" component={History} title="History" initial={false} panHandlers={null}/>
-					<Scene key="account" component={Account} title="Account" initial={false} panHandlers={null}/>
-					<Scene key="settings" component={Settings} title="Settings" initial={false}  panHandlers={null}/>
-					
-					
+					<Scene key="diverseRecommendation" component={DiverseRecommendation} title="RENEWAL" />
+					<Scene key="favorite" component={Favorite} title="Favorite" />
+					<Scene key="history" component={History} title="History" />
+					<Scene key="account" component={Account} title="Account" />
+					<Scene key="settings" component={Settings} title="Settings"  />
+
+
 					{/*webview*/}
-					<Scene key="webview" component={Webview} initial={false} title="Webview"  />
-					
-					
-					
+					<Scene key="webview" component={Webview} title="Webview"  />
+
+
+
 					{/*prototypes*/}
-					<Scene key="listView" component={ListView} title="ListView" initial={false} />	
-					<Scene key="details" component={Details} title="Details" initial={false} />
-					<Scene key="timer" component={Timer} title="Timer" initial={false} />
-					
+					<Scene key="flatListViewArticle" component={ListView} title="FlatListViewArticle" />
+					<Scene key="articleView" component={ArticleView} title="Details" />
+					<Scene key="timer" component={Timer} title="Timer" />
+
 					{/*sensors*/}
-					<Scene key="accelerometer" component={Accelerometer} title="Accelerometer" initial={false} />	
-					<Scene key="gyroscope" component={Gyroscope} title="Gyroscope" initial={false} />	
-					<Scene key="localization" component={Localization} title="Localization" initial={false} />	
-					<Scene key="location" component={Location} title="Location" initial={false} />		
-					<Scene key="magnetometer" component={Magnetometer} title="Magnetometer" initial={false} />	
-					<Scene key="pedometer" component={Pedometer} title="Pedometer" initial={false} />	
-				
+					<Scene key="accelerometer" component={Accelerometer} title="Accelerometer" />
+					<Scene key="gyroscope" component={Gyroscope} title="Gyroscope" />
+					<Scene key="localization" component={Localization} title="Localization" />
+					<Scene key="location" component={Location} title="Location" />
+					<Scene key="magnetometer" component={Magnetometer} title="Magnetometer" />
+					<Scene key="pedometer" component={Pedometer} title="Pedometer" />
+
 				</Stack>
 			 </Router>
 			)

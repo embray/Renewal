@@ -1,14 +1,27 @@
-import React, { Component} from 'react'
-import { KeyboardAvoidingView, LayoutAnimation, Platform, StyleSheet, UIManager, Text } from 'react-native'
+import React, { Component } from 'react'
+import {
+  Button,
+  KeyboardAvoidingView,
+  LayoutAnimation,
+  Platform,
+  StyleSheet,
+  Text,
+  UIManager
+} from 'react-native'
+import * as ScreenOrientation from 'expo-screen-orientation';
+import { OrientationLock } from 'expo-screen-orientation';
 import { Image, View } from 'react-native-animatable'
+
+import Config from '../../../config';
+
 import imgLogo from '../../images/logo.png'
 import metrics from '../../config/metrics'
 
 import Opening from './Opening'
 import SignupForm from './SignupForm'
 import LoginForm from './LoginForm'
-import * as ScreenOrientation from 'expo-screen-orientation';
-import { OrientationLock } from 'expo-screen-orientation';
+
+
 const IMAGE_WIDTH = metrics.DEVICE_WIDTH * 0.8
 
 if (Platform.OS === 'android') UIManager.setLayoutAnimationEnabledExperimental(true)
@@ -50,15 +63,17 @@ export default class AuthScreen extends Component {
     visibleForm: null // Can be: null | SIGNUP | LOGIN
   }
 
-  async componentWillMount() {
+  async componentDidMount() {
     ScreenOrientation.lockAsync(OrientationLock.PORTRAIT);
   }
-  componentWillUpdate (nextProps) {
+
+  componentDidUpdate(prevProps) {
     // If the user has logged/signed up succesfully start the hide animation
-    if (!this.props.isLoggedIn && nextProps.isLoggedIn) {
+    if (!prevProps.isLoggedIn && this.props.isLoggedIn) {
       this._hideAuthScreen()
     }
   }
+
   async componentWillUnmount(){
     ScreenOrientation.lockAsync(OrientationLock.ALL);
   }
@@ -92,19 +107,10 @@ export default class AuthScreen extends Component {
     console.log(this.state)
     return (
       <View style={styles.container}>
-        {this.state.visibleForm === null ? (
-          <View>
-          </View>
-        ) : (
-          <Text
-            onPress={()=>this.setState({visibleForm: null})} style={{color: 'black', width :'10%', paddingLeft: '3%', alignItems: 'center', justifyContent: 'center',color:"red"}}  > X </Text>
-
-        )}
-
         <Image
           animation={'bounceIn'}
           duration={1200}
-          delay={200}
+          delay={0}
           ref={(ref) => this.logoImgRef = ref}
           style={styles.logoImg}
           source={imgLogo}
@@ -149,6 +155,7 @@ const styles = StyleSheet.create({
     width: metrics.DEVICE_WIDTH,
     height: metrics.DEVICE_HEIGHT,
     paddingTop: 24,
+    paddingBottom: 48,
     backgroundColor: 'white'
   },
   logoImg: {

@@ -29,7 +29,8 @@ export default class Opening extends Component {
       token : null
     }
   }
-  async componentWillMount() {
+
+  async componentDidMount() {
     try {
      AsyncStorage.getItem('userInformationBasic', (err, result)=>{
       var json = JSON.parse(result)
@@ -39,8 +40,25 @@ export default class Opening extends Component {
       // Error saving data
     }
     await I18n.initAsync();
-    this.setState({isLoading:false})
+    this.setState({isLoading: false})
   }
+
+  async _dummySignin() {
+    console.log('DUMMY SIGNIN');
+    const userInfo = {
+      firstName: 'Dummy',
+      lastName: 'User',
+      email: 'dummy@example.com',
+      birth: '01-01-2020',  // TODO: Use a proper date format
+      mail: 1
+    };
+
+    await AsyncStorage.setItem('userInformationBasic', JSON.stringify(userInfo),
+      () => {this.setState({ userInformationBasic: userInfo})});
+
+    Actions.screenCenter()
+  }
+
   async logInFB() {
     const { type, token } = {type: 'success', token: 'dummy'};
     /* TODO: Disabled fore now; facebook login will be handled by firebase
@@ -73,9 +91,10 @@ export default class Opening extends Component {
       this.updateWithFacebook(userInfo)
       await this._fetchAuth(result.user.email, result.user.id, "fb");
 
-      Actions.screnCenter()
+      Actions.screenCenter()
     }
   }
+
   updateWithFacebook(userInfo){
     console.log(userInfo)
     console.log(userInfo.name)
@@ -98,8 +117,9 @@ export default class Opening extends Component {
       // Error saving data
       console.log("error")
     }
-    Actions.screnCenter()
+    Actions.screenCenter()
   }
+
   async  signInWithGoogleAsync() {
     try {
       const result = await Google.logInAsync({
@@ -136,13 +156,13 @@ export default class Opening extends Component {
     try {
       AsyncStorage.setItem('userInformationBasic', JSON.stringify(this.state.userInformationBasic));
       await this._fetchAuth(result.user.email, result.user.id, "google");
-      await Actions.screnCenter()
+      await Actions.screenCenter()
 
     } catch (error) {
       // Error saving data
       console.log("error")
     }
-    Actions.screnCenter()
+    Actions.screenCenter()
 
   }
 
@@ -155,7 +175,7 @@ export default class Opening extends Component {
   */
  _fetchAuth = async (username, password, socialNetwork) => {
 
-  this.setState({ isLoading: true })
+  this.setState({isLoading: true})
 
 
   // TODO: Why twice?
@@ -214,7 +234,7 @@ export default class Opening extends Component {
       .catch((error) => {
         console.error(error);
       });
-    //Actions.screnCenter()
+    //Actions.screenCenter()
   }
   loginG = async () => {
     const result = await this.signInWithGoogleAsync()
@@ -230,8 +250,16 @@ export default class Opening extends Component {
     }
     return (
       <View style={styles.container}>
-
-        <View animation={'zoomIn'} delay={600} duration={400}>
+        { Config.debug && (
+          <View>
+            <TouchableOpacity style={styles.dummySignin} activeOpacity={0.5}
+              onPress={() => {this._dummySignin()}}
+            >
+              <Text style={styles.TextStyle}>DEBUG SIGN IN</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        <View animation={'zoomIn'} delay={0} duration={100}>
         <TouchableOpacity style={styles.EmailStyle} activeOpacity={0.5} onPress={this.props.onSignInPress}>
           <Image
             source={require('../../images/email.png')}
@@ -242,12 +270,12 @@ export default class Opening extends Component {
           </TouchableOpacity>
 
         </View>
-        <View style={styles.separatorContainer} animation={'zoomIn'} delay={700} duration={400}>
+        <View style={styles.separatorContainer} animation={'zoomIn'} delay={100} duration={100}>
           <View style={styles.separatorLine} />
           <Text style={styles.separatorOr}>{I18n.t('opening_or')}</Text>
           <View style={styles.separatorLine} />
         </View>
-        <View animation={'zoomIn'} delay={700} duration={400}>
+        <View animation={'zoomIn'} delay={100} duration={100}>
         <TouchableOpacity style={styles.GooglePlusStyle} activeOpacity={0.5} onPress={()=>this.loginG()}>
           <Image
             source={require('../../images/Google_Plus.png')}
@@ -258,7 +286,7 @@ export default class Opening extends Component {
           </TouchableOpacity>
         </View>
 
-        <View animation={'zoomIn'} delay={700} duration={400}>
+        <View animation={'zoomIn'} delay={200} duration={100}>
         <TouchableOpacity style={styles.FacebookStyle} activeOpacity={0.5} onPress={()=>this.logInFB()}>
 
          <Image
@@ -273,7 +301,7 @@ export default class Opening extends Component {
        </TouchableOpacity>
         </View>
 
-        <View animation={'zoomIn'} delay={700} duration={400}>
+        <View animation={'zoomIn'} delay={300} duration={100}>
         <TouchableOpacity style={styles.TwitterStyle} activeOpacity={0.5} onPress={() => Alert.alert(
                   'lifehack',
                   'Delete Twitter from your phone, because it is the worst',
@@ -367,17 +395,29 @@ const styles = StyleSheet.create({
   margin: 5,
 
 },
- EmailStyle: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  backgroundColor: '#212121',
-  borderWidth: .5,
-  borderColor: '#fff',
-  height: 40,
-  borderRadius: 5 ,
-  margin: 5,
+  EmailStyle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#212121',
+    borderWidth: .5,
+    borderColor: '#fff',
+    height: 40,
+    borderRadius: 5 ,
+    margin: 5
+  },
 
-},
+  dummySignin: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#212121',
+    borderWidth: .5,
+    borderColor: '#fff',
+    height: 40,
+    borderRadius: 5 ,
+    margin: 5,
+    paddingLeft: 40
+  },
+
   ImageIconStyle: {
      padding: 10,
      margin: 5,
@@ -387,11 +427,9 @@ const styles = StyleSheet.create({
 
   },
   TextStyle :{
-
     color: "#fff",
-    marginBottom : 4,
-    marginRight :20,
-
+    marginBottom: 4,
+    marginRight: 20,
   },
 
   SeparatorLine :{

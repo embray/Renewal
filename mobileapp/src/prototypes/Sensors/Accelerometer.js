@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, NetInfo } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Accelerometer } from 'expo-sensors';
 
 export default class AccelerometerSensor extends React.Component {
@@ -24,7 +24,7 @@ export default class AccelerometerSensor extends React.Component {
   }
 
   _slow = () => {
-    Accelerometer.setUpdateInterval(1000); 
+    Accelerometer.setUpdateInterval(1000);
   }
 
   _fast = () => {
@@ -41,7 +41,7 @@ export default class AccelerometerSensor extends React.Component {
     this._subscription && this._subscription.remove();
     this._subscription = null;
   }
-  
+
   render() {
     let { x, y, z } = this.state.accelerometerData;
 

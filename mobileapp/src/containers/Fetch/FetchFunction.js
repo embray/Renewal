@@ -1,25 +1,25 @@
 import React, { Component } from "react";
 import {
-    StyleSheet,
-    ImageBackground,
-    TextInput,
-    TouchableOpacity,
-    TouchableHighlight,
-    Image,
-    Animated,
-    Dimensions,
-    Keyboard,
-    Platform,
-    FlatList,
-    Slider,
-    ScrollView,
-    WebView,
-    View,
-    StatusBar,
-    Share,
-    Linking,
-    NetInfo
+  StyleSheet,
+  ImageBackground,
+  TextInput,
+  TouchableOpacity,
+  TouchableHighlight,
+  Image,
+  Animated,
+  Dimensions,
+  Keyboard,
+  Platform,
+  FlatList,
+  Slider,
+  ScrollView,
+  WebView,
+  View,
+  StatusBar,
+  Share,
+  Linking
 } from "react-native";
+import NetInfo from '@react-native-community/netinfo';
 import {Actions} from 'react-native-router-flux';
 import * as Animatable from 'react-native-animatable';
 import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Text, List, ListItem } from 'native-base';
@@ -34,6 +34,11 @@ const SCREEN_HEIGHT_CUSTOM_REST= SCREEN_HEIGHT - SCREEN_HEIGHT_CUSTOM_HEADER;
 const PropTypes = require('prop-types');
 
 const timer = require('react-native-timer');
+
+// TODO: This entire module appears to be buggy, at best.  And it's in a
+// strange location in the project hierarchy.  Probably just delete it once
+// we find out exactly what it's used for.
+
 const fetchFunction = {
     // TODO: It seems like there's a whole duplicate of the user auth functionality
     //       from the auth module here.  Just get rid of the duplication!
@@ -117,10 +122,10 @@ const fetchFunction = {
     _verify : async function(){
         console.log("let s start verify")
         let response = undefined;
-        NetInfo.getConnectionInfo().then((connectionInfo) => {
+        NetInfo.fetch().then((state) => {
             //res = connectionInfo.type === none ? res : connectionInfo.type
-            console.log(connectionInfo.type)
-            response = connectionInfo.type;
+            console.log(state.type)
+            response = state.type;
             //return connectionInfo.type === none ? false : true
         });
         response = response === "none" ? false : true;

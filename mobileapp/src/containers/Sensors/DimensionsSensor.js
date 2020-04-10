@@ -1,6 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, NetInfo, AppState } from 'react-native';
-import { Accelerometer } from 'expo-sensors';
+import { AppState } from 'react-native';
 
 const dimensionsSensor = {
     _subscribe : function (){

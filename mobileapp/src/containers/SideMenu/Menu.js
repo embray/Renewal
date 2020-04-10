@@ -1,5 +1,4 @@
 import React from 'react';
-import Constants from 'expo';
 import PropTypes from 'prop-types';
 import {
   Dimensions,
@@ -7,11 +6,13 @@ import {
   ScrollView,
   View,
   Image,
-  Platform, 
+  Platform,
   TouchableOpacity
 } from 'react-native';
-import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Text, List, ListItem } from 'native-base';
+import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Text, List, ListItem, Icon } from 'native-base';
 import {Actions} from 'react-native-router-flux';
+import Constants from 'expo-constants';
+
 const window = Dimensions.get('window');
 const uri = 'https://icon-icons.com/icons2/933/PNG/512/settings-cogwheel-button_icon-icons.com_72559.png';
 
@@ -29,9 +30,9 @@ function onPressItem(item){
     //console.log("item du menu pressed is : "+item)
     onItemSelected(item)
 }
-export default function Menu({ onItemSelected }) { 
+export default function Menu({ onItemSelected }) {
   return (
-    <Container style={{backgroundColor:'#212121', paddingTop: Platform.OS === 'ios' ? 0 : Constants.statusBarHeight}}>
+    <Container style={{backgroundColor:'#212121'}}>
         <Header style={styles.header}>
           <Left>
               {/*
@@ -45,30 +46,30 @@ export default function Menu({ onItemSelected }) {
           </Body>
           <Right>
             <Button transparent onPress={() =>  onItemSelected("Settings")}>
-              <Icon name='ios-settings-outline' style={{color:'white'}}/>
+              <Icon name='md-settings' style={{color:'white'}}/>
             </Button>
            </Right>
         </Header>
         <Content  style={{backgroundColor:'#212121'}} >
             <List style={{backgroundColor:'#424242', marginTop:5}}>
                 <ListItem iconLeft onPress={() =>  onItemSelected("DiverseRecommendation")}>
-                    <Icon name="ios-home-outline" style={styles.iconItem} />
+                    <Icon name="md-home" style={styles.iconItem} />
                     <Text style={styles.textItem} >{I18n.t('side_menu_recommendation')}</Text>
                 </ListItem>
                 <ListItem iconLeft onPress={() => onItemSelected("Favorite")}>
-                    <Icon name="ios-star-outline" style={styles.iconItem} />
+                    <Icon name="md-star-outline" style={styles.iconItem} />
                     <Text style={styles.textItem}  >{I18n.t('side_menu_fav')}</Text>
                 </ListItem>
                 <ListItem iconLeft onPress={() => onItemSelected("History")}>
-                    <Icon name="ios-stats-outline" style={styles.iconItem} />
+                    <Icon name="md-stats" style={styles.iconItem} />
                     <Text style={styles.textItem}  >{I18n.t('side_menu_history')}</Text>
                 </ListItem>
                 <ListItem iconLeft onPress={() => onItemSelected("Account")}>
-                    <Icon name="ios-person-outline" style={styles.iconItem} />
+                    <Icon name="md-person" style={styles.iconItem} />
                     <Text style={styles.textItem} > {I18n.t('side_menu_account')} </Text>
                 </ListItem>
             </List>
-           
+
         </Content>
         <Footer style={{ backgroundColor: '#212121'}} >
           <FooterTab>
@@ -86,18 +87,18 @@ Menu.propTypes = {
 };
 const styles = StyleSheet.create({
     iconItem:{
-        color: 'white', 
+        color: 'white',
         marginRight:10
     },
     textItem:{
-        color: 'white', 
+        color: 'white',
     },
     header:{
         backgroundColor: '#212121',
         marginBottom:5
     },
     TouchableOpacityStyle:{
- 
+
         position: 'absolute',
         width: 50,
         height: 50,
@@ -106,9 +107,9 @@ const styles = StyleSheet.create({
         right: 30,
         bottom: 30,
       },
-     
+
       FloatingButtonStyle: {
-     
+
         resizeMode: 'contain',
         width: 50,
         height: 50,

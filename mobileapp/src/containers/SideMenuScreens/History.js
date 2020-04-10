@@ -1,22 +1,19 @@
 import React, { Component } from 'react';
-import { 
-  StyleSheet, 
-  Platform, 
-  View, 
-  ActivityIndicator, 
-  FlatList, 
+import {
+  StyleSheet,
+  Platform,
+  View,
+  ActivityIndicator,
+  FlatList,
   Image,
-  Alert, 
-  YellowBox, 
-  TouchableOpacity, 
+  Alert,
+  TouchableOpacity,
   Dimensions,
   StatusBar,
   ScrollView
 } from 'react-native';
 import {Actions} from 'react-native-router-flux';
-import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Text, List, ListItem, DeckSwiper, Card, CardItem,Thumbnail} from 'native-base';
-import SideMenu from 'react-native-side-menu';
-import Menu from '../SideMenu/Menu';
+import { Container, Header, Title, Content, Footer, FooterTab, Left, Right, Body, Icon, Text, List, ListItem, DeckSwiper, Card, CardItem,Thumbnail} from 'native-base';
 import TreePicker from 'react-native-tree-picker';
 import I18n from 'ex-react-native-i18n';
 I18n.fallbacks = true
@@ -33,15 +30,14 @@ export default class Historique extends Component {
   constructor(props) {
     super(props);
     this.state = { isLoading: true, languages: []}
-    YellowBox.ignoreWarnings(['Warning: componentWillMount is deprecated','Warning: componentWillReceiveProps is deprecated',]);
-  }
- 
-  async componentWillMount() {
-    await I18n.initAsync();
-    setTimeout(() => this.setState({ isLoading:false })) 
   }
 
-  
+  async componentDidMount() {
+    await I18n.initAsync();
+    this.setState({ isLoading:false })
+  }
+
+
   render() {
     if (this.state.isLoading) {
       return (
@@ -51,41 +47,35 @@ export default class Historique extends Component {
       );
     }
     return (
-      
-      
-      
-      
-      <View style={{justifyContent: 'center',alignItems: 'center',  height : Dimensions.get('window').height > Dimensions.get('window').width ? Dimensions.get('window').height-100 : Dimensions.get('window').height, width:'100%'}}>
-        
+      <View style={styles.contents}>
         <Image
           style={{width: 150, height: 150}}
           source={require('../../images/coming-soonn.png')}
         />
-        <Button block rounded danger  onPress={() => console.log("fr")} ><Text>This feature will arrive quickly</Text> </Button> 
       </View>
-               
+
    );
   }
 }
 
- 
+
 const styles = StyleSheet.create({
-  MainContainer :{
+  contents: {
     justifyContent: 'center',
-    flex:1,
-    backgroundColor : "white"
-    //margin: 5,
-    //marginTop: (Platform.OS === 'ios') ? 20 : 0,  
+    alignItems: 'center',
+    // TODO:  Huh???
+    height: screen.height > screen.width ? screen.height-100 : screen.height,
+    width: '100%'
   },
   imageView: {
     height: screen.height / 5,
 
     margin: 7,
     borderRadius : 7,
-    justifyContent: 'center', 
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  textView: { 
+  textView: {
     textAlignVertical:'center',
     textAlign: 'center',
     padding:10,

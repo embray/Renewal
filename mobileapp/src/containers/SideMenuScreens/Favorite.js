@@ -1,4 +1,5 @@
-import Expo, { AppLoading } from 'expo';
+import { AppLoading } from 'expo';
+import Constants from 'expo-constants';
 import * as SQLite from 'expo-sqlite';
 import React, { Component } from 'react';
 import {
@@ -9,7 +10,6 @@ import {
   FlatList,
   Image,
   Alert,
-  YellowBox,
   TouchableOpacity,
   Dimensions,
   StatusBar
@@ -38,8 +38,8 @@ export default class Favoris extends Component {
       newscastSavedState:null,
       refreshing: false
     }
-    YellowBox.ignoreWarnings(['Warning: componentWillMount is deprecated','Warning: componentWillReceiveProps is deprecated',]);
   }
+
   async componentDidMount(){
     this.update();
   }
@@ -67,7 +67,7 @@ export default class Favoris extends Component {
   }
   render() {
     return (
-      <View style={{justifyContent: 'center', flex:1, backgroundColor : "#212121",paddingTop: Platform.OS === 'ios' ? 0 : Expo.Constants.statusBarHeight}}>
+      <View style={{justifyContent: 'center', flex:1, backgroundColor : "#212121",paddingTop: Platform.OS === 'ios' ? 0 : Constants.statusBarHeight}}>
       <Content  style={{backgroundColor:'#212121'}} >
       <FlatList
           data={ this.state.newscastSavedState }

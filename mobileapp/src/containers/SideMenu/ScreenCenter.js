@@ -8,24 +8,38 @@ import * as SQLite from 'expo-sqlite';
 import React, { Component } from 'react';
 import {
   AppState,
-  StyleSheet,
-  Platform,
-  View,
-  ActivityIndicator,
-  FlatList,
-  Image,
-  Alert,
-  YellowBox,
-  TouchableOpacity,
+  AsyncStorage,
   Dimensions,
-  StatusBar,
-  NetInfo,
-  ScrollView ,
-  AsyncStorage
+  Platform,
+  StyleSheet,
+  View,
+  YellowBox
 } from 'react-native';
-import {Actions} from 'react-native-router-flux';
-import { Root, Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Text, List, ListItem } from 'native-base';
+import NetInfo from '@react-native-community/netinfo';
+import { Actions } from 'react-native-router-flux';
+import {
+  Body,
+  Button,
+  Header,
+  Icon,
+  Left,
+  Right,
+  Root,
+  Text,
+  Title
+} from 'native-base';
+
+// TODO: Ignore as of yet unfixed warnings from react-native-side-menu
+// Remove this later when Drawer is fixed.
+YellowBox.ignoreWarnings([
+  'Warning: componentWillMount has been renamed',
+  'Warning: componentWillReceiveProps has been renamed',
+  'Warning: Can only update a mounted or mounting component'
+]);
+// TODO: This package is not well maintained and is pretty out of date
+// and produces warnings.  Replace with something else soon.
 import SideMenu from 'react-native-side-menu';
+
 import Menu from '../SideMenu/Menu';
 const screen = Dimensions.get('window');
 import I18n from 'ex-react-native-i18n';
@@ -49,8 +63,6 @@ import accelerometerSensor  from '../Sensors/AccelerometerSensor';
 import gyroscopeSensor from '../Sensors/GyroscopeSensor';
 import locationSensor from '../Sensors/LocationSensor';
 import deviceInfoSensor from '../Sensors/DeviceInfoSensor';
-//import fetch
-import FetchFunction from '../Fetch/FetchFunction';
 
 
 function MiniOfflineSign() {
@@ -61,7 +73,7 @@ function MiniOfflineSign() {
   );
 }
 
-export default class Project extends Component {
+export default class ScreenCenter extends Component {
   constructor(props) {
     super(props);
     this.toggle = this.toggle.bind(this);
@@ -75,15 +87,17 @@ export default class Project extends Component {
       loading: true,
       token : undefined
     }
-    YellowBox.ignoreWarnings(['Warning: componentWillMount is deprecated','Warning: componentWillReceiveProps is deprecated','Warning: Can only update a mounted or mounting component']);
-
+    this.unsubscribeConnectivityChange = () => {};
   }
 
   async componentDidMount(){
     await I18n.initAsync();
     //console.log(this.props)
     //this.setState({ loading: false });
-    NetInfo.isConnected.addEventListener('connectionChange', this.handleConnectivityChange);
+    this.unsubscribeConnectivityChange = NetInfo.addEventListener((state) => {
+      this.handleConnectivityChange(state.isConnected)
+    });
+
     AppState.addEventListener('change', this._handleAppStateChange);
     //accelerometerSensor._subscribe();
     //gyroscopeSensor._subscribe();
@@ -99,8 +113,9 @@ export default class Project extends Component {
      }
      setTimeout(() => this.setState({ loading:false }))
   }
+
   componentWillUnmount() {
-    NetInfo.isConnected.removeEventListener('connectionChange', this.handleConnectivityChange);
+    this.unsubscribeConnectivityChange();
     AppState.removeEventListener('change', this._handleAppStateChange);
     //accelerometerSensor._unsubscribe();
     //gyroscopeSensor._unsubscribe();
@@ -112,16 +127,9 @@ export default class Project extends Component {
     }
     this.setState({appState: nextAppState});
   }
-  handleConnectivityChange = isConnected => {
-    if (isConnected) {
-      this.setState({ isConnected });
-      NetInfo.getConnectionInfo().then((connectionInfo) => {
-        console.log('Initial, type: ' + connectionInfo.type + ', effectiveType: ' + connectionInfo.effectiveType);
-        this.setState({ networkInfo : 'type: ' + connectionInfo.type + ', effectiveType: ' + connectionInfo.effectiveType });
-        });
-    } else {
-      this.setState({ isConnected });
-    }
+
+  handleConnectivityChange = (isConnected) => {
+    this.setState({ isConnected });
   };
   /*
     Partie side menu
@@ -169,7 +177,11 @@ export default class Project extends Component {
       isOpen: false,
       selectedItem: item,
     });
-    this.fetchEvent("menuItemSelected", "goToScreen : "+item+", from : "+this.props.navigation.state.params.screen)
+    // TODO: This was sending an event to the server every time the user
+    // selects a menu item, making things incredibly slow.  I'm not sure if
+    // it's even worth recording such an event, but if we really wanted to
+    // it should happen in the background and not slow down the UI.
+    //this.fetchEvent("menuItemSelected", "goToScreen : "+item+", from : "+this.props.navigation.state.params.screen)
     this.props.navigation.state.params.screen = item;
   }
 
@@ -214,7 +226,7 @@ export default class Project extends Component {
         return (
           <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
             <Button transparent>
-              <Icon name='ios-star' style={{ color: '#fff'}}   />
+              <Icon name='md-star' style={{ color: '#fff'}}   />
             </Button>
             <Title style={{color:'white'}}>{I18n.t('side_menu_fav')}</Title>
           </Body>
@@ -223,7 +235,7 @@ export default class Project extends Component {
         return (
           <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
             <Button transparent>
-              <Icon name='ios-stats' style={{ color: '#fff'}}   />
+              <Icon name='md-stats' style={{ color: '#fff'}}   />
             </Button>
             <Title style={{color:'white'}}>{I18n.t('side_menu_history')}</Title>
           </Body>
@@ -232,7 +244,7 @@ export default class Project extends Component {
         return (
           <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
             <Button transparent>
-              <Icon name='ios-person' style={{ color: '#fff'}}    />
+              <Icon name='md-person' style={{ color: '#fff'}}    />
             </Button>
             <Title style={{color:'white'}}>{I18n.t('side_menu_account')}</Title>
           </Body>
@@ -241,7 +253,7 @@ export default class Project extends Component {
         return (
           <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
             <Button transparent>
-              <Icon name='ios-cafe' style={{ color: '#fff'}}   />
+              <Icon name='md-cafe' style={{ color: '#fff'}}   />
             </Button>
             <Title style={{color:'white'}}>{I18n.t('side_menu_concept')}</Title>
           </Body>
@@ -251,7 +263,7 @@ export default class Project extends Component {
         return (
           <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
             <Button transparent>
-              <Icon name='ios-settings' style={{ color: '#fff'}}    />
+              <Icon name='md-settings' style={{ color: '#fff'}}    />
             </Button>
             <Title style={{color:'white'}}>{I18n.t('side_menu_account')}</Title>
           </Body>
@@ -260,7 +272,7 @@ export default class Project extends Component {
         return (
           <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
             <Button transparent>
-              <Icon name='ios-home' style={{ color: '#fff'}}    />
+              <Icon name='md-home' style={{ color: '#fff'}}    />
             </Button>
             <Title style={{color:'white'}}>RENEWAL</Title>
           </Body>
@@ -291,9 +303,8 @@ export default class Project extends Component {
         isOpen={this.state.isOpen}
         onChange={isOpen => this.updateMenuState(isOpen)}
       >
-      <View style={{ justifyContent: 'center', flex:1,backgroundColor : "#212121",paddingTop: Platform.OS === 'ios' ? 0 : Constants.statusBarHeight}} >
+      <View style={{ justifyContent: 'center', flex:1,backgroundColor : "#212121"}}>
         <Header style={{backgroundColor: '#212121'}}>
-          <StatusBar barStyle="light-content"/>
           <Left>
             <Button transparent>
               <Icon name='menu' style={{ color: '#fff'}}   onPress={()=>this._sideMenuPress()} />

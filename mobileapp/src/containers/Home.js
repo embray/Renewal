@@ -40,29 +40,29 @@ YellowBox.ignoreWarnings([
 // and produces warnings.  Replace with something else soon.
 import SideMenu from 'react-native-side-menu';
 
-import Menu from '../SideMenu/Menu';
+import Menu from './SideMenu/Menu';
 const screen = Dimensions.get('window');
 import I18n from 'ex-react-native-i18n';
 I18n.fallbacks = true
 const deviceLocale = I18n.locale
 I18n.translations = {
-  'en': require("../../i18n/en"),
-  'fr': require('../../i18n/fr'),
+  'en': require("../i18n/en"),
+  'fr': require('../i18n/fr'),
 };
 
 //Import Screen
-import DiverseRecommendation from '../ListOfArticles/DiverseRecommendation';
-import Favorites from '../SideMenuScreens/Favorite';
-import History from '../SideMenuScreens/History';
-import Account from '../SideMenuScreens/Account';
-import Concept from '../SideMenuScreens/SimpleConcept';
-import Settings from '../SideMenuScreens/Settings';
+import DiverseRecommendation from './ListOfArticles/DiverseRecommendation';
+import Favorites from './SideMenuScreens/Favorite';
+import History from './SideMenuScreens/History';
+import Account from './SideMenuScreens/Account';
+import Concept from './SideMenuScreens/SimpleConcept';
+import Settings from './SideMenuScreens/Settings';
 
 //import sensors
-import accelerometerSensor  from '../Sensors/AccelerometerSensor';
-import gyroscopeSensor from '../Sensors/GyroscopeSensor';
-import locationSensor from '../Sensors/LocationSensor';
-import deviceInfoSensor from '../Sensors/DeviceInfoSensor';
+import accelerometerSensor  from './Sensors/AccelerometerSensor';
+import gyroscopeSensor from './Sensors/GyroscopeSensor';
+import locationSensor from './Sensors/LocationSensor';
+import deviceInfoSensor from './Sensors/DeviceInfoSensor';
 
 
 function MiniOfflineSign() {
@@ -73,7 +73,100 @@ function MiniOfflineSign() {
   );
 }
 
-export default class ScreenCenter extends Component {
+
+export class HomeHeader extends Component {
+  _sideMenuPress() {
+    // TODO: Figure out how to connect header to the side menu drawer once it's
+    // been added.
+  }
+
+  renderHeaderBody() {
+    console.log(`renderHeaderBody(${JSON.stringify(this.props)})`);
+    // TODO: Figure out the correct variable to switch on
+    //switch(this.props.route.params.screen){
+    switch ("") {
+      case "Favorite" :
+        return (
+          <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
+            <Button transparent>
+              <Icon name='md-star' style={{ color: '#fff'}}   />
+            </Button>
+            <Title style={{color:'white'}}>{I18n.t('side_menu_fav')}</Title>
+          </Body>
+        );
+      case "History" :
+        return (
+          <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
+            <Button transparent>
+              <Icon name='md-stats' style={{ color: '#fff'}}   />
+            </Button>
+            <Title style={{color:'white'}}>{I18n.t('side_menu_history')}</Title>
+          </Body>
+        );
+      case "Account" :
+        return (
+          <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
+            <Button transparent>
+              <Icon name='md-person' style={{ color: '#fff'}}    />
+            </Button>
+            <Title style={{color:'white'}}>{I18n.t('side_menu_account')}</Title>
+          </Body>
+        );
+      case "SimpleConcept" :
+        return (
+          <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
+            <Button transparent>
+              <Icon name='md-cafe' style={{ color: '#fff'}}   />
+            </Button>
+            <Title style={{color:'white'}}>{I18n.t('side_menu_concept')}</Title>
+          </Body>
+
+        );
+      case "Settings" :
+        return (
+          <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
+            <Button transparent>
+              <Icon name='md-settings' style={{ color: '#fff'}}    />
+            </Button>
+            <Title style={{color:'white'}}>{I18n.t('side_menu_account')}</Title>
+          </Body>
+        );
+      default :
+        return (
+          <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
+            <Button transparent>
+              <Icon name='md-home' style={{ color: '#fff'}}    />
+            </Button>
+            <Title style={{color:'white'}}>RENEWAL</Title>
+          </Body>
+      );
+
+    }
+    return null;
+  }
+
+  render() {
+    const width = Dimensions.get('window').width;
+
+    return (
+      <Header style={[styles.header, {'width': width}]}>
+        <Left>
+          <Button transparent>
+            <Icon name='menu' style={{ color: '#fff'}}
+              onPress={()=>this._sideMenuPress()}
+            />
+          </Button>
+        </Left>
+        {this.renderHeaderBody()}
+        <Right>
+        </Right>
+      </Header>
+    );
+  }
+}
+
+
+export default class Home extends Component {
   constructor(props) {
     super(props);
     this.toggle = this.toggle.bind(this);
@@ -111,7 +204,7 @@ export default class ScreenCenter extends Component {
        // Error saving data
        console.log("oh mon dieu le token a disparu")
      }
-     setTimeout(() => this.setState({ loading:false }))
+     setTimeout(() => this.setState({ loading: false }))
   }
 
   componentWillUnmount() {
@@ -182,7 +275,7 @@ export default class ScreenCenter extends Component {
     // it's even worth recording such an event, but if we really wanted to
     // it should happen in the background and not slow down the UI.
     //this.fetchEvent("menuItemSelected", "goToScreen : "+item+", from : "+this.props.navigation.state.params.screen)
-    this.props.navigation.state.params.screen = item;
+    this.props.route.params.screen = item;
   }
 
   contentSwitch(){
@@ -190,7 +283,8 @@ export default class ScreenCenter extends Component {
       return <View style={{flex:1}} ><MiniOfflineSign /></View>
     }*/
     ScreenOrientation.lockAsync(OrientationLock.ALL);
-    switch(this.props.navigation.state.params.screen){
+    //switch(this.props.route.params.screen){
+    switch ("") {
       case "Favorite" :
         return (
           <Favorites />
@@ -220,72 +314,9 @@ export default class ScreenCenter extends Component {
     }
     return null;
   }
-  contentHeaderSwitch(){
-    switch(this.props.navigation.state.params.screen){
-      case "Favorite" :
-        return (
-          <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
-            <Button transparent>
-              <Icon name='md-star' style={{ color: '#fff'}}   />
-            </Button>
-            <Title style={{color:'white'}}>{I18n.t('side_menu_fav')}</Title>
-          </Body>
-        );
-      case "History" :
-        return (
-          <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
-            <Button transparent>
-              <Icon name='md-stats' style={{ color: '#fff'}}   />
-            </Button>
-            <Title style={{color:'white'}}>{I18n.t('side_menu_history')}</Title>
-          </Body>
-        );
-      case "Account" :
-        return (
-          <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
-            <Button transparent>
-              <Icon name='md-person' style={{ color: '#fff'}}    />
-            </Button>
-            <Title style={{color:'white'}}>{I18n.t('side_menu_account')}</Title>
-          </Body>
-        );
-      case "SimpleConcept" :
-        return (
-          <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
-            <Button transparent>
-              <Icon name='md-cafe' style={{ color: '#fff'}}   />
-            </Button>
-            <Title style={{color:'white'}}>{I18n.t('side_menu_concept')}</Title>
-          </Body>
-
-        );
-      case "Settings" :
-        return (
-          <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
-            <Button transparent>
-              <Icon name='md-settings' style={{ color: '#fff'}}    />
-            </Button>
-            <Title style={{color:'white'}}>{I18n.t('side_menu_account')}</Title>
-          </Body>
-        );
-      default :
-        return (
-          <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
-            <Button transparent>
-              <Icon name='md-home' style={{ color: '#fff'}}    />
-            </Button>
-            <Title style={{color:'white'}}>RENEWAL</Title>
-          </Body>
-      );
-
-    }
-    return null;
-  }
 
   render() {
     let content = this.contentSwitch();
-    let contentHeader = this.contentHeaderSwitch();
-
 
     const menu = <Menu onItemSelected={this.onMenuItemSelected} />;
     //console.log(this.state.selectedItem)
@@ -304,16 +335,6 @@ export default class ScreenCenter extends Component {
         onChange={isOpen => this.updateMenuState(isOpen)}
       >
       <View style={{ justifyContent: 'center', flex:1,backgroundColor : "#212121"}}>
-        <Header style={{backgroundColor: '#212121'}}>
-          <Left>
-            <Button transparent>
-              <Icon name='menu' style={{ color: '#fff'}}   onPress={()=>this._sideMenuPress()} />
-            </Button>
-          </Left>
-          {contentHeader}
-          <Right>
-          </Right>
-        </Header>
         <View style={{flex:1}}>
         {
           this.state.isConnected === false
@@ -333,7 +354,10 @@ export default class ScreenCenter extends Component {
 
 
 const styles = StyleSheet.create({
-  MainContainer :{
+  header: {
+    backgroundColor: '#212121'
+  },
+  MainContainer: {
     justifyContent: 'center',
     flex:1,
     backgroundColor : "white"

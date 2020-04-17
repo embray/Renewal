@@ -6,7 +6,7 @@ import InitialPath from './containers/InitialPath';
 import LoginApp from './containers/LoginAnimation';
 import HomeSreen from './containers/HomeScreen/HomeScreen';
 {/*Home*/}
-import ScreenCenter from './containers/SideMenu/ScreenCenter';
+import Home from './containers/Home';
 {/*sidemenu*/}
 import DiverseRecommendation from './containers/ListOfArticles/DiverseRecommendation';
 import Favorite from './containers/SideMenuScreens/Favorite';
@@ -43,7 +43,7 @@ export default class Routes extends Component {
 					<Scene key="loginapp" component={LoginApp} title="LoginApp" />
 
 					{/*home*/}
-					<Scene key="screenCenter" component={ScreenCenter} title="RENEWAL"   />
+					<Scene key="screenCenter" component={Home} title="RENEWAL"   />
 					{/* sidemenu */}
 					<Scene key="diverseRecommendation" component={DiverseRecommendation} title="RENEWAL" />
 					<Scene key="favorite" component={Favorite} title="Favorite" />

@@ -356,14 +356,8 @@ export default class Project extends Component {
   }
   _onPressOnItem (item) {
     console.log(item)
-
-    let pack = {
-      title: item.title,
-      url:item.url,
-      previous : "DiverseRecommendation"
-    }
     this.fetchEvent("pressOnItem", "itemClickedTitle : "+item.title+" itemClickedUrl : "+item.url)
-    Actions.webview(item);
+    this.props.navigation.navigate('Article', item);
   }
   GetItem (flower_name) {
     Alert.alert(flower_name);

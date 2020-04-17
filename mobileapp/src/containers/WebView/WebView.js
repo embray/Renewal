@@ -162,7 +162,7 @@ export default class MessageWebView extends Component {
     asynchronously without slowing down user interactions.
     this.fetchEvent("back", "fromTitle : "+this.props.navigation.state.params.title+" fromUrl : "+this.props.navigation.state.params.url);
     */
-    this.props.navigation.goBack()
+    this.props.navigation.goBack();
   }
 
   /*

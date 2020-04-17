@@ -169,15 +169,9 @@ const SCREEN_OPTIONS = new Map([
 export default class Home extends Component {
   constructor(props) {
     super(props);
-    this.toggle = this.toggle.bind(this);
     this.state = {
       appState: AppState.currentState,
       isLoading: true,
-      isOpen: false,
-      refreshing: true,
-      selectedItem: null,
-      items: null,
-      loading: true,
       token : undefined
     }
     this.unsubscribeConnectivityChange = () => {};
@@ -201,7 +195,7 @@ export default class Home extends Component {
        // Error saving data
        console.log("oh mon dieu le token a disparu")
      }
-     setTimeout(() => this.setState({ loading: false }))
+     setTimeout(() => this.setState({ isLoading: false }))
   }
 
   componentWillUnmount() {
@@ -219,24 +213,10 @@ export default class Home extends Component {
   handleConnectivityChange = (isConnected) => {
     this.setState({ isConnected });
   };
-  /*
-    Partie side menu
-  */
-  _sideMenuPress(){
-    this.toggle();
-  }
-  toggle() {
-    this.setState({
-      isOpen: !this.state.isOpen,
-    });
-  }
 
-  updateMenuState(isOpen) {
-    this.setState({ isOpen });
-  }
   fetchEvent =  async (something, someData)=>{
     console.log(this.state.token)
-    await FetchFunction._event(this.state.token,something, someData)
+    await FetchFunction._event(this.state.token, something, someData)
     /*
     let userData = null;
     console.log(this.props)
@@ -260,63 +240,9 @@ export default class Home extends Component {
     })*/
 
   }
-  onMenuItemSelected = item =>{
-    this.setState({
-      isOpen: false,
-      selectedItem: item,
-    });
-    // TODO: This was sending an event to the server every time the user
-    // selects a menu item, making things incredibly slow.  I'm not sure if
-    // it's even worth recording such an event, but if we really wanted to
-    // it should happen in the background and not slow down the UI.
-    //this.fetchEvent("menuItemSelected", "goToScreen : "+item+", from : "+this.props.navigation.state.params.screen)
-    this.props.route.params.screen = item;
-  }
-
-  contentSwitch(){
-    /*if(this.state.isConnected === false){
-      return <View style={{flex:1}} ><MiniOfflineSign /></View>
-    }*/
-    ScreenOrientation.lockAsync(OrientationLock.ALL);
-    //switch(this.props.route.params.screen){
-    switch ("") {
-      case "Favorite" :
-        return (
-          <Favorites />
-        );
-      case "History" :
-        return (
-          <History />
-        );
-      case "Account" :
-        return (
-          <Account />
-        );
-      case "SimpleConcept" :
-        return (
-          <Concept />
-        );
-      case "Settings" :
-        return (
-          <Settings />
-        );
-      default :
-        return (
-          <ArticlesList {...this.props} />
-          //this.state.isConnected === false ? <View style={{flex:1}}><View style={{height:30}}><MiniOfflineSign /></View><DiverseRecommendation /></View> : <DiverseRecommendation />
-        );
-
-    }
-    return null;
-  }
 
   render() {
-    let content = this.contentSwitch();
-
-    const menu = <Menu onItemSelected={this.onMenuItemSelected} />;
-    //console.log(this.state.selectedItem)
-
-    if (this.state.loading) {
+    if (this.state.isLoading) {
       return (
         <Root>
           <AppLoading />

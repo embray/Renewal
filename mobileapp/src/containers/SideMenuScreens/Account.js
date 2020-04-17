@@ -52,40 +52,48 @@ I18n.translations = {
 };
 
 
-export default class MonCompte extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { isLoading: true, isOpen: false, selectedItem: 'compte', visible:false, userInfo: null,modalVisible: false, user: null,isVisible: false,
+// TODO: This should be defined elsewhere, like in a central account
+// management module
+const DEFAULT_USER_INFO = {
+  firstName: '',
+  lastName: '',
+  picture: {
+    data: {}
+  }
+}
+
+
+export default class Account extends Component {
+  // TODO: Clean this all up
+  state = {
+    isLoading: true,
+    isOpen: false,
+    selectedItem: 'compte',
+    visible:false,
+    userInfo: DEFAULT_USER_INFO,
+    modalVisible: false,
+    user: null,
+    isVisible: false,
     dialogLocationIsVisible: false,
     dialogPhoneIsVisible: false,
     authUrl: null,
     dialogText : null,
     date:"01-01-1949"
-    }
   }
 
   async componentDidMount(){
-    console.log(userInformation)
     await I18n.initAsync();
     try {
-
-      //AsyncStorage.setItem('userInformationBasic', JSON.stringify(userInformation[0]));
       AsyncStorage.getItem('userInformationBasic', (err, result)=>{
-        console.log(result)
-        var json = JSON.parse(result)
-        console.log(json)
-        //console.log(json[0].location)
-        this.setState({userInformationBasic : json, isLoading: false })
-        console.log(this.state.userInformationBasic.facebook)
-
-
+        let userInfo = JSON.parse(result);
+        userInfo = userInfo === null ? DEFAULT_USER_INFO : userInfo;
+        this.setState({ userInfo })
       })
       //AsyncStorage.removeItem('settings',(error, result));
-
     } catch (error) {
-      // Error saving data
+      console.log(`Account: error retrieving user info: ${error}`);
     }
-
+    this.setState({ isLoading: false });
   }
 
   async logInFB() {
@@ -118,7 +126,7 @@ export default class MonCompte extends Component {
   updateWithFacebook(userInfo){
     console.log(userInfo)
     console.log(userInfo.name)
-    const u = this.state.userInformationBasic;
+    const u = this.state.userInfo;
     u.firstName = u.firstName === "Empty" ? userInfo.name.split(" ")[0] : u.lastName;
     u.lastName = u.lastName === "Empty" ? userInfo.name.split(" ")[1] : u.lastName;
 
@@ -131,11 +139,11 @@ export default class MonCompte extends Component {
     u.mail=1;
 
     this.setState({
-      userInformationBasic : u,
+      userInfo : u,
     });
     console.log(u)
     try {
-      AsyncStorage.setItem('userInformationBasic', JSON.stringify(this.state.userInformationBasic));
+      AsyncStorage.setItem('userInformationBasic', JSON.stringify(this.state.userInfo));
 
     } catch (error) {
       // Error saving data
@@ -164,19 +172,17 @@ export default class MonCompte extends Component {
   }
   updateWithGoogle(result){
     console.log(result)
-    const u = this.state.userInformationBasic;
+    const u = this.state.userInfo;
     u.firstName = u.firstName === "Empty" ? result.user.givenName : u.firstName;
     u.lastName = u.lastName === "Empty" ? result.user.familyName : u.lastName;
     u.email = u.email === "Empty" ? result.user.email : u.email;
     u.image = u.image === "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Empty_set.svg/500px-Empty_set.svg.png" ? result.user.photoUrl : u.image;
     u.google = 1;
     u.mail=1;
-    this.setState({
-      userInformationBasic : u,
-    });
+    this.setState({ userInfo: u });
     console.log(u)
     try {
-      AsyncStorage.setItem('userInformationBasic', JSON.stringify(this.state.userInformationBasic));
+      AsyncStorage.setItem('userInformationBasic', JSON.stringify(this.state.userInfo));
 
     } catch (error) {
       // Error saving data
@@ -188,19 +194,19 @@ export default class MonCompte extends Component {
   }
 
   handleChangeSex(sx) {
-    const u = this.state.userInformationBasic;
+    const u = this.state.userInfo;
     u.sex = sx;
     this.update(u)
   };
   handleChangeLocation(){
     console.log(this.state.dialogText)
-    const u = this.state.userInformationBasic;
+    const u = this.state.userInfo;
     u.location = this.state.dialogText;
     this.update(u)
   }
   handleChangeEmail(){
     console.log(this.state.dialogText)
-    const u = this.state.userInformationBasic;
+    const u = this.state.userInfo;
     let reg = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/ ;
     if(reg.test(this.state.dialogText) === false){
       console.log("Email is Not Correct");
@@ -211,14 +217,14 @@ export default class MonCompte extends Component {
   }
   handleChangeDate(date){
     console.log(date)
-    const u = this.state.userInformationBasic;
+    const u = this.state.userInfo;
     u.birth = date;
     this.update(u);
 
   }
   handleChangePhone(){
     console.log(this.state.dialogText)
-    const u = this.state.userInformationBasic;
+    const u = this.state.userInfo;
     u.phone = this.state.dialogText;
    this.update(u);
   }
@@ -226,10 +232,10 @@ export default class MonCompte extends Component {
     console.log('update')
     console.log(u)
     this.setState({
-      userInformationBasic : u,
-      dialogPhoneIsVisible:false,
-      dialogEmailIsVisible:false,
-      dialogLocationIsVisible:false
+      userInfo: u,
+      dialogPhoneIsVisible: false,
+      dialogEmailIsVisible: false,
+      dialogLocationIsVisible: false
     });
     try {
       AsyncStorage.setItem('userInformationBasic', JSON.stringify(u));
@@ -337,7 +343,7 @@ export default class MonCompte extends Component {
       AsyncStorage.setItem('userInformationBasic', JSON.stringify(userInformation[0]));
       AsyncStorage.getItem('userInformationBasic', (err, result)=>{
       var json = JSON.parse(result)
-      this.setState({userInformationBasic : json, isLoading: false })
+      this.setState({userInfo : json, isLoading: false })
       })
       //AsyncStorage.removeItem('settings',(error, result));
 
@@ -377,7 +383,7 @@ export default class MonCompte extends Component {
         <View style={styles.container}>
         <TouchableOpacity  >
             <Image
-            source={{uri : this.state.userInformationBasic.image}}
+            source={{uri : this.state.userInfo.image}}
             style={{
               justifyContent: 'center',
               alignItems: 'center',
@@ -390,7 +396,7 @@ export default class MonCompte extends Component {
         <Card style={{flex: 1, width:'100%'}}>
           <CardItem header bordered>
 
-            <Text>{this.state.userInformationBasic.firstName}  {this.state.userInformationBasic.lastName.toUpperCase()}</Text>
+            <Text>{this.state.userInfo.firstName}  {this.state.userInfo.lastName.toUpperCase()}</Text>
 
 
           </CardItem>
@@ -414,7 +420,7 @@ export default class MonCompte extends Component {
                   { cancelable: false }
                 )} >
               <Right>
-                <Text>{this.state.userInformationBasic.sex}</Text>
+                <Text>{this.state.userInfo.sex}</Text>
                 <Icon name="arrow-forward" />
               </Right>
               </TouchableHighlight>
@@ -429,7 +435,7 @@ export default class MonCompte extends Component {
               <Right>
               <DatePicker
           style={{width: 200}}
-          date={this.state.userInformationBasic.birth}
+          date={this.state.userInfo.birth}
           mode="date"
           placeholder="select date"
           format="DD-MM-YYYY"
@@ -460,7 +466,7 @@ export default class MonCompte extends Component {
           }}
           onDateChange={(date) => this.handleChangeDate(date) }
         />
-                {/*<Text>{this.state.userInformationBasic.birthday}</Text>
+                {/*<Text>{this.state.userInfo.birthday}</Text>
                 <Icon name="arrow-forward" />*/}
                 <Icon name="arrow-forward" />
               </Right>
@@ -471,7 +477,7 @@ export default class MonCompte extends Component {
               {I18n.t('account_location_popup')}
               </Dialog.Description>
               <Dialog.Input onChangeText={(text) => this.setState({dialogText: text}) }  >
-              {this.state.userInformationBasic.location}
+              {this.state.userInfo.location}
               </Dialog.Input>
               <Dialog.Button label="Cancel" onPress={()=>this.setState({dialogLocationIsVisible : !this.state.dialogLocationIsVisible})}/>
               <Dialog.Button label="OK" onPress={()=>this.handleChangeLocation()}/>
@@ -487,7 +493,7 @@ export default class MonCompte extends Component {
                 onPress={() =>this.setState({dialogLocationIsVisible : !this.state.dialogLocationIsVisible}) }>
 
               <Right>
-                <Text>{this.state.userInformationBasic.location}</Text>
+                <Text>{this.state.userInfo.location}</Text>
                 <Icon name="arrow-forward" />
               </Right>
               </TouchableHighlight>
@@ -498,7 +504,7 @@ export default class MonCompte extends Component {
               {I18n.t('account_email_popup')}
               </Dialog.Description>
               <Dialog.Input onChangeText={(text) => this.setState({dialogText: text}) } >
-                {this.state.userInformationBasic.email}
+                {this.state.userInfo.email}
               </Dialog.Input>
               <Dialog.Button label="Cancel" onPress={()=>this.setState({dialogEmailIsVisible : !this.state.dialogEmailIsVisible})}/>
               <Dialog.Button label="OK" onPress={()=>this.handleChangeEmail()}/>
@@ -514,7 +520,7 @@ export default class MonCompte extends Component {
                 onPress={() =>this.setState({dialogEmailIsVisible : !this.state.dialogEmailIsVisible}) }>
 
                 <Right>
-                <Text>{this.state.userInformationBasic.email}</Text>
+                <Text>{this.state.userInfo.email}</Text>
                 <Icon name="arrow-forward" />
               </Right>
               </TouchableHighlight>
@@ -526,7 +532,7 @@ export default class MonCompte extends Component {
                 Change your Phone
               </Dialog.Description>
               <Dialog.Input keyboardType={'numeric'} onChangeText={(text) => this.setState({dialogText: text}) } >
-                {this.state.userInformationBasic.phone}
+                {this.state.userInfo.phone}
               </Dialog.Input>
               <Dialog.Button label="Cancel" onPress={()=>this.setState({dialogPhoneIsVisible : !this.state.dialogPhoneIsVisible})}/>
               <Dialog.Button label="OK" onPress={()=>this.handleChangePhone()}/>
@@ -544,7 +550,7 @@ export default class MonCompte extends Component {
                 onPress={() =>this.setState({dialogPhoneIsVisible : !this.state.dialogPhoneIsVisible}) }>
 
               <Right>
-                <Text>{this.state.userInformationBasic.phone}</Text>
+                <Text>{this.state.userInfo.phone}</Text>
                 <Icon name="arrow-forward" />
               </Right>
               </TouchableHighlight>
@@ -569,7 +575,7 @@ export default class MonCompte extends Component {
               </Body>
               <Right>
               <TouchableOpacity >
-                <Icon name={this.state.userInformationBasic.mail == 0 ? 'close-circle' : 'checkmark-circle'} style={{color: this.state.userInformationBasic.mail === 0 ? 'red' : 'green'}} />
+                <Icon name={this.state.userInfo.mail == 0 ? 'close-circle' : 'checkmark-circle'} style={{color: this.state.userInfo.mail === 0 ? 'red' : 'green'}} />
               </TouchableOpacity>
 
               </Right>
@@ -577,20 +583,20 @@ export default class MonCompte extends Component {
             <ListItem icon>
               <Left>
               <TouchableOpacity
-                onPress={()=> this.state.userInformationBasic.google === 1 ? console.log() : this.signInWithGoogleAsync()}>
+                onPress={()=> this.state.userInfo.google === 1 ? console.log() : this.signInWithGoogleAsync()}>
                 <Icon name="logo-google" style={{color:'#DD4B39'}} />
                 </TouchableOpacity>
               </Left>
               <Body>
                 <TouchableOpacity
-                onPress={()=>this.state.userInformationBasic.google === 1 ? console.log() : this.signInWithGoogleAsync()}>
+                onPress={()=>this.state.userInfo.google === 1 ? console.log() : this.signInWithGoogleAsync()}>
                 <Text>Google</Text>
                 </TouchableOpacity>
               </Body>
               <Right>
               <TouchableOpacity
-                onPress={()=>   this.state.userInformationBasic.google === 1 ? console.log() :this.signInWithGoogleAsync()}>
-                <Icon name={this.state.userInformationBasic.google == 0 ? 'close-circle' : 'checkmark-circle'} style={{color: this.state.userInformationBasic.google === 0 ? 'red' : 'green'}} />
+                onPress={()=>   this.state.userInfo.google === 1 ? console.log() :this.signInWithGoogleAsync()}>
+                <Icon name={this.state.userInfo.google == 0 ? 'close-circle' : 'checkmark-circle'} style={{color: this.state.userInfo.google === 0 ? 'red' : 'green'}} />
                 </TouchableOpacity>
 
               </Right>
@@ -599,21 +605,21 @@ export default class MonCompte extends Component {
 
               <Left>
               <TouchableOpacity
-                onPress={()=> this.state.userInformationBasic.facebook === 1 ? console.log() : this.logInFB()}>
+                onPress={()=> this.state.userInfo.facebook === 1 ? console.log() : this.logInFB()}>
                 <Icon name="logo-facebook" style={{color:'#3b5998'}} />
                 </TouchableOpacity>
               </Left>
               <Body>
                 <TouchableOpacity
-                onPress={()=> this.state.userInformationBasic.facebook === 1 ? console.log() : this.logInFB()}>
+                onPress={()=> this.state.userInfo.facebook === 1 ? console.log() : this.logInFB()}>
                 <Text>Facebook</Text>
                 </TouchableOpacity>
 
               </Body>
               <Right>
               <TouchableOpacity
-                onPress={()=> this.state.userInformationBasic.facebook === 1 ? console.log() : this.logInFB()}>
-                <Icon name={this.state.userInformationBasic.facebook == 0 ? 'close-circle' : 'checkmark-circle'} style={{color: this.state.userInformationBasic.facebook === 0 ? 'red' : 'green'}}/>
+                onPress={()=> this.state.userInfo.facebook === 1 ? console.log() : this.logInFB()}>
+                <Icon name={this.state.userInfo.facebook == 0 ? 'close-circle' : 'checkmark-circle'} style={{color: this.state.userInfo.facebook === 0 ? 'red' : 'green'}}/>
                 </TouchableOpacity>
 
               </Right>
@@ -643,7 +649,7 @@ export default class MonCompte extends Component {
               <Right>
                 <TouchableOpacity
                 >
-                <Icon name={this.state.userInformationBasic.twitter == 0 ? 'close-circle' : 'checkmark-circle'} style={{color: this.state.userInformationBasic.twitter === 0 ? 'red' : 'green'}}/>
+                <Icon name={this.state.userInfo.twitter == 0 ? 'close-circle' : 'checkmark-circle'} style={{color: this.state.userInfo.twitter === 0 ? 'red' : 'green'}}/>
                 </TouchableOpacity>
               </Right>
             </ListItem>

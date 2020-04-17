@@ -7,7 +7,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
 import Config from './config';
-import Home, { HomeHeader } from './src/containers/Home';
+import Home from './src/containers/Home';
 import Article, { ArticleHeader } from './src/containers/Article';
 
 if (Config.debug) {
@@ -38,7 +38,7 @@ export default class App extends Component {
       <NavigationContainer>
         <Stack.Navigator initialRouteName="Home">
           <Stack.Screen name="Home" component={Home}
-            options={{ header: (props) => <HomeHeader {...props} /> }}
+            options={ {headerShown: false} }
           />
           <Stack.Screen name="Article" component={Article}
             options={{ header: (props) => <ArticleHeader {...props} /> }}

@@ -12,11 +12,11 @@ import {
   Dimensions,
   Platform,
   StyleSheet,
-  View,
-  YellowBox
+  View
 } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
-import { Actions } from 'react-native-router-flux';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import { createStackNavigator } from '@react-navigation/stack';
 import {
   Body,
   Button,
@@ -29,16 +29,6 @@ import {
   Title
 } from 'native-base';
 
-// TODO: Ignore as of yet unfixed warnings from react-native-side-menu
-// Remove this later when Drawer is fixed.
-YellowBox.ignoreWarnings([
-  'Warning: componentWillMount has been renamed',
-  'Warning: componentWillReceiveProps has been renamed',
-  'Warning: Can only update a mounted or mounting component'
-]);
-// TODO: This package is not well maintained and is pretty out of date
-// and produces warnings.  Replace with something else soon.
-import SideMenu from 'react-native-side-menu';
 
 import Menu from './SideMenu/Menu';
 const screen = Dimensions.get('window');
@@ -65,6 +55,8 @@ import locationSensor from './Sensors/LocationSensor';
 import deviceInfoSensor from './Sensors/DeviceInfoSensor';
 
 
+const Drawer = createDrawerNavigator();
+
 function MiniOfflineSign() {
   return (
     <View style={styles.offlineContainer}>
@@ -74,15 +66,16 @@ function MiniOfflineSign() {
 }
 
 
-export class HomeHeader extends Component {
-  _sideMenuPress() {
+class HomeHeader extends Component {
+  _onMenuButtonPress() {
     // TODO: Figure out how to connect header to the side menu drawer once it's
     // been added.
+    this.props.navigation.toggleDrawer();
   }
 
   renderHeaderBody() {
-    console.log(`renderHeaderBody(${JSON.stringify(this.props)})`);
-    // TODO: Figure out the correct variable to switch on
+    // TODO: Redo this to not use a switch statement, but rather determine
+    // the correct title and icon to use from the screen properties.
     //switch(this.props.route.params.screen){
     switch ("") {
       case "Favorite" :
@@ -151,16 +144,40 @@ export class HomeHeader extends Component {
     return (
       <Header style={[styles.header, {'width': width}]}>
         <Left>
-          <Button transparent>
-            <Icon name='menu' style={{ color: '#fff'}}
-              onPress={()=>this._sideMenuPress()}
-            />
+          <Button transparent onPress={ this._onMenuButtonPress.bind(this) }>
+            <Icon name='menu' style={{ color: '#fff'}} />
           </Button>
         </Left>
         {this.renderHeaderBody()}
         <Right>
         </Right>
       </Header>
+    );
+  }
+}
+
+
+// In order to add a header to DrawerNavigator screens it's apparently
+// necessary to wrap each Screen in its own StackNavigator, which is
+// a bit of a mess...
+
+// https://github.com/react-navigation/react-navigation/issues/1632
+// Not sure why DrawerNavigator screens can't also just have headers...
+const RecommendationsStack = createStackNavigator();
+
+
+// Contains the StackNavigator for the home screen which is
+// embedded in the DrawerNavigator
+class Recommendations extends Component {
+  render() {
+    return (
+      <RecommendationsStack.Navigator
+        screenOptions={{ header: (props) => <HomeHeader {...props} /> }}
+      >
+        <RecommendationsStack.Screen name="Recommendations"
+          component={ ArticlesList }
+      />
+      </RecommendationsStack.Navigator>
     );
   }
 }
@@ -328,7 +345,20 @@ export default class Home extends Component {
         </Root>
       );
     }
+
     return (
+      <Drawer.Navigator initialRouteName="Recommendations">
+        <Drawer.Screen name="Recommendations" component={ Recommendations } />
+        <Drawer.Screen name="Favorites" component={ Favorites } />
+        <Drawer.Screen name="History" component={ History } />
+        <Drawer.Screen name="Settings" component={ Settings } />
+        <Drawer.Screen name="Account" component={ Account } />
+      </Drawer.Navigator>
+    );
+
+    /* TODO: Move implementation of the MiniOfflineSign elsewhere and figure
+     * out an effective way to display it on all screens when applicable
+     *
       <SideMenu
         menu={menu}
         isOpen={this.state.isOpen}
@@ -349,6 +379,7 @@ export default class Home extends Component {
       </View>
       </SideMenu>
     );
+    */
   }
 }
 

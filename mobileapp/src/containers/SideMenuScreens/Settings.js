@@ -68,44 +68,28 @@ async function getLocationAsync() {
   }
 }
 
-export default class Param extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { isLoading: true, isOpen: false, selectedItem: 'param', location:false, settings:null}
+export default class Settings extends Component {
+  state = {
+    isLoading: true,
+    isOpen: false,
+    selectedItem: 'param',
+    settings: {}
   }
 
   async componentDidMount(){
-
-    //console.log(settings)
-    this.setState({settings : settings})
-    //console.log(settings[0].location)
-    //AsyncStorage.removeItem('settings',(error, result));
     try {
-      //AsyncStorage.setItem('settings', JSON.stringify(settings[0]));
-      AsyncStorage.getItem('settings', (err, result)=>{
-        //console.log(result)
-        var json = JSON.parse(result)
-        console.log(json)
-        //console.log(json[0].location)
-        this.setState({settings : json, isLoading: false })
-        //console.log(this.state.settings.location)
-
+      AsyncStorage.getItem('settings', (err, result) => {
+        let settings = JSON.parse(result);
+        settings = settings === null ? {} : settings;
+        this.setState({ settings });
       })
-
-
     } catch (error) {
       // Error saving data
+      console.log(`Settings: error retrieving settings: ${error}`);
     }
-    //this.getLocationAsync();
-    console.log(getLocationAsync())
     await I18n.initAsync();
     this.setState({isLoading:false})
-
-
-
   }
-
-
 
   changeStateLocation(){
     const s = this.state.settings;

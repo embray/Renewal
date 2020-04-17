@@ -57,24 +57,7 @@ function MiniOfflineSign() {
 
 class HomeHeader extends Component {
   _onMenuButtonPress() {
-    // TODO: Figure out how to connect header to the side menu drawer once it's
-    // been added.
     this.props.navigation.toggleDrawer();
-  }
-
-  renderHeaderBody(routeName) {
-    let { label, icon } = SCREEN_OPTIONS.get(routeName);
-    // Special case for the main screen
-    if (routeName == 'recommendations') {
-      label = 'RENEWAL'
-      icon = () => null;
-    }
-    return (
-      <>
-        { icon({ color: 'white' }) }
-        <Title style={ styles.headerTitle }>{ label }</Title>
-      </>
-    );
   }
 
   render() {
@@ -82,18 +65,17 @@ class HomeHeader extends Component {
     const { name } = this.props.scene.route;
     // Modify the flexbox for the main heading to put the title in
     // the center
-    const flexStyle = (name == 'recommendations' ?
-      {'flex': 1, 'justifyContent': 'center'} : {});
+    const flexStyle = {'flex': 1, 'justifyContent': 'center'};
 
     return (
-      <Header style={[styles.header, {'width': width}]}>
+      <Header style={ [styles.header, {'width': width}] }>
         <Left style={ flexStyle }>
           <Button transparent onPress={ this._onMenuButtonPress.bind(this) }>
             <Icon name='menu' style={{ color: '#fff'}} />
           </Button>
         </Left>
         <Body style={ [styles.headerBody, flexStyle] }>
-          {this.renderHeaderBody(name)}
+          <Title style={ styles.headerStyle }>RENEWAL</Title>
         </Body>
         <Right style={ flexStyle }>
         </Right>

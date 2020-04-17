@@ -14,7 +14,6 @@ import {
   Alert
 } from 'react-native';
 import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Text, List, ListItem, Icon } from 'native-base';
-import {Actions} from 'react-native-router-flux';
 const screen = Dimensions.get('window');
 const db = SQLite.openDatabase('db.db');
 

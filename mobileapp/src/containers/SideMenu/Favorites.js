@@ -14,7 +14,6 @@ import {
   Dimensions,
   StatusBar
 } from 'react-native';
-import {Actions} from 'react-native-router-flux';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Text, List, ListItem } from 'native-base';
 const screen = Dimensions.get('window');
@@ -78,7 +77,9 @@ class FavoritesContent extends Component {
       url:item.url,
       previous : "Favorite"
     }
-    Actions.webview(pack)
+    // TODO: Navigate to article view.  Need to figure out how to
+    // correctly hook up the navigation for this.
+    //Actions.webview(pack)
   }
 
 

@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import Expo, { AppLoading } from 'expo';
 import { Container, Header, Left, Body, Right, Button, Icon, Title, Footer, FooterTab } from 'native-base';
-import {Actions} from 'react-native-router-flux';
 import I18n from 'ex-react-native-i18n';
 const SCREEN_HEIGHT = Dimensions.get('window').height
 const SCREEN_WIDTH  = Dimensions.get('window').width
@@ -65,17 +64,27 @@ export default class InitialPath extends Component {
                 if(result === null){
                     //if user not connected, we need to init async storage
                     console.log("User not connected")
-                    Actions.conceptSwipe();
+                    // TODO: Originally this went to the splash screen
+                    // Instead we will always go strait to the Home screen
+                    // even if the user isn't registered yet
+                    // Actions.conceptSwipe();
                 }else{
                     console.log("userInformationBasic's true")
                     var json = JSON.parse(result)
                     this.setState({userInformationBasic : json })
                     if(this.state.userInformationBasic.email === "Empty"){
                         console.log("But user is not connecter")
-                        Actions.conceptSwipe();
+                      // TODO: Originally this went to the splash screen
+                      // Instead we will always go strait to the Home screen
+                      // even if the user isn't registered yet
+                      // Actions.conceptSwipe();
                     }else{
                         this.setState({isConnected : true})
-                        Actions.screenCenter();
+                        // TODO: Just go straight to the home screen;
+                        // In fact this code will likely be moved to the
+                        // main App component later; just making a note
+                        // of it for now.
+                        // Actions.screenCenter();
                     }
                 }
             })

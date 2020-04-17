@@ -15,7 +15,6 @@ import {
   Linking,
   TouchableHighlight
 } from 'react-native';
-import {Actions} from 'react-native-router-flux';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Text, List, ListItem, Switch, Separator, Card, CardItem} from 'native-base';
 import { AuthSession } from 'expo';

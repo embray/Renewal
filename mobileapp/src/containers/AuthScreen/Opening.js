@@ -3,7 +3,6 @@ import { StyleSheet, Alert, AsyncStorage, ActivityIndicator, TouchableOpacity, I
 import { View } from 'react-native-animatable'
 import { AuthSession, Google } from 'expo';
 import Constants from 'expo-constants';
-import {Actions} from 'react-native-router-flux';
 import QueryString from 'query-string';
 import Config from '../../../config';
 import CustomButton from '../../components/CustomButton'
@@ -56,7 +55,12 @@ export default class Opening extends Component {
     await AsyncStorage.setItem('userInformationBasic', JSON.stringify(userInfo),
       () => {this.setState({ userInformationBasic: userInfo})});
 
-    Actions.screenCenter()
+    // TODO: Return to Home screen
+    // Note: This screen will be removed later--users will always be logged in
+    // anonymously, with the option (on the Account screen) to link their
+    // acount, so there will be no need for this screen anymore; however some
+    // small bits of its code may be useful.
+    //Actions.screenCenter()
   }
 
   async logInFB() {
@@ -91,7 +95,12 @@ export default class Opening extends Component {
       this.updateWithFacebook(userInfo)
       await this._fetchAuth(result.user.email, result.user.id, "fb");
 
-      Actions.screenCenter()
+      // TODO: Return to Home screen
+      // Note: This screen will be removed later--users will always be logged in
+      // anonymously, with the option (on the Account screen) to link their
+      // acount, so there will be no need for this screen anymore; however some
+      // small bits of its code may be useful.
+      //Actions.screenCenter()
     }
   }
 
@@ -117,7 +126,12 @@ export default class Opening extends Component {
       // Error saving data
       console.log("error")
     }
-    Actions.screenCenter()
+    // TODO: Return to Home screen
+    // Note: This screen will be removed later--users will always be logged in
+    // anonymously, with the option (on the Account screen) to link their
+    // acount, so there will be no need for this screen anymore; however some
+    // small bits of its code may be useful.
+    //Actions.screenCenter()
   }
 
   async  signInWithGoogleAsync() {
@@ -156,13 +170,23 @@ export default class Opening extends Component {
     try {
       AsyncStorage.setItem('userInformationBasic', JSON.stringify(this.state.userInformationBasic));
       await this._fetchAuth(result.user.email, result.user.id, "google");
-      await Actions.screenCenter()
+      // TODO: Return to Home screen
+      // Note: This screen will be removed later--users will always be logged in
+      // anonymously, with the option (on the Account screen) to link their
+      // acount, so there will be no need for this screen anymore; however some
+      // small bits of its code may be useful.
+      //await Actions.screenCenter()
 
     } catch (error) {
       // Error saving data
       console.log("error")
     }
-    Actions.screenCenter()
+    // TODO: Return to Home screen
+    // Note: This screen will be removed later--users will always be logged in
+    // anonymously, with the option (on the Account screen) to link their
+    // acount, so there will be no need for this screen anymore; however some
+    // small bits of its code may be useful.
+    //Actions.screenCenter()
 
   }
 

@@ -20,7 +20,6 @@ import {
   Linking
 } from "react-native";
 import NetInfo from '@react-native-community/netinfo';
-import {Actions} from 'react-native-router-flux';
 import * as Animatable from 'react-native-animatable';
 import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Text, List, ListItem } from 'native-base';
 import Config from '../../../config';

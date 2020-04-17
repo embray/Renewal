@@ -18,7 +18,6 @@ import {
 } from 'react-native';
 import { AuthSession, Google } from 'expo';
 import Constants from 'expo-constants';
-import { Actions } from 'react-native-router-flux';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Container, Header, Title, Content, Footer, FooterTab, Left,Button, Right, Body, Icon, Text, List, ListItem, CardItem, Card, Switch } from 'native-base';
 import Dialog from "react-native-dialog";
@@ -381,7 +380,10 @@ class AccountContent extends Component {
     }catch(error){
 
     }
-    Actions.conceptSwipe();
+    // TODO: This used to return to the splash screen here for some reason
+    // That seems like a bug to me. Once authentication is refactored, users
+    // will always be logged in anonymously.
+    //Actions.conceptSwipe();
   }
   render() {
     if (this.state.isLoading) {

@@ -12,7 +12,6 @@ import {
   StatusBar,
   ScrollView
 } from 'react-native';
-import {Actions} from 'react-native-router-flux';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Container, Header, Title, Content, Footer, FooterTab, Left, Right, Body, Icon, Text, List, ListItem, DeckSwiper, Card, CardItem,Thumbnail} from 'native-base';
 import TreePicker from 'react-native-tree-picker';

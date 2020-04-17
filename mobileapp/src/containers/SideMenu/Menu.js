@@ -20,7 +20,6 @@ import {
   DrawerContentScrollView,
   DrawerItemList
 } from '@react-navigation/drawer';
-import {Actions} from 'react-native-router-flux';
 import Constants from 'expo-constants';
 
 import I18n from 'ex-react-native-i18n';

@@ -1,16 +1,11 @@
 import { AppLoading } from 'expo';
-import Constants from 'expo-constants';
-import * as Location from 'expo-location';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { OrientationLock } from 'expo-screen-orientation';
-import { Accelerometer, Gyroscope, Magnetometer } from 'expo-sensors';
-import * as SQLite from 'expo-sqlite';
 import React, { Component } from 'react';
 import {
   AppState,
   AsyncStorage,
   Dimensions,
-  Platform,
   StyleSheet,
   View
 } from 'react-native';
@@ -29,33 +24,27 @@ import {
   Title
 } from 'native-base';
 
-
-import Menu from './SideMenu/Menu';
-const screen = Dimensions.get('window');
 import I18n from 'ex-react-native-i18n';
-I18n.fallbacks = true
-const deviceLocale = I18n.locale
-I18n.translations = {
-  'en': require("../i18n/en"),
-  'fr': require('../i18n/fr'),
-};
 
 //Import Screen
 import ArticlesList from './ArticlesList';
+import Menu from './SideMenu/Menu';
 import Favorites from './SideMenuScreens/Favorite';
 import History from './SideMenuScreens/History';
 import Account from './SideMenuScreens/Account';
 import Concept from './SideMenuScreens/SimpleConcept';
 import Settings from './SideMenuScreens/Settings';
 
-//import sensors
-import accelerometerSensor  from './Sensors/AccelerometerSensor';
-import gyroscopeSensor from './Sensors/GyroscopeSensor';
-import locationSensor from './Sensors/LocationSensor';
-import deviceInfoSensor from './Sensors/DeviceInfoSensor';
+
+I18n.fallbacks = true
+I18n.translations = {
+  'en': require("../i18n/en"),
+  'fr': require('../i18n/fr'),
+};
 
 
 const Drawer = createDrawerNavigator();
+
 
 function MiniOfflineSign() {
   return (
@@ -209,9 +198,6 @@ export default class Home extends Component {
     });
 
     AppState.addEventListener('change', this._handleAppStateChange);
-    //accelerometerSensor._subscribe();
-    //gyroscopeSensor._subscribe();
-    //locationSensor._subscribe();
     try {
       AsyncStorage.getItem('token', (err, result)=>{
         setTimeout(() => this.setState({ token:result }))//this.setState({token: result});
@@ -227,10 +213,8 @@ export default class Home extends Component {
   componentWillUnmount() {
     this.unsubscribeConnectivityChange();
     AppState.removeEventListener('change', this._handleAppStateChange);
-    //accelerometerSensor._unsubscribe();
-    //gyroscopeSensor._unsubscribe();
-    //locationSensor._unsubscribe();
   }
+
   _handleAppStateChange = (nextAppState) => {
     if (this.state.appState.match(/inactive|background/) && nextAppState === 'active') {
       console.log('App has come to the foreground!')
@@ -388,40 +372,6 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#212121'
   },
-  MainContainer: {
-    justifyContent: 'center',
-    flex:1,
-    backgroundColor : "white"
-    //margin: 5,
-    //marginTop: (Platform.OS === 'ios') ? 20 : 0,
-  },
-  imageView: {
-    height: screen.height / 5,
-
-    margin: 7,
-    borderRadius : 7,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  textView: {
-    textAlignVertical:'center',
-    textAlign: 'center',
-    padding:10,
-    color: '#000',
-    width : '80%',
-    margin:0,
-    padding:0
-
-  },
-  iconStyle:{
-    color: 'black',
-    width :'10%',
-    paddingLeft: '3%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop : 0,
-    paddingBottom : 0
-  },
   offlineContainer: {
     backgroundColor: '#b52424',
     height: 30,
@@ -432,5 +382,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   offlineText: {
-    color: '#fff', }
+    color: '#fff'
+  }
 });

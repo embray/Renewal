@@ -27,7 +27,7 @@ I18n.translations = {
   'fr': require('../../i18n/fr'),
 };
 
-export default class Favoris extends Component {
+export default class Favorites extends Component {
   constructor(props) {
     super(props);
     this.state = {

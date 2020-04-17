@@ -26,14 +26,14 @@ import {
 
 import I18n from 'ex-react-native-i18n';
 
-//Import Screen
 import ArticlesList from './ArticlesList';
-import Menu from './SideMenu/Menu';
-import Favorites from './SideMenuScreens/Favorite';
-import History from './SideMenuScreens/History';
-import Account from './SideMenuScreens/Account';
-import Concept from './SideMenuScreens/SimpleConcept';
-import Settings from './SideMenuScreens/Settings';
+import {
+  Menu,
+  Favorites,
+  History,
+  Account,
+  Settings
+} from './SideMenu';
 
 
 I18n.fallbacks = true

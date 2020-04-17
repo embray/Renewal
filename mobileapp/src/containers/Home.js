@@ -51,7 +51,7 @@ I18n.translations = {
 };
 
 //Import Screen
-import DiverseRecommendation from './ListOfArticles/DiverseRecommendation';
+import ArticlesList from './ArticlesList';
 import Favorites from './SideMenuScreens/Favorite';
 import History from './SideMenuScreens/History';
 import Account from './SideMenuScreens/Account';
@@ -307,7 +307,7 @@ export default class Home extends Component {
         );
       default :
         return (
-          <DiverseRecommendation />
+          <ArticlesList {...this.props} />
           //this.state.isConnected === false ? <View style={{flex:1}}><View style={{height:30}}><MiniOfflineSign /></View><DiverseRecommendation /></View> : <DiverseRecommendation />
         );
 

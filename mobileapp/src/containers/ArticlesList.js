@@ -243,7 +243,7 @@ const demoDataNewsLoadMore = [
   },
 ];
 
-export default class Project extends Component {
+export default class ArticlesList extends Component {
   constructor(props) {
     super(props);
     var {height, width} = Dimensions.get('window');
@@ -354,14 +354,17 @@ export default class Project extends Component {
       console.log(this.state.globalDataSource[i])
     }
   }
-  _onPressOnItem (item) {
-    console.log(item)
-    this.fetchEvent("pressOnItem", "itemClickedTitle : "+item.title+" itemClickedUrl : "+item.url)
+
+  _onPressItem (item) {
+    console.log(item);
+    this.fetchEvent("pressOnItem", "itemClickedTitle : "+item.title+" itemClickedUrl : "+item.url);
     this.props.navigation.navigate('Article', item);
   }
+
   GetItem (flower_name) {
     Alert.alert(flower_name);
   }
+
   FlatListItemSeparator = () => {
     return (
       <View
@@ -512,7 +515,7 @@ export default class Project extends Component {
   renderItem=({item, index, nativeEvent}) => (
     <View  onPressItem={this._onPressItem}  >
       <View style={{flex:1, backgroundColor: item.isRejected ? "#484848" : "#fff"}}>
-        <TouchableOpacity onPress={item.isRejected? console.log("item isRejected") : this._onPressOnItem.bind(this, item)} >
+        <TouchableOpacity onPress={item.isRejected? console.log("item isRejected") : this._onPressItem.bind(this, item)} >
           <Image source = {{ uri: item.image }}
             style={{
               //height: this.state.height / 5,
@@ -525,7 +528,7 @@ export default class Project extends Component {
               alignItems: 'center',
 
             }}//style={styles.imageView}
-            onPress={this._onPressOnItem.bind(this, item)
+            onPress={this._onPressItem.bind(this, item)
             //onPress={this._onScrollItem(nativeEvent)
 
             }
@@ -537,7 +540,7 @@ export default class Project extends Component {
                       height : Platform.OS === 'ios' ? PixelRatio.roundToNearestPixel(100/PixelRatio.get()) : PixelRatio.roundToNearestPixel(50)
         }}>
           <Icon name="md-download" style={styles.iconStyle}    onPress={()=>item.isRejected ? console.log("error") :this._toggleFav( { item, index } )} />
-          <Text numberOfLines={2} style={styles.textView} onPress={item.isRejected? console.log("item isRejected") :this._onPressOnItem.bind(this, item)}>{item.title}</Text>
+          <Text numberOfLines={2} style={styles.textView} onPress={item.isRejected? console.log("item isRejected") :this._onPressItem.bind(this, item)}>{item.title}</Text>
           <Icon name={item.isRejected ? "md-checkmark" : "md-close"}  style={{color: 'black', width :'10%', paddingLeft: '3%', alignItems: 'center', justifyContent: 'center',color: item.isRejected ? "green" :"red"}}   onPress={()=>this._toggleReject( { item, index } )} />
         </View>
       </View>
@@ -546,7 +549,7 @@ export default class Project extends Component {
   renderItemLandscape=({item, index, nativeEvent}) => (
     <View  onPressItem={this._onPressItem}  >
       <View style={{flex:1, flexDirection: 'row', backgroundColor: item.isRejected ? "#484848" : "#fff"}}>
-        <TouchableOpacity onPress={item.isRejected? console.log("item isRejected") : this._onPressOnItem.bind(this, item)} >
+        <TouchableOpacity onPress={item.isRejected? console.log("item isRejected") : this._onPressItem.bind(this, item)} >
           <Image source = {{ uri: item.image }}
             style={{
               //height: this.state.height / 8,
@@ -559,7 +562,7 @@ export default class Project extends Component {
               alignItems: 'center',
 
             }}//style={styles.imageView}
-            onPress={this._onPressOnItem.bind(this, item)
+            onPress={this._onPressItem.bind(this, item)
             //onPress={this._onScrollItem(nativeEvent)
 
             }
@@ -567,7 +570,7 @@ export default class Project extends Component {
         </TouchableOpacity>
         <View style={{width:'100%', flexDirection : 'row',  height:90//this.state.height / 8
           }}>
-          <Text numberOfLines={3} style={styles.textViewLandscape} onPress={item.isRejected? console.log("item isRejected") :this._onPressOnItem.bind(this, item)}>{item.title}</Text>
+          <Text numberOfLines={3} style={styles.textViewLandscape} onPress={item.isRejected? console.log("item isRejected") :this._onPressItem.bind(this, item)}>{item.title}</Text>
           <View style={{alignItems: 'center', justifyContent: 'center', flexDirection : 'column'}} >
             <Icon name="md-download" onPress={()=>item.isRejected ? console.log("error") :this._toggleFav( { item, index } )} />
             <Icon name={item.isRejected ? "md-checkmark" :"md-close"}  style={{color: 'black', alignItems: 'center', justifyContent: 'center',color: item.isRejected ? "green" :"red"}}   onPress={()=>this._toggleReject( { item, index } )} />

@@ -8,7 +8,7 @@ import HomeSreen from './containers/HomeScreen/HomeScreen';
 {/*Home*/}
 import Home from './containers/Home';
 {/*sidemenu*/}
-import DiverseRecommendation from './containers/ListOfArticles/DiverseRecommendation';
+import ArticlesList from './containers/ArticlesList';
 import Favorite from './containers/SideMenuScreens/Favorite';
 import History from './containers/SideMenuScreens/History';
 import Account from './containers/SideMenuScreens/Account';
@@ -45,7 +45,7 @@ export default class Routes extends Component {
 					{/*home*/}
 					<Scene key="screenCenter" component={Home} title="RENEWAL"   />
 					{/* sidemenu */}
-					<Scene key="diverseRecommendation" component={DiverseRecommendation} title="RENEWAL" />
+					<Scene key="diverseRecommendation" component={ArticlesList} title="RENEWAL" />
 					<Scene key="favorite" component={Favorite} title="Favorite" />
 					<Scene key="history" component={History} title="History" />
 					<Scene key="account" component={Account} title="Account" />

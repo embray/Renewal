@@ -8,7 +8,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 
 import Config from './config';
 import Home, { HomeHeader } from './src/containers/Home';
-import ArticleView from './src/containers/WebView/WebView';
+import Article, { ArticleHeader } from './src/containers/Article';
 
 if (Config.debug) {
     console.log(`Config: ${JSON.stringify(Config)}`);
@@ -36,11 +36,13 @@ export default class App extends Component {
 
     return (
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="Home"
-          screenOptions={{ header: (props) => <HomeHeader {...props} /> }}
-        >
-          <Stack.Screen name="Home" component={Home} />
-          <Stack.Screen name="Article" component={ArticleView} />
+        <Stack.Navigator initialRouteName="Home">
+          <Stack.Screen name="Home" component={Home}
+            options={{ header: (props) => <HomeHeader {...props} /> }}
+          />
+          <Stack.Screen name="Article" component={Article}
+            options={{ header: (props) => <ArticleHeader {...props} /> }}
+          />
         </Stack.Navigator>
       </NavigationContainer>
     );

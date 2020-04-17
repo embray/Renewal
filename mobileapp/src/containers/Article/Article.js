@@ -124,12 +124,54 @@ class RatingPanel extends Component {
 }
 
 
-export default class MessageWebView extends Component {
+export class ArticleHeader extends Component {
+  _onBack() {
+    /*
+    TODO: This tries to send an event message that the user went back from
+    a news article; this is maybe a worthwhile event to send since it tells us
+    how much time the user spent reading an article.  However, it should be done
+    asynchronously without slowing down user interactions.
+    this.fetchEvent("back", "fromTitle : "+this.props.navigation.state.params.title+" fromUrl : "+this.props.navigation.state.params.url);
+    */
+    this.props.navigation.goBack();
+  }
+
+  _setModalVisible(visible) {
+    // TODO: Need to figure out how to connect this up, or if we'll even
+    // keep this button
+  }
+
+  render() {
+    const { title } = this.props.scene.route.params;
+
+    return (
+      <Header style={styles.header}>
+        <Left style={styles.headerLeft}>
+          <Button transparent onPress={ this._onBack.bind(this) }>
+            <Icon name='md-arrow-back' style={styles.headerIcon} />
+          </Button>
+        </Left>
+        <Body>
+          <Title style={styles.headerTitle}>{title}</Title>
+        </Body>
+        <Right>
+          <Button transparent
+            onPress={ this._setModalVisible.bind(this, true) }
+          >
+            <Icon name='md-add' style={styles.headerIcon} />
+          </Button>
+        </Right>
+      </Header>
+    );
+  }
+}
+
+
+export default class Article extends Component {
   constructor(props) {
     super(props)
     this.state = {
       modalVisible : false,
-      title : this.props.navigation.state.params.title,
     };
 
     this._webView = null;
@@ -141,11 +183,12 @@ export default class MessageWebView extends Component {
 
   _shareArticle() {
     // TODO: This needs to be fixed.
+    const { title, url } = this.props.route.params;
     Share.share({
-        title: this.props.navigation.state.params.title,
-        message: `Bonjour, \n je pense que l'article : ${this.props.navigation.state.params.title} pourrait t'interresser. \n `,
-        url: this.props.navigation.state.params.url,
-        subject: `Je recommande l'article : ${this.props.navigation.state.params.title}` //  for email
+        title: title,
+        message: `Bonjour, \n je pense que l'article : ${title} pourrait t'interresser. \n `,
+        url: url,
+        subject: `Je recommande l'article : ${title}` //  for email
     }).then(result => console.log(result)).catch(errorMsg => console.log(errorMsg));
   }
 
@@ -153,17 +196,6 @@ export default class MessageWebView extends Component {
       this.setState({modalVisible: visible});
   }
   //WebView content part
-
-  onBack() {
-    /*
-    TODO: This tries to send an event message that the user went back from
-    a news article; this is maybe a worthwhile event to send since it tells us
-    how much time the user spent reading an article.  However, it should be done
-    asynchronously without slowing down user interactions.
-    this.fetchEvent("back", "fromTitle : "+this.props.navigation.state.params.title+" fromUrl : "+this.props.navigation.state.params.url);
-    */
-    this.props.navigation.goBack();
-  }
 
   /*
   WebView content fixed message
@@ -227,41 +259,31 @@ export default class MessageWebView extends Component {
       * https://github.com/react-native-community/react-native-webview/issues/1095
       * As such we cannot capture window.onload events; need a
       * different workaround */
+    const { url } = this.props.route.params;
+
     return (
-      <View style={styles.container}>
-        <Header style={styles.header}>
-          <Left style={styles.headerLeft}>
-            <Button transparent onPress={() => this.onBack()}>
-              <Icon name='md-arrow-back' style={styles.headerIcon} />
-            </Button>
-          </Left>
-          <Body>
-            <Title style={styles.headerTitle}>
-              {this.props.navigation.state.params.title}
-            </Title>
-          </Body>
-          <Right>
-            <Button transparent onPress={() => this.setModalVisible(true)}>
-              <Icon name='md-add' style={styles.headerIcon} />
-            </Button>
-          </Right>
-        </Header>
+      <View style={ styles.container }>
         <WebView
           javaScriptEnabled
-          injectedJavaScript={injectionJS}
-          source={{uri:this.props.url}}
-          renderLoading={() => this.renderLoadingWebView()}
-          renderError={(errorName) => this.renderErrorWebView(errorName)}
-          ref={x => {this._webView = x}}
-          onMessage={e => this.onMessageFromWebView(e.nativeEvent.data)}
+          injectedJavaScript={ injectionJS }
+          source={ {uri: url} }
+          renderLoading={ () => this.renderLoadingWebView() }
+          renderError={ (errorName) => this.renderErrorWebView(errorName) }
+          ref={ x => {this._webView = x} }
+          onMessage={ e => this.onMessageFromWebView(e.nativeEvent.data) }
         />
-        <BottomDrawer style={styles.bottomDrawer}>
+        <BottomDrawer style={ styles.bottomDrawer }>
           <RatingPanel />
         </BottomDrawer>
       </View>
     );
   }
 }
+
+
+// TODO: Consolidate header styles--some views have different header
+// components, but the styling for them is roughly the same across
+// the board.
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { backgroundColor: '#212121' },

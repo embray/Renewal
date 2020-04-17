@@ -257,7 +257,7 @@ export default class Home extends Component {
         drawerContent={ (props) => <Menu {...props} /> }
       >
         { Array.from(SCREEN_OPTIONS.entries(), ([name, opts]) => (
-          <Drawer.Screen name={ name } component={ opts.component }
+          <Drawer.Screen key={ name } name={ name } component={ opts.component }
             options={{ drawerLabel: opts.label, drawerIcon: opts.icon }}
           />
         ))}

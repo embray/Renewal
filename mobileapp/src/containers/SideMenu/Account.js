@@ -19,12 +19,16 @@ import {
 import { AuthSession, Google } from 'expo';
 import Constants from 'expo-constants';
 import { Actions } from 'react-native-router-flux';
+import { createStackNavigator } from '@react-navigation/stack';
 import { Container, Header, Title, Content, Footer, FooterTab, Left,Button, Right, Body, Icon, Text, List, ListItem, CardItem, Card, Switch } from 'native-base';
 import Dialog from "react-native-dialog";
 import DatePicker from 'react-native-datepicker';
 import man from '../../images/man.png'
 import woman from '../../images/girl.png'
 import user from '../../images/user.png'
+
+import SideHeader from './SideHeader';
+
 const screen = Dimensions.get('window');
 const FB_APP_ID = '2073630512892455';
 const userInformation = [ {
@@ -63,7 +67,25 @@ const DEFAULT_USER_INFO = {
 }
 
 
+const AccountStack = createStackNavigator();
+
+
 export default class Account extends Component {
+  render() {
+    return (
+      <AccountStack.Navigator
+        screenOptions={{ header: (props) => <SideHeader {...props} /> }}
+      >
+        <AccountStack.Screen name="account"
+          component={ AccountContent }
+      />
+      </AccountStack.Navigator>
+    );
+  }
+}
+
+
+class AccountContent extends Component {
   // TODO: Clean this all up
   state = {
     isLoading: true,

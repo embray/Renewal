@@ -16,12 +16,16 @@ import {
   TouchableHighlight
 } from 'react-native';
 import {Actions} from 'react-native-router-flux';
+import { createStackNavigator } from '@react-navigation/stack';
 import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Text, List, ListItem, Switch, Separator, Card, CardItem} from 'native-base';
 import { AuthSession } from 'expo';
 import Constants from 'expo-constants';
 import * as Font from 'expo-font';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
+
+import SideHeader from './SideHeader';
+
 const screen = Dimensions.get('window');
 
 let settings = [
@@ -48,12 +52,15 @@ I18n.translations = {
   'en': require("../../i18n/en"),
   'fr': require('../../i18n/fr'),
 };
+
+
 async function alertIfRemoteNotificationsDisabledAsync() {
   const { status } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
   if (status !== 'granted') {
     alert('Hey! You might want to enable notifications for my app, they are good.');
   }
 }
+
 
 async function getLocationAsync() {
   const { status } = await Permissions.getAsync(Permissions.LOCATION);
@@ -68,7 +75,27 @@ async function getLocationAsync() {
   }
 }
 
+
+
+const SettingsStack = createStackNavigator();
+
+
 export default class Settings extends Component {
+  render() {
+    return (
+      <SettingsStack.Navigator
+        screenOptions={{ header: (props) => <SideHeader {...props} /> }}
+      >
+        <SettingsStack.Screen name="settings"
+          component={ SettingsContents }
+      />
+      </SettingsStack.Navigator>
+    );
+  }
+}
+
+
+class SettingsContents extends Component {
   state = {
     isLoading: true,
     isOpen: false,

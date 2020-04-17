@@ -13,12 +13,15 @@ import {
   ScrollView
 } from 'react-native';
 import {Actions} from 'react-native-router-flux';
+import { createStackNavigator } from '@react-navigation/stack';
 import { Container, Header, Title, Content, Footer, FooterTab, Left, Right, Body, Icon, Text, List, ListItem, DeckSwiper, Card, CardItem,Thumbnail} from 'native-base';
 import TreePicker from 'react-native-tree-picker';
 import I18n from 'ex-react-native-i18n';
-I18n.fallbacks = true
-const deviceLocale = I18n.locale
 
+import SideHeader from './SideHeader';
+
+
+I18n.fallbacks = true
 I18n.translations = {
   'en': require("../../i18n/en"),
   'fr': require('../../i18n/fr'),
@@ -26,7 +29,26 @@ I18n.translations = {
 
 const screen = Dimensions.get('window');
 
-export default class Historique extends Component {
+
+const HistoryStack = createStackNavigator();
+
+
+export default class History extends Component {
+  render() {
+    return (
+      <HistoryStack.Navigator
+        screenOptions={{ header: (props) => <SideHeader {...props} /> }}
+      >
+        <HistoryStack.Screen name="history"
+          component={ HistoryContents }
+      />
+      </HistoryStack.Navigator>
+    );
+  }
+}
+
+
+class HistoryContents extends Component {
   constructor(props) {
     super(props);
     this.state = { isLoading: true, languages: []}

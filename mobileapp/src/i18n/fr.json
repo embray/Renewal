@@ -61,10 +61,11 @@
   "settings_popup_gosettings" : "Accéder aux paramètres",
   "settings_popup_allow" : "Autoriser",
 
-  "side_menu_recommendation" : "Recommandation d'article",
+  "side_menu_recommendation" : "Recommandations",
   "side_menu_fav" : "Favoris",
   "side_menu_history" : "Historique",
   "side_menu_account" : "Mon compte",
+  "side_menu_settings" : "Paramètres",
   "side_menu_concept" : "Le concept",
 
   "account_sex" : "Sexe",

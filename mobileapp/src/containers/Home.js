@@ -62,83 +62,40 @@ class HomeHeader extends Component {
     this.props.navigation.toggleDrawer();
   }
 
-  renderHeaderBody() {
-    // TODO: Redo this to not use a switch statement, but rather determine
-    // the correct title and icon to use from the screen properties.
-    //switch(this.props.route.params.screen){
-    switch ("") {
-      case "Favorite" :
-        return (
-          <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
-            <Button transparent>
-              <Icon name='md-star' style={{ color: '#fff'}}   />
-            </Button>
-            <Title style={{color:'white'}}>{I18n.t('side_menu_fav')}</Title>
-          </Body>
-        );
-      case "History" :
-        return (
-          <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
-            <Button transparent>
-              <Icon name='md-stats' style={{ color: '#fff'}}   />
-            </Button>
-            <Title style={{color:'white'}}>{I18n.t('side_menu_history')}</Title>
-          </Body>
-        );
-      case "Account" :
-        return (
-          <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
-            <Button transparent>
-              <Icon name='md-person' style={{ color: '#fff'}}    />
-            </Button>
-            <Title style={{color:'white'}}>{I18n.t('side_menu_account')}</Title>
-          </Body>
-        );
-      case "SimpleConcept" :
-        return (
-          <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
-            <Button transparent>
-              <Icon name='md-cafe' style={{ color: '#fff'}}   />
-            </Button>
-            <Title style={{color:'white'}}>{I18n.t('side_menu_concept')}</Title>
-          </Body>
-
-        );
-      case "Settings" :
-        return (
-          <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
-            <Button transparent>
-              <Icon name='md-settings' style={{ color: '#fff'}}    />
-            </Button>
-            <Title style={{color:'white'}}>{I18n.t('side_menu_account')}</Title>
-          </Body>
-        );
-      default :
-        return (
-          <Body style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }} >
-            <Button transparent>
-              <Icon name='md-home' style={{ color: '#fff'}}    />
-            </Button>
-            <Title style={{color:'white'}}>RENEWAL</Title>
-          </Body>
-      );
-
+  renderHeaderBody(routeName) {
+    let { label, icon } = SCREEN_OPTIONS.get(routeName);
+    // Special case for the main screen
+    if (routeName == 'recommendations') {
+      label = 'RENEWAL'
+      icon = () => null;
     }
-    return null;
+    return (
+      <>
+        { icon({ color: 'white' }) }
+        <Title style={ styles.headerTitle }>{ label }</Title>
+      </>
+    );
   }
 
   render() {
     const width = Dimensions.get('window').width;
+    const { name } = this.props.scene.route;
+    // Modify the flexbox for the main heading to put the title in
+    // the center
+    const flexStyle = (name == 'recommendations' ?
+      {'flex': 1, 'justifyContent': 'center'} : {});
 
     return (
       <Header style={[styles.header, {'width': width}]}>
-        <Left>
+        <Left style={ flexStyle }>
           <Button transparent onPress={ this._onMenuButtonPress.bind(this) }>
             <Icon name='menu' style={{ color: '#fff'}} />
           </Button>
         </Left>
-        {this.renderHeaderBody()}
-        <Right>
+        <Body style={ [styles.headerBody, flexStyle] }>
+          {this.renderHeaderBody(name)}
+        </Body>
+        <Right style={ flexStyle }>
         </Right>
       </Header>
     );
@@ -163,13 +120,50 @@ class Recommendations extends Component {
       <RecommendationsStack.Navigator
         screenOptions={{ header: (props) => <HomeHeader {...props} /> }}
       >
-        <RecommendationsStack.Screen name="Recommendations"
+        <RecommendationsStack.Screen name="recommendations"
           component={ ArticlesList }
       />
       </RecommendationsStack.Navigator>
     );
   }
 }
+
+
+function iconFactory(name) {
+  return ({size, focus, color}) => (
+    <Icon name={ name } style={{ color }} />
+  );
+}
+
+
+// Icons and menu titles / labels for all the main screens
+const SCREEN_OPTIONS = new Map([
+  ['recommendations', {
+    component: Recommendations,
+    label: I18n.t('side_menu_recommendation'),
+    icon: iconFactory('md-home')
+  }],
+  ['favorites', {
+    component: Favorites,
+    label: I18n.t('side_menu_fav'),
+    icon: iconFactory('md-star')
+  }],
+  ['history', {
+    component: History,
+    label: I18n.t('side_menu_history'),
+    icon: iconFactory('md-stats')
+  }],
+  ['settings', {
+    component: Settings,
+    label: I18n.t('side_menu_settings'),
+    icon: iconFactory('md-settings')
+  }],
+  ['account', {
+    component: Account,
+    label: I18n.t('side_menu_account'),
+    icon: iconFactory('md-person')
+  }]
+]);
 
 
 export default class Home extends Component {
@@ -330,13 +324,17 @@ export default class Home extends Component {
       );
     }
 
+    /* TODO: Once account management is working again, replace the Account
+     * icon default with the user's image if one exists */
     return (
-      <Drawer.Navigator initialRouteName="Recommendations">
-        <Drawer.Screen name="Recommendations" component={ Recommendations } />
-        <Drawer.Screen name="Favorites" component={ Favorites } />
-        <Drawer.Screen name="History" component={ History } />
-        <Drawer.Screen name="Settings" component={ Settings } />
-        <Drawer.Screen name="Account" component={ Account } />
+      <Drawer.Navigator initialRouteName="Recommendations"
+        drawerContent={ (props) => <Menu {...props} /> }
+      >
+        { Array.from(SCREEN_OPTIONS.entries(), ([name, opts]) => (
+          <Drawer.Screen name={ name } component={ opts.component }
+            options={{ drawerLabel: opts.label, drawerIcon: opts.icon }}
+          />
+        ))}
       </Drawer.Navigator>
     );
 
@@ -371,6 +369,14 @@ export default class Home extends Component {
 const styles = StyleSheet.create({
   header: {
     backgroundColor: '#212121'
+  },
+  headerTitle: {
+    color: 'white'
+  },
+  headerBody: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start'
   },
   offlineContainer: {
     backgroundColor: '#b52424',

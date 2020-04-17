@@ -63,10 +63,11 @@
    "settings_popup_allow": "Allow",
 
 
-  "side_menu_recommendation": "Article recommendation",
+  "side_menu_recommendation": "Recommendations",
   "side_menu_fav": "Favorites",
   "side_menu_history": "History",
   "side_menu_account": "My account",
+  "side_menu_settings": "Settings",
   "side_menu_concept": "The concept",
 
 

@@ -1,20 +1,27 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import {
-  Dimensions,
-  StyleSheet,
-  ScrollView,
-  View,
-  Image,
-  Platform,
-  TouchableOpacity
-} from 'react-native';
-import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Text, List, ListItem, Icon } from 'native-base';
+  Body,
+  Button,
+  Container,
+  Content,
+  Footer,
+  FooterTab,
+  Header,
+  Icon,
+  Left,
+  List,
+  ListItem,
+  Right,
+  Text,
+  Title
+} from 'native-base';
+import React from 'react';
+import { StyleSheet } from 'react-native';
+import {
+  DrawerContentScrollView,
+  DrawerItemList
+} from '@react-navigation/drawer';
 import {Actions} from 'react-native-router-flux';
 import Constants from 'expo-constants';
-
-const window = Dimensions.get('window');
-const uri = 'https://icon-icons.com/icons2/933/PNG/512/settings-cogwheel-button_icon-icons.com_72559.png';
 
 import I18n from 'ex-react-native-i18n';
 
@@ -26,92 +33,31 @@ I18n.translations = {
   'fr': require('../../i18n/fr'),
 };
 
-function onPressItem(item){
-    //console.log("item du menu pressed is : "+item)
-    onItemSelected(item)
-}
-export default function Menu({ onItemSelected }) {
-  return (
-    <Container style={{backgroundColor:'#212121'}}>
-        <Header style={styles.header}>
-          <Left>
-              {/*
-            <Button transparent>
-              <Icon name='menu' />
-            </Button>
-              */}
-          </Left>
-          <Body>
-            <Title style={{color:'white'}}>Renewal</Title>
-          </Body>
-          <Right>
-            <Button transparent onPress={() =>  onItemSelected("Settings")}>
-              <Icon name='md-settings' style={{color:'white'}}/>
-            </Button>
-           </Right>
-        </Header>
-        <Content  style={{backgroundColor:'#212121'}} >
-            <List style={{backgroundColor:'#424242', marginTop:5}}>
-                <ListItem iconLeft onPress={() =>  onItemSelected("DiverseRecommendation")}>
-                    <Icon name="md-home" style={styles.iconItem} />
-                    <Text style={styles.textItem} >{I18n.t('side_menu_recommendation')}</Text>
-                </ListItem>
-                <ListItem iconLeft onPress={() => onItemSelected("Favorite")}>
-                    <Icon name="md-star-outline" style={styles.iconItem} />
-                    <Text style={styles.textItem}  >{I18n.t('side_menu_fav')}</Text>
-                </ListItem>
-                <ListItem iconLeft onPress={() => onItemSelected("History")}>
-                    <Icon name="md-stats" style={styles.iconItem} />
-                    <Text style={styles.textItem}  >{I18n.t('side_menu_history')}</Text>
-                </ListItem>
-                <ListItem iconLeft onPress={() => onItemSelected("Account")}>
-                    <Icon name="md-person" style={styles.iconItem} />
-                    <Text style={styles.textItem} > {I18n.t('side_menu_account')} </Text>
-                </ListItem>
-            </List>
 
-        </Content>
-        <Footer style={{ backgroundColor: '#212121'}} >
-          <FooterTab>
-            <Button full onPress={() => onItemSelected("SimpleConcept")}>
-              <Text >{I18n.t('side_menu_concept')}</Text>
-            </Button>
-          </FooterTab>
-        </Footer>
-      </Container>
+export default function Menu(props) {
+  return (
+    <Container>
+      <Header style={styles.header}>
+        <Left />
+        <Body>
+          <Title style={styles.headerTitle}>RENEWAL</Title>
+        </Body>
+        <Right />
+      </Header>
+      <DrawerContentScrollView {...props}>
+        <DrawerItemList {...props} />
+      </DrawerContentScrollView>
+    </Container>
   );
 }
 
-Menu.propTypes = {
-  onItemSelected: PropTypes.func.isRequired,
-};
+
 const styles = StyleSheet.create({
-    iconItem:{
-        color: 'white',
-        marginRight:10
-    },
-    textItem:{
-        color: 'white',
-    },
-    header:{
-        backgroundColor: '#212121',
-        marginBottom:5
-    },
-    TouchableOpacityStyle:{
-
-        position: 'absolute',
-        width: 50,
-        height: 50,
-        alignItems: 'center',
-        justifyContent: 'center',
-        right: 30,
-        bottom: 30,
-      },
-
-      FloatingButtonStyle: {
-
-        resizeMode: 'contain',
-        width: 50,
-        height: 50,
-      }
+  header: {
+    backgroundColor: '#212121',
+    marginBottom: 5,
+  },
+  headerTitle: {
+    color: 'white'
+  }
 });

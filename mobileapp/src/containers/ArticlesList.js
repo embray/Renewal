@@ -11,7 +11,8 @@ import {
   FlatList,
   Image,
   TouchableOpacity,
-  Alert
+  Alert,
+  SafeAreaView
 } from 'react-native';
 import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Text, List, ListItem, Icon } from 'native-base';
 const screen = Dimensions.get('window');
@@ -45,32 +46,60 @@ function _fake_article_statuses(articles) {
 }
 
 
+// TODO: Move this to a utilities module.
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
 export default class ArticlesList extends Component {
-  constructor(props) {
-    super(props);
-    var {height, width} = Dimensions.get('window');
-      this.state = {
-        height : screen.height > screen.width ? screen.height : screen.width,
-        width : screen.width > screen.height ? screen.width : screen.height,
-        isLoading: true,
-        globalDataSource : null,
-        displayDataSource : null,
-        page : 1,
-        nbItemPerPage : 5,
-        newscastSavedState : null,
-        refreshing: false,
-        token : null,
-        sizeImageRatio : 210,
-        sizeViewRatio : 150,
-        ratio : PixelRatio.get(),
-        orientation : height > width ? 'portrait' : 'landscape'
-      }
+  static defaultProps = {
+    perPage: 5
   }
 
-  async componentDidMount(){
-    await this._initSqlTable();
-    await this.webCall();
+  constructor(props) {
+    super(props);
 
+    const {height, width} = Dimensions.get('window');
+
+    this.state = {
+      refreshing: false,
+      loading: true,
+      loadingMore: false,
+      endOfData: false,
+      articlesList: [],
+      page: 0,
+
+      // TODO: old state variables that may or may not be used
+      height : screen.height > screen.width ? screen.height : screen.width,
+      width : screen.width > screen.height ? screen.width : screen.height,
+      globalDataSource : null,
+      displayDataSource : null,
+      nbItemPerPage : 5,
+      newscastSavedState : null,
+      token : null,
+      sizeImageRatio : 210,
+      sizeViewRatio : 150,
+      ratio : PixelRatio.get(),
+      orientation : height > width ? 'portrait' : 'landscape'
+    }
+
+    // NOTE: Not part of the state; only the list of article keys is
+    // in the state.  For now we key articles on their URLs but later
+    // we'll use something more efficient (i.e. an ID number)
+    this.articles = new Map();
+  }
+
+  async componentDidMount() {
+    //await this._initSqlTable();
+    await this._fetchArticles();
+
+    // TODO: ignore the rest of this function for now until we get the basics
+    // working.
+    return;
+
+    // TODO: Need to figure out what's going on with this sqlite storage
+    // and if we still have a use for it or not.
     await this._updateSelectedItems()
     try {
       AsyncStorage.getItem('token', (err, result)=>{
@@ -96,13 +125,12 @@ export default class ArticlesList extends Component {
     });
     //console.log("pixel ratio : "+PixelRatio.get())
     //console.log("pixel round : "+PixelRatio.roundToNearestPixel(100))
-    //this.getMoviesFromApi();
     //this.getNewsFromApi();
    // await this._generateDisplayItems()
 
   }
 
-  fetchEvent =  async (something, someData)=>{
+  fetchEvent = async (something, someData)=>{
     return someData === null ?
       console.log("[{Event : "+something+", timestamp :"+Date.now()+"}]")
       :
@@ -179,49 +207,44 @@ export default class ArticlesList extends Component {
     );
   }
 
-  async webCall() {
-    // TODO: This had all kinds of sample calls originally.
-    // Eventually we will replace this so that it only tries to request from
-    // our backend, but in DEBUG mode it can also use the dummy data if the
-    // backend is not configured.
-    // Furthermore, this should be replaced with an API abstractio of the
-    // backend.
-    //return fetch('https://129.175.22.71:4243/url/bulk/100')
-    //return fetch('https://api.renewal-research.com/news/url/bulk/99')
-    //return fetch('https://facebook.github.io/react-native/movies.json')
-    //return fetch('https://reactnativecode.000webhostapp.com/FlowersList.php')
-    //  .then((response) => response.json())
-    //  .then((responseJson) => {
-    // TODO: Clean up this entire mess.
-        this.setState({
-          //isLoading: false,
-          //dataSource: responseJson,
-          // NOTE: The original demo news list was actually split into two
-          // separate lists; now we just put it in one list but take a slice;
-          // originally the first list happened to contain 17 items for some
-          // reason.
-          globalDataSource : DEBUG_ARTICLE_DATA.slice(0, 17)
-        }, function() {
-             // In this block you can do something with new state.
-             console.log(this.state.dataSource)
-            let pack = []
-            let i = this.state.displayDataSource === null ? 0 : this.state.displayDataSource.length;
-            while(i != this.state.nbItemPerPage*this.state.page){
-              //console.log(i)
-              //console.log(this.state.globalDataSource[i])
-              i++;
-              pack.push(this.state.globalDataSource[i])
-            }
-            this.setState({
-              isLoading: false,
-              page : this.state.page+1,
-              displayDataSource : pack
-            })
-        });
-      //})
-      //.catch((error) => {
-      //  console.error(error);
-      //});
+  // TODO: Eventually this will use the API for the backend to fetch
+  // articles, and may include a built-in layer for article caching,
+  // as well as the fallback that loads demo data in debug mode.
+  async _fetchArticles() {
+    const { perPage } = this.props;
+    const { page } = this.state;
+
+    console.log(`fetching articles page ${page} with ${perPage} per page`);
+    // Simulate data being refreshed
+    // TODO: Only do this in debug mode--simul
+    await sleep(50);
+
+    // TODO: Here we would actually fetch the data from the backend
+    const response = DEBUG_ARTICLE_DATA.slice(page * perPage,
+                                              (page + 1) * perPage);
+    const newArticles = [];
+
+    // TODO: This line is debug only to test refreshing
+    // to simulate getting new articles.
+    if (page == 0) {
+      this.articles.clear();
+    }
+
+    for (let article of response) {
+      if (!this.articles.has(article.url)) {
+        newArticles.push(article.url);
+        this.articles.set(article.url, article);
+      }
+    }
+
+    this.setState((prevState) => ({
+      articlesList: (prevState.page === 0 ?
+        newArticles : [...prevState.articlesList, ...newArticles]),
+      refreshing: false,
+      loading: false,
+      loadingMore: false,
+      endOfData: (response.length === 0)
+    }));
   }
   /*_ItemLoadMore = () => {
     let pack = this.state.displayDataSource;
@@ -301,69 +324,49 @@ export default class ArticlesList extends Component {
       :
       this.fetchEvent('unrejectNews'," title : "+display[index].title+", url : "+display[index].url)
   }
-  async getMoviesFromApi() {
-    let response = null;
-    let responseJson = null;
-    try {
-      response = await fetch(
-        'https://facebook.github.io/react-native/movies.json'
-        );
-        responseJson = await response.json();
-        console.log(responseJson)
-        return responseJson.movies;
-    } catch (error) {
-      console.error(error);
-    }
-  }
-    async getNewsFromApi() {
-        let response = null;
-        let responseJson = null;
-        try {
-            response = await fetch(
-            `https://129.175.22.71:4243/news/url/bulk/100`
-        );
-        responseJson = await response.json();
-        console.log(responseJson)
-        return responseJson;
-        } catch (error) {
-        console.error(error);
-        }
-    }
 
-  renderItem=({item, index, nativeEvent}) => (
-    <View  onPressItem={this._onPressItem}  >
-      <View style={{flex:1, backgroundColor: item.rating == -1 ? "#484848" : "#fff"}}>
-        <TouchableOpacity onPress={item.rating == -1 ? console.log("item rejected") : this._onPressItem.bind(this, item)} >
-          <Image source = {{ uri: item.image }}
-            style={{
-              //height: this.state.height / 5,
-              height : PixelRatio.roundToNearestPixel(70),//94.5,//135,
-              height : Platform.OS === 'ios' ? PixelRatio.roundToNearestPixel(140/PixelRatio.get()) : PixelRatio.roundToNearestPixel(70),
-              opacity: item.rating == -1 ? 0.3:1,
-              margin: 1,
-              borderRadius : 7,
-              justifyContent: 'center',
-              alignItems: 'center',
+  _renderArticle(url, index, nativeEvent) {
+    const article = this.articles.get(url);
+    // TODO: Replace this with an article card component
+    // TODO: Load article images asynchronously outside the main component rendering;
+    // makes articles load slowly otherwise.
+    return (
+      <View onPressItem={this._onPressItem}>
+        <View style={{flex:1, backgroundColor: article.rating == -1 ? "#484848" : "#fff"}}>
+          <TouchableOpacity onPress={article.rating == -1 ? console.log("article rejected") : this._onPressItem.bind(this, article)} >
+            <Image source = {{ uri: article.image }}
+              style={{
+                //height: this.state.height / 5,
+                height : PixelRatio.roundToNearestPixel(70),//94.5,//135,
+                height : Platform.OS === 'ios' ? PixelRatio.roundToNearestPixel(140/PixelRatio.get()) : PixelRatio.roundToNearestPixel(70),
+                opacity: article.rating == -1 ? 0.3:1,
+                margin: 1,
+                borderRadius : 7,
+                justifyContent: 'center',
+                alignItems: 'center',
 
-            }}//style={styles.imageView}
-            onPress={this._onPressItem.bind(this, item)
-            //onPress={this._onScrollItem(nativeEvent)
+              }}//style={styles.imageView}
+              onPress={this._onPressItem.bind(this, article)
+              //onPress={this._onScrollItem(nativeEvent)
 
-            }
-             />
-        </TouchableOpacity>
-        <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width:'100%',
-                      //height: this.state.height / 17
+              }
+              progressiveRenderingEnabled
+               />
+          </TouchableOpacity>
+          <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width:'100%',
+                        //height: this.state.height / 17
 
-                      height : Platform.OS === 'ios' ? PixelRatio.roundToNearestPixel(100/PixelRatio.get()) : PixelRatio.roundToNearestPixel(50)
-        }}>
-          <Icon name="md-download" style={styles.iconStyle}    onPress={()=>item.rating == -1 ? console.log("error") :this._toggleFav( { item, index } )} />
-          <Text numberOfLines={2} style={styles.textView} onPress={item.rating == -1 ? console.log("item rejected") :this._onPressItem.bind(this, item)}>{item.title}</Text>
-          <Icon name={item.rating == -1 ? "md-checkmark" : "md-close"}  style={{color: 'black', width :'10%', paddingLeft: '3%', alignItems: 'center', justifyContent: 'center',color: item.rating == -1 ? "green" :"red"}}   onPress={()=>this._toggleReject( { item, index } )} />
+                        height : Platform.OS === 'ios' ? PixelRatio.roundToNearestPixel(100/PixelRatio.get()) : PixelRatio.roundToNearestPixel(50)
+          }}>
+            <Icon name="md-download" style={styles.iconStyle}    onPress={()=>article.rating == -1 ? console.log("error") :this._toggleFav( { article, index } )} />
+            <Text numberOfLines={2} style={styles.textView} onPress={article.rating == -1 ? console.log("article rejected") :this._onPressItem.bind(this, article)}>{article.title}</Text>
+            <Icon name={article.rating == -1 ? "md-checkmark" : "md-close"}  style={{color: 'black', width :'10%', paddingLeft: '3%', alignItems: 'center', justifyContent: 'center',color: article.rating == -1 ? "green" :"red"}}   onPress={()=>this._toggleReject( { article, index } )} />
+          </View>
         </View>
       </View>
-    </View>
-  )
+    );
+  }
+
   renderItemLandscape=({item, index, nativeEvent}) => (
     <View  onPressItem={this._onPressItem}  >
       <View style={{flex:1, flexDirection: 'row', backgroundColor: item.rating == -1 ? "#484848" : "#fff"}}>
@@ -511,24 +514,70 @@ export default class ArticlesList extends Component {
       </View>
     );
   };
-  renderFooter = () => {
+
+  _onRefresh() {
+    console.log('refreshing');
+    this.setState(
+      { page: 0, refreshing: true },
+      this._fetchArticles
+    );
+  }
+
+  _onEndReached(info) {
+    console.log(`loading more: ${JSON.stringify(info)}`);
+    this.setState((prevState) => ({
+      page: prevState.page + 1,
+      loadingMore: true
+    }), () => { this._fetchArticles() });
+  }
+
+  _renderFooter() {
+    const { height, width } = Dimensions.get('window');
+
+    if (this.state.endOfData) {
+      return (
+        <View style={[ styles.endFooter, { width } ]}>
+          <Text style={ styles.endFooterText}>·</Text>
+        </View>
+      );
+    }
+
     return (
-      <View
-        style={{
-          paddingVertical: 20,
-          borderTopWidth: 1,
-          borderColor: "#CED0CE"
-        }}
-      >
+      <View style={[ styles.loadingFooter, { width, height: height / 2} ]}>
         <ActivityIndicator animating size="large" />
       </View>
     );
-  };
-  async onRefresh() {
-    await console.log('refreshing')
-    await this.webCall();
   }
+
   render() {
+    // TODO: Need to figure out a more precise number for
+    // onEndReachedThreshold, perhaps based on the size of the screen
+    // and the article cards?
+    return (
+      <SafeAreaView style={ styles.container }>
+        { !this.state.loading ? (
+          <FlatList
+            data={ this.state.articlesList }
+            keyExtractor={ (item, index) => item }
+            renderItem={ ({item}) => this._renderArticle(item) }
+            initialNumToRender={ this.props.perPage }
+            refreshing={ this.state.refreshing }
+            onRefresh={ this._onRefresh.bind(this) }
+            onEndReached={ this._onEndReached.bind(this) }
+            onEndReachedThreshold={ 0.75 }
+            onScroll={ () => {} }
+            ListFooterComponent={ this._renderFooter.bind(this) }
+          />
+        ) : (
+          <>
+            <Text style={ styles.loadingText }>Loading news...</Text>
+            <ActivityIndicator size="large" />
+          </>
+        )}
+      </SafeAreaView>
+    );
+
+/*
     if (this.state.isLoading) {
       return (
         <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
@@ -580,73 +629,88 @@ export default class ArticlesList extends Component {
           />
 
    );
+*/
   }
 }
 
 const styles = StyleSheet.create({
-
-MainContainer :{
-
-    justifyContent: 'center',
+  container: {
     flex:1,
-    marginTop: (Platform.OS === 'ios') ? 20 : 0,
+  },
+  loadingText: {
+    alignSelf: 'center'
+  },
+  loadingFooter: {
+    position: 'relative',
+    paddingVertical: 20,
+    borderTopWidth: 1,
+    borderColor: '#f2f2f2',
+    marginTop: 10,
+    marginBottom: 10
+  },
+  endFooter: {
+    position: 'relative',
+    height: 20,
+    alignItems: 'center'
+  },
+  endFooterText: {
+    color: 'black',
+    fontWeight: 'bold'
+  },
+  imageView: {
+    height: screen.height / 5,
 
-},
-imageView: {
-  height: screen.height / 5,
-
-  margin: 7,
-  borderRadius : 7,
-  justifyContent: 'center',
-  alignItems: 'center',
-},
-offlineContainer: {
-  backgroundColor: '#b52424',
-  height: 30,
-  justifyContent: 'center',
-  alignItems: 'center',
-  flexDirection: 'row',
-  width : screen.width,
-  position: 'absolute',
-  top: 30
-},
-offlineText: { color: '#fff' },
-textView: {
-  textAlignVertical:'center',
-  textAlign: 'center',
-  padding:10,
-  color: '#000',
-  width : '80%',
-  margin:0,
-  padding:0
-
-},
-textViewLandscape: {
-    //width: screen.height < screen.width ?  screen.width/1.6 : screen.height/2,
-    width: '63%',
-    textAlignVertical:'center',
+    margin: 7,
+    borderRadius : 7,
+    justifyContent: 'center',
     alignItems: 'center',
-    textAlign: 'left',
-    //textAlign: 'left',
-    //paddingTop:screen.height / 20,
-    paddingTop: 30,
-    //paddingBottom : 30,
-    paddingLeft : 10,
-    paddingRight : 10,
-    //padding : 30,
-
+  },
+  offlineContainer: {
+    backgroundColor: '#b52424',
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    width : screen.width,
+    position: 'absolute',
+    top: 30
+  },
+  offlineText: { color: '#fff' },
+  textView: {
+    textAlignVertical:'center',
+    textAlign: 'center',
+    padding:10,
     color: '#000',
-   // backgroundColor : 'yellow'
+    width : '80%',
+    margin:0,
+    padding:0
 
-},
-iconStyle:{
-  color: 'black',
-  width :'10%',
-  paddingLeft: '3%',
-  alignItems: 'center',
-  justifyContent: 'center',
-  paddingTop : 0,
-  paddingBottom : 0
-},
+  },
+  textViewLandscape: {
+      //width: screen.height < screen.width ?  screen.width/1.6 : screen.height/2,
+      width: '63%',
+      textAlignVertical:'center',
+      alignItems: 'center',
+      textAlign: 'left',
+      //textAlign: 'left',
+      //paddingTop:screen.height / 20,
+      paddingTop: 30,
+      //paddingBottom : 30,
+      paddingLeft : 10,
+      paddingRight : 10,
+      //padding : 30,
 
+      color: '#000',
+     // backgroundColor : 'yellow'
+
+  },
+  iconStyle:{
+    color: 'black',
+    width :'10%',
+    paddingLeft: '3%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop : 0,
+    paddingBottom : 0
+  }
 });

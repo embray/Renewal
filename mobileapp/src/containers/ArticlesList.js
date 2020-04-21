@@ -1,23 +1,22 @@
-import Expo, { AppLoading } from 'expo';
 import * as SQLite from 'expo-sqlite';
+import { Icon } from 'native-base';
 import React, { Component } from 'react';
 import {
-  StyleSheet,
-  Platform,
-  Dimensions,
-  PixelRatio,
-  View,
   ActivityIndicator,
+  Dimensions,
   FlatList,
   Image,
+  PixelRatio,
+  Platform,
+  SafeAreaView,
+  StyleSheet,
+  Text,
   TouchableOpacity,
-  Alert,
-  SafeAreaView
+  View
 } from 'react-native';
-import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Text, List, ListItem, Icon } from 'native-base';
+
 const screen = Dimensions.get('window');
 const db = SQLite.openDatabase('db.db');
-
 
 // TODO: Originally this data include the user's saved articles and rejected
 // articles in the same data structure; this excludes them for now because
@@ -71,17 +70,10 @@ export default class ArticlesList extends Component {
       page: 0,
 
       // TODO: old state variables that may or may not be used
-      height : screen.height > screen.width ? screen.height : screen.width,
-      width : screen.width > screen.height ? screen.width : screen.height,
-      globalDataSource : null,
+      height : height > width ? height : width,
+      width : width > height ? width : height,
       displayDataSource : null,
-      nbItemPerPage : 5,
       newscastSavedState : null,
-      token : null,
-      sizeImageRatio : 210,
-      sizeViewRatio : 150,
-      ratio : PixelRatio.get(),
-      orientation : height > width ? 'portrait' : 'landscape'
     }
 
     // NOTE: Not part of the state; only the list of article keys is
@@ -121,13 +113,7 @@ export default class ArticlesList extends Component {
           width : deviceWidth > deviceHeight ? deviceWidth : deviceHeight,
 
       });
-      console.log(this.state.orientation);
     });
-    //console.log("pixel ratio : "+PixelRatio.get())
-    //console.log("pixel round : "+PixelRatio.roundToNearestPixel(100))
-    //this.getNewsFromApi();
-   // await this._generateDisplayItems()
-
   }
 
   fetchEvent = async (something, someData)=>{
@@ -136,25 +122,30 @@ export default class ArticlesList extends Component {
       :
       console.log("[{Event : "+something+", timestamp :"+Date.now()+","+someData+"}]")
   }
+
   executeSql = async (sql, params = []) => {
     return new Promise((resolve, reject) => db.transaction(tx => {
       tx.executeSql(sql, params, (_, { rows }) => resolve(rows._array), reject)
     }))
   }
+
   _initSqlTable = async () => {
     //await this.executeSql('DROP TABLE newscastSaved;');
     //await this.executeSql('DROP TABLE newscasts;');
     await this.executeSql('create table if not exists newscastSaved (id integer primary key , done int, title text,image text,url text);');
     //await this.executeSql('create table if not exists newscasts ( id integer primary key , title text not null,image text not null,url text not null,isSaved integer default 0, isRejected integer default 0 );');
   }
+
   _updateSelectedItems = async()=>{
     //console.log("update")
     await this.executeSql('select * from newscastSaved', []).then(newscastSavedState => this.setState({newscastSavedState})  );
     await this._checkSavedItems();
   }
+
   _downloadSqlTableSaved= async () => {
     await this.executeSql('select * from newscastSaved', []).then(newscastSavedState => this.setState({newscastSavedState})  );
   }
+
   _checkSavedItems(){
     let display = this.state.displayDataSource;
     if(this.state.newscastSavedState != null){
@@ -176,35 +167,11 @@ export default class ArticlesList extends Component {
       })
     }
   }
-  _generateDisplayItems(){
-    console.log("display")
-    let pack = []
-    let i = this.state.displayDataSource === null ? 0 : this.state.displayDataSource.length;
-    while(i != this.state.nbItemPerPage*this.state.page){
-      console.log(this.state.globalDataSource[i])
-    }
-  }
 
-  _onPressItem (item) {
+  _onPressItem(item) {
     console.log(item);
     this.fetchEvent("pressOnItem", "itemClickedTitle : "+item.title+" itemClickedUrl : "+item.url);
     this.props.navigation.navigate('Article', item);
-  }
-
-  GetItem (flower_name) {
-    Alert.alert(flower_name);
-  }
-
-  FlatListItemSeparator = () => {
-    return (
-      <View
-        style={{
-          height: .5,
-          width: "100%",
-          backgroundColor: "#000",
-        }}
-      />
-    );
   }
 
   // TODO: Eventually this will use the API for the backend to fetch
@@ -246,55 +213,7 @@ export default class ArticlesList extends Component {
       endOfData: (response.length === 0)
     }));
   }
-  /*_ItemLoadMore = () => {
-    let pack = this.state.displayDataSource;
-    let i = this.state.displayDataSource === null ? 0 : this.state.displayDataSource.length;
-    //if(this.state.displayDataSource[this.state.displayDataSource.length]!=this.state.globalDataSource[this.state.globalDataSource.length] || this.state.nbItemPerPage*this.state.page < this.state.globalDataSource.length){
-    if(this.state.nbItemPerPage*this.state.page < this.state.globalDataSource.length){
-      while(i != this.state.nbItemPerPage*this.state.page ){
-        //console.log(i)
-        //console.log(this.state.globalDataSource[i])
-        i++;
-        pack.push(this.state.globalDataSource[i])
-      }
-      this.setState({
-        page : this.state.page+1,
-        displayDataSource : pack
-      })
-    }
-    this._updateSelectedItems()
-  }*/
-  _ItemLoadMore = () => {
-    let pack = this.state.displayDataSource;
-    let i = this.state.displayDataSource === null ? 0 : this.state.displayDataSource.length;
-    let j = this.state.nbItemPerPage*this.state.page > this.state.globalDataSource.length ? this.state.globalDataSource.length : this.state.nbItemPerPage*this.state.page;
-    while(i!=j){
-      pack.push(this.state.globalDataSource[i])
-      i++;
-    }
-    console.log(pack.length)
-    console.log(this.state.globalDataSource.length)
-    if(pack.length > this.state.globalDataSource.length/2){
-      console.log("################################################ ok ####################################");
-      let global = this.state.globalDataSource;
-      // NOTE: Originally this was a separate list; now both
-      // lists are combined into one; the original first list
-      // had 17 items for some reason...
-      let more = DEBUG_ARTICLE_DATA.slice(17);
-      for (let i=0; i != more.length; i++) {
-        console.log(more[i])
-        global.push(more[i]);
-      }
-      this.setState({
-        globalDataSource : global
-      })
-    }
-    this.setState({
-      page : this.state.page+1,
-      displayDataSource : pack
-    })
-    this._updateSelectedItems()
-  }
+
   _toggleFav = async({ item, index })=>{
 
     let display = this.state.displayDataSource;
@@ -367,6 +286,7 @@ export default class ArticlesList extends Component {
     );
   }
 
+  // TODO: Decide how to render articles in landscape mode.
   renderItemLandscape=({item, index, nativeEvent}) => (
     <View  onPressItem={this._onPressItem}  >
       <View style={{flex:1, flexDirection: 'row', backgroundColor: item.rating == -1 ? "#484848" : "#fff"}}>
@@ -400,120 +320,6 @@ export default class ArticlesList extends Component {
       </View>
     </View>
   )
-  getItemLayout= (data, index) => (
-    {length: (screen.height / 17) + (screen.height / 5), offset: (screen.height / 17) + (screen.height / 5) * index, index}
-  );
-  percentageCalculator= async(sizeOneNews, position)=>{
-    let currentItemIndex = 0;
-    if(sizeOneNews > position){
-      currentItemIndex = 0;
-    }else{
-      currentItemIndex = (position/sizeOneNews+"").split('.')[0];
-    }
-    currentItemIndex++;
-    console.log(currentItemIndex)
-    let positionEndItem = currentItemIndex*sizeOneNews
-    //console.log(sizeOneNews)
-    //console.log(position)
-    //console.log("##################")
-    //console.log("positon end "+positionEndItem)
-    //console.log(positionEndItem-position)
-    let p = ((100*(positionEndItem-position))/sizeOneNews+"").split('.')[0]
-    //console.log("percent top :"+p)
-    currentItemIndex--;
-    return {
-        index : currentItemIndex,
-        title : this.state.displayDataSource[currentItemIndex].title,
-        url : this.state.displayDataSource[currentItemIndex].url,
-        percent : p+"%"
-      };
-  }
-  percentageCalculatorBottom= async(sizeOneNews, position, sizeGlobalDisplay)=>{
-    if(position < sizeGlobalDisplay) {
-      let currentItemIndex = (position/sizeOneNews+"").split('.')[0];
-
-    let positionEndItem = currentItemIndex*sizeOneNews
-    //console.log(sizeOneNews)=
-    //console.log("##################")
-    //console.log(position)
-    //console.log("positon end "+positionEndItem)
-    //console.log(position-positionEndItem)
-    let p = ((100*(position-positionEndItem))/sizeOneNews+"").split('.')[0]
-    //console.log("percent bottom :"+p)
-    currentItemIndex++;
-    currentItemIndex--;
-    return {
-        index : currentItemIndex,
-        title : this.state.displayDataSource[currentItemIndex].title,
-        url : this.state.displayDataSource[currentItemIndex].url,
-        percent : p+"%"
-      };
-    }else{
-      return null
-    }
-
-  }
-  _onScrollItem = async (nativeEvent) => {
-    // TODO: This appears to be a no-op.  Maybe it was an incomplete feature; I
-    // don't know.
-    //console.log("##### detect scroll item ####")
-    const sizeGlobalDisplay = nativeEvent.contentSize.height;
-    const displayLenght = this.state.displayDataSource.length;
-    //let tailleItem =  (screen.height / 17) + (screen.height / 5) + .5 > sizeGlobalDisplay/displayLenght ? (screen.height / 17) + (screen.height / 5) + .5 : sizeGlobalDisplay/displayLenght;
-    let tailleItem = sizeGlobalDisplay/displayLenght;
-    const tailleEcran = nativeEvent.layoutMeasurement.height;
-    //console.log("taille ecran"+ tailleEcran);
-    //console.log("Taille item"+tailleItem);
-    //console.log("NB items visible : "+tailleEcran/tailleItem)
-    let paquet = [ ];
-    const itemTop = await this.percentageCalculator(tailleItem, nativeEvent.contentOffset.y);
-    paquet.push(itemTop)
-    const itemBottom = await this.percentageCalculatorBottom(tailleItem, nativeEvent.contentOffset.y+tailleEcran,sizeGlobalDisplay);
-    let i = await itemTop.index;
-    let j = itemBottom === null ? this.state.displayDataSource.length : itemBottom.index;
-    //console.log("j : "+j)
-    i++;
-    for(i; i<j;i++){
-      paquet.push(
-        {
-          index : i,
-          title : this.state.displayDataSource[i].title,
-          url : this.state.displayDataSource[i].url,
-          percentage : "100%"
-        }
-      )
-    }
-    paquet.push(itemBottom)
-
-    console.log(paquet)
-    //console.log(tailleEcran/tailleItem)
-
-  }
-
-  FlatListItemSeparator = () => {
-      return (
-        <View
-          style={{
-            height: .5,
-            width: "100%",
-            backgroundColor: "#000",
-          }}
-        />
-      );
-  }
-  renderEmpty = () => {
-    return (
-      <View
-        style={{
-          paddingVertical: 20,
-          borderTopWidth: 1,
-          borderColor: "#CED0CE"
-        }}
-      >
-        <ActivityIndicator animating size="large" />
-      </View>
-    );
-  };
 
   _onRefresh() {
     console.log('refreshing');
@@ -576,60 +382,6 @@ export default class ArticlesList extends Component {
         )}
       </SafeAreaView>
     );
-
-/*
-    if (this.state.isLoading) {
-      return (
-        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-          <ActivityIndicator size="large" />
-        </View>
-      );
-    }
-
-
-    return (
-
-
-      <FlatList
-          data={ this.state.displayDataSource }
-          debug={this.state.debug}
-          extraData={this.state}
-          refreshing={this.state.isLoading}
-          onRefresh={()=>this.onRefresh()}
-          ListEmptyComponent={this.renderEmpty}
-          ListFooterComponent={this.renderFooter}
-          ItemSeparatorComponent = {this.FlatListItemSeparator}
-          renderItem={({item, index, nativeEvent}) => this.state.orientation === 'portrait' ? this.renderItem({item, index, nativeEvent}) : this.renderItemLandscape({item, index, nativeEvent}) }
-          initialNumToRender={5}
-          keyExtractor={(item, index) => index.toString()}
-          onEndReachedThreshold={0.5}
-          onEndReached={({ distanceFromEnd }) => {
-            this._ItemLoadMore();
-         }}
-
-          ref={ (el) => this._flatList = el }
-
-
-
-          onLayout={ ({nativeEvent}) => {
-            //console.log("onLayout")
-            //console.log(nativeEvent)
-            Platform.OS === 'ios' ?
-            this._flatList.scrollToOffset({
-              offset: 1,
-              animated: false
-           }) :
-           this._flatList.getScrollResponder().scrollTo({x: 0, y: 1, animated: true});
-          } }
-          getItemLayout={(data, index)=>this.getItemLayout(data, index)}
-          viewabilityConfig={this.viewabilityConfig}
-          onScroll={ ({ nativeEvent }) => {
-            this._onScrollItem(nativeEvent);
-          }}
-          />
-
-   );
-*/
   }
 }
 

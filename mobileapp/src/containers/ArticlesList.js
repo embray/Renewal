@@ -252,7 +252,7 @@ export default class ArticlesList extends Component {
     return (
       <View onPressItem={this._onPressItem}>
         <View style={{flex:1, backgroundColor: article.rating == -1 ? "#484848" : "#fff"}}>
-          <TouchableOpacity onPress={article.rating == -1 ? console.log("article rejected") : this._onPressItem.bind(this, article)} >
+          <TouchableOpacity onPress={article.rating == -1 ? null : this._onPressItem.bind(this, article)} >
             <Image source = {{ uri: article.image }}
               style={{
                 //height: this.state.height / 5,
@@ -278,7 +278,7 @@ export default class ArticlesList extends Component {
                         height : Platform.OS === 'ios' ? PixelRatio.roundToNearestPixel(100/PixelRatio.get()) : PixelRatio.roundToNearestPixel(50)
           }}>
             <Icon name="md-download" style={styles.iconStyle}    onPress={()=>article.rating == -1 ? console.log("error") :this._toggleFav( { article, index } )} />
-            <Text numberOfLines={2} style={styles.textView} onPress={article.rating == -1 ? console.log("article rejected") :this._onPressItem.bind(this, article)}>{article.title}</Text>
+            <Text numberOfLines={2} style={styles.textView} onPress={article.rating == -1 ? null : this._onPressItem.bind(this, article)}>{article.title}</Text>
             <Icon name={article.rating == -1 ? "md-checkmark" : "md-close"}  style={{color: 'black', width :'10%', paddingLeft: '3%', alignItems: 'center', justifyContent: 'center',color: article.rating == -1 ? "green" :"red"}}   onPress={()=>this._toggleReject( { article, index } )} />
           </View>
         </View>
@@ -290,7 +290,7 @@ export default class ArticlesList extends Component {
   renderItemLandscape=({item, index, nativeEvent}) => (
     <View  onPressItem={this._onPressItem}  >
       <View style={{flex:1, flexDirection: 'row', backgroundColor: item.rating == -1 ? "#484848" : "#fff"}}>
-        <TouchableOpacity onPress={item.rating == -1 ? console.log("item rejected") : this._onPressItem.bind(this, item)} >
+        <TouchableOpacity onPress={item.rating == -1 ? null : this._onPressItem.bind(this, item)} >
           <Image source = {{ uri: item.image }}
             style={{
               //height: this.state.height / 8,
@@ -311,7 +311,7 @@ export default class ArticlesList extends Component {
         </TouchableOpacity>
         <View style={{width:'100%', flexDirection : 'row',  height:90//this.state.height / 8
           }}>
-          <Text numberOfLines={3} style={styles.textViewLandscape} onPress={item.rating == -1 ? console.log("item rejected") :this._onPressItem.bind(this, item)}>{item.title}</Text>
+          <Text numberOfLines={3} style={styles.textViewLandscape} onPress={item.rating == -1 ? null : this._onPressItem.bind(this, item)}>{item.title}</Text>
           <View style={{alignItems: 'center', justifyContent: 'center', flexDirection : 'column'}} >
             <Icon name="md-download" onPress={()=>item.rating == -1 ? console.log("error") :this._toggleFav( { item, index } )} />
             <Icon name={item.rating == -1 ? "md-checkmark" :"md-close"}  style={{color: 'black', alignItems: 'center', justifyContent: 'center',color: item.rating == -1 ? "green" :"red"}}   onPress={()=>this._toggleReject( { item, index } )} />

@@ -97,8 +97,15 @@ class RecommendationsContent extends Component {
   }
 
   render() {
+    // Note: The paddingTop: ThemeVariables.toolbarHeight
+    // is crucial to ensure that the top of the ArticlesList
+    // is not overlapped by the animated header; I cannot
+    // figure out exactly why this is where the padding is needed
+    // and why, say, a margin wouldn't work instead, but this seems
+    // to do the trick.
     return (
       <ArticlesList { ...this.props }
+        style={{ paddingTop: ThemeVariables.toolbarHeight }}
         onScroll={ Animated.event([{
           nativeEvent: {contentOffset: {y: this.scrollYAnim}}
         }], { useNativeDriver: true }) }

@@ -11,22 +11,11 @@ import {
 } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { createStackNavigator } from '@react-navigation/stack';
-import {
-  Body,
-  Button,
-  Header,
-  Icon,
-  Left,
-  Right,
-  Root,
-  Text,
-  Title
-} from 'native-base';
+import { Icon, Root, Text } from 'native-base';
 
 import I18n from 'ex-react-native-i18n';
 
-import ArticlesList from './ArticlesList';
+import Recommendations from './Recommendations';
 import {
   Menu,
   Favorites,
@@ -52,62 +41,6 @@ function MiniOfflineSign() {
       <Text style={styles.offlineText}>{I18n.t('no_connection')}</Text>
   </View>
   );
-}
-
-
-class HomeHeader extends Component {
-  _onMenuButtonPress() {
-    this.props.navigation.toggleDrawer();
-  }
-
-  render() {
-    const width = Dimensions.get('window').width;
-    const { name } = this.props.scene.route;
-    // Modify the flexbox for the main heading to put the title in
-    // the center
-    const flexStyle = {'flex': 1, 'justifyContent': 'center'};
-
-    return (
-      <Header style={ [styles.header, {'width': width}] }>
-        <Left style={ flexStyle }>
-          <Button transparent onPress={ this._onMenuButtonPress.bind(this) }>
-            <Icon name='menu' style={{ color: '#fff'}} />
-          </Button>
-        </Left>
-        <Body style={ [styles.headerBody, flexStyle] }>
-          <Title style={ styles.headerStyle }>RENEWAL</Title>
-        </Body>
-        <Right style={ flexStyle }>
-        </Right>
-      </Header>
-    );
-  }
-}
-
-
-// In order to add a header to DrawerNavigator screens it's apparently
-// necessary to wrap each Screen in its own StackNavigator, which is
-// a bit of a mess...
-
-// https://github.com/react-navigation/react-navigation/issues/1632
-// Not sure why DrawerNavigator screens can't also just have headers...
-const RecommendationsStack = createStackNavigator();
-
-
-// Contains the StackNavigator for the home screen which is
-// embedded in the DrawerNavigator
-class Recommendations extends Component {
-  render() {
-    return (
-      <RecommendationsStack.Navigator
-        screenOptions={{ header: (props) => <HomeHeader {...props} /> }}
-      >
-        <RecommendationsStack.Screen name="recommendations"
-          component={ ArticlesList }
-      />
-      </RecommendationsStack.Navigator>
-    );
-  }
 }
 
 
@@ -275,17 +208,6 @@ export default class Home extends Component {
 
 
 const styles = StyleSheet.create({
-  header: {
-    backgroundColor: '#212121'
-  },
-  headerTitle: {
-    color: 'white'
-  },
-  headerBody: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start'
-  },
   offlineContainer: {
     backgroundColor: '#b52424',
     height: 30,

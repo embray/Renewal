@@ -363,6 +363,7 @@ export default class ArticlesList extends Component {
       <SafeAreaView style={ styles.container }>
         { !this.state.loading ? (
           <FlatList
+            { ...this.props }
             data={ this.state.articlesList }
             keyExtractor={ (item, index) => item }
             renderItem={ ({item}) => this._renderArticle(item) }
@@ -371,7 +372,6 @@ export default class ArticlesList extends Component {
             onRefresh={ this._onRefresh.bind(this) }
             onEndReached={ this._onEndReached.bind(this) }
             onEndReachedThreshold={ 0.75 }
-            onScroll={ () => {} }
             ListFooterComponent={ this._renderFooter.bind(this) }
           />
         ) : (
@@ -387,7 +387,7 @@ export default class ArticlesList extends Component {
 
 const styles = StyleSheet.create({
   container: {
-    flex:1,
+    flex: 1
   },
   loadingText: {
     alignSelf: 'center'

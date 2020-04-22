@@ -9,7 +9,7 @@ import {
   variables as ThemeVariables
 } from 'native-base';
 import React, { Component } from 'react';
-import { Dimensions, StyleSheet } from 'react-native';
+import { Animated, Dimensions, StyleSheet } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 
 import ArticlesList from './ArticlesList';
@@ -23,6 +23,11 @@ import ArticlesList from './ArticlesList';
 const RecommendationsStack = createStackNavigator();
 
 
+// This is required as a workaround to
+// https://reactnavigation.org/docs/troubleshooting/#i-get-the-warning-non-serializable-values-were-found-in-the-navigation-state
+const headerExtraParams = {}
+
+
 // This is the "main" home screen header.
 class RecommendationsHeader extends Component {
   _onMenuButtonPress() {
@@ -30,30 +35,33 @@ class RecommendationsHeader extends Component {
   }
 
   render() {
-    const width = Dimensions.get('window').width;
     const { name } = this.props.scene.route;
+    const headerTop = headerExtraParams.headerTop;
+    const width = Dimensions.get('window').width;
+    const translateY = (headerTop !== undefined ? headerTop : 0);
+    const transform = [{ translateY }];
     // Modify the flexbox for the main heading to put the title in
     // the center
     const flexStyle = {'flex': 1, 'justifyContent': 'center'};
 
     return (
-      <Header style={ [styles.header, {'width': width}] }>
-        <Left style={ flexStyle }>
-          <Button transparent onPress={ this._onMenuButtonPress.bind(this) }>
-            <Icon name='menu' style={{ color: '#fff'}} />
-          </Button>
-        </Left>
-        <Body style={ [styles.headerBody, flexStyle] }>
-          <Title style={ styles.headerTitle }>RENEWAL</Title>
-        </Body>
-        <Right style={ flexStyle }>
-        </Right>
-      </Header>
+      <Animated.View style={[ styles.headerContainer, { width, transform } ]}>
+        <Header style={ styles.header }>
+          <Left style={ flexStyle }>
+            <Button transparent onPress={ this._onMenuButtonPress.bind(this) }>
+              <Icon name='menu' style={{ color: '#fff'}} />
+            </Button>
+          </Left>
+          <Body style={ [styles.headerBody, flexStyle] }>
+            <Title style={ styles.headerTitle }>RENEWAL</Title>
+          </Body>
+          <Right style={ flexStyle }>
+          </Right>
+        </Header>
+      </Animated.View>
     );
   }
 }
-
-
 
 
 // Contains the StackNavigator for the home screen which is
@@ -74,15 +82,27 @@ export default class Recommendations extends Component {
 
 
 class RecommendationsContent extends Component {
-  _onScroll(e) {
-    // console.log(e.nativeEvent.contentOffset.y);
+  constructor(props) {
+    super(props);
+
+    // This is a fixed constant hard-coded in native-base.
+    // Here we are just using the default theme.
+    const headerHeight = ThemeVariables.toolbarHeight;
+    this.scrollYAnim = new Animated.Value(0);
+    headerExtraParams.headerTop = this.scrollYAnim.interpolate({
+      inputRange: [0, headerHeight],
+      outputRange: [0, -headerHeight],
+      extrapolate: 'clamp'
+    });
   }
 
   render() {
     return (
       <ArticlesList { ...this.props }
-        onScroll={ this._onScroll.bind(this) }
-        scrollEventThrottle={ 16 }
+        onScroll={ Animated.event([{
+          nativeEvent: {contentOffset: {y: this.scrollYAnim}}
+        }], { useNativeDriver: true }) }
+        scrollEventThrottle={ 100 }
       />
     );
   }
@@ -90,8 +110,12 @@ class RecommendationsContent extends Component {
 
 
 const styles = StyleSheet.create({
+  headerContainer: {
+    position: 'absolute',
+    overflow: 'hidden'
+  },
   header: {
-    backgroundColor: '#212121'
+    backgroundColor: '#212121',
   },
   headerTitle: {
     color: 'white'

@@ -3,8 +3,8 @@ import { Icon } from 'native-base';
 import React, { Component } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Dimensions,
-  FlatList,
   Image,
   PixelRatio,
   Platform,
@@ -362,7 +362,7 @@ export default class ArticlesList extends Component {
     return (
       <SafeAreaView style={ styles.container }>
         { !this.state.loading ? (
-          <FlatList
+          <Animated.FlatList
             { ...this.props }
             data={ this.state.articlesList }
             keyExtractor={ (item, index) => item }

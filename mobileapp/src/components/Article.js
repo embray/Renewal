@@ -41,52 +41,114 @@ TimeAgo.locale(TimeAgoI18nFr);
 const timeAgo = new TimeAgo();
 
 
-export default class Article extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      rating: this.props.article.rating,
-      saved: this.props.article.saved
+// Higher-order component for components that modify articles in some
+// way; currently does not do much, but this will be a centralized place
+// for managing actions on individual articles in such a way that can
+// be reused throughout the application
+function articleController(WrappedComponent) {
+  return class extends WrappedComponent {
+    constructor(props) {
+      super(props);
+
+      this.state = {
+        article: this.props.article
+      }
+
+      this.setRating = this.setRating.bind(this);
+      this.toggleSaved = this.toggleSaved.bind(this);
+      this.share = this.share.bind(this);
     }
-  }
 
-  _onThumbsUp() {
-    console.log('thumbs up');
-    this.setState((prevState) => ({
-      rating: prevState.rating == 1 ? 0 : 1
-    }));
-  }
+    // Set the article's rating.
+    setRating(rating) {
+      // TODO: For now this just manages the local state of the component;
+      // later this will instead dispatch an action to propogate the article's
+      // state change through the global application state.  Same with the
+      // toogleSaved method.
+      console.log(`setRating(${rating})`);
+      this.setState((prevState) => ({
+        article: { ...prevState.article, rating }
+      }));
+    }
 
-  _onThumbsDown() {
-    console.log('thumbs down');
-    this.setState((prevState) => ({
-      rating: prevState.rating == -1 ? 0 : -1
-    }));
-  }
+    // Toggle the article's bookmarked state
+    toggleSaved() {
+      // TODO: For now this just manages the local state of the component;
+      // later this will instead dispatch an action to propogate the article's
+      // state change through the global application state.  Same with the
+      // toogleSaved method.
+      this.setState((prevState) => ({
+        article: { ...prevState.article, saved: !prevState.article.saved }
+      }));
+    }
 
-  _onSave() {
-    this.setState((prevState) => ({
-      saved: !prevState.saved
-    }));
-  }
+    // Share the article with the system's native sharing mechanism
+    async share() {
+      const { title, url } = this.props.article;
+      const message = `${I18n.t('share_message_1')} "${title}" ${I18n.t('share_message_2')}\n${url}`;
+      const subject = `${I18n.t('share_subject')} "${title}"`;
+      try {
+        // TODO: It might worth capturing the result of the share action and
+        // sending it as an event--I imagine the recommendation engines would want
+        // successful share events too...
+        await Share.share({ title, url, message, subject })
+      } catch (error) {
+        Alert.alert(error.message);
+      }
+    }
+  };
+}
 
-  async _onShare() {
-    const { title, url } = this.props.article;
-    const message = `${I18n.t('share_message_1')} "${title}" ${I18n.t('share_message_2')}\n${url}`;
-    const subject = `${I18n.t('share_subject')} "${title}"`;
-    try {
-      // TODO: It might worth capturing the result of the share action and
-      // sending it as an event--I imagine the recommendation engines would want
-      // successful share events too...
-      await Share.share({ title, url, message, subject })
-    } catch (error) {
-      Alert.alert(error.message);
+
+// Component for the strip of article control buttons at the bottom of an
+// Article card
+class _ArticleButtons extends Component {
+  _toggleRating(rating) {
+    const prevRating = this.state.article.rating;
+    if (prevRating == rating) {
+      this.setRating(0);
+    } else {
+      this.setRating(rating);
     }
   }
 
   render() {
+    const { rating, saved } = this.state.article;
+
+    return (
+      <Grid>
+        <Col>
+          <Button transparent onPress={ () => this._toggleRating(1) }>
+            <Icon name="thumbs-up" active={ rating == 1 } />
+          </Button>
+        </Col>
+        <Col>
+          <Button transparent onPress={ () => this._toggleRating(-1) }>
+            <Icon name="thumbs-down" active={ rating == -1 } />
+          </Button>
+        </Col>
+        <Col>
+          <Button transparent onPress={ this.toggleSaved }>
+            <Icon name="bookmark" active={ saved } />
+          </Button>
+        </Col>
+        <Col>
+          <Button transparent onPress={ this.share }>
+            <Icon name="share" />
+          </Button>
+        </Col>
+      </Grid>
+    );
+  }
+}
+
+
+const ArticleButtons = articleController(_ArticleButtons);
+
+
+export default class Article extends Component {
+  render() {
     const { article, source } = this.props;
-    const { rating, saved } = this.state;
     const { height } = Dimensions.get('window');
     const icon = `data:image/png;base64,${source.icon}`;
 
@@ -99,10 +161,6 @@ export default class Article extends Component {
       // more rarely.
       var dateRel = '???';
     }
-
-    // TODO: This re-renders whenever the user clicks the save button
-    // or one of the rating buttons which is a bit slow; we could optimize this
-    // significantly by pushing those state variables down into sub-components
 
     return (
       <Card>
@@ -127,28 +185,7 @@ export default class Article extends Component {
           </Body>
         </CardItem>
         <CardItem style={{ paddingTop: 0, paddingBottom: 0 }}>
-          <Grid>
-            <Col>
-              <Button transparent onPress={ this._onThumbsUp.bind(this) }>
-                <Icon name="thumbs-up" active={ rating == 1 } />
-              </Button>
-            </Col>
-            <Col>
-              <Button transparent onPress={ this._onThumbsDown.bind(this) }>
-                <Icon name="thumbs-down" active={ rating == -1 } />
-              </Button>
-            </Col>
-            <Col>
-              <Button transparent onPress={ this._onSave.bind(this) }>
-                <Icon name="bookmark" active={ saved } />
-              </Button>
-            </Col>
-            <Col>
-              <Button transparent onPress={ this._onShare.bind(this) }>
-                <Icon name="share" />
-              </Button>
-            </Col>
-          </Grid>
+          <ArticleButtons article={ article } />
         </CardItem>
       </Card>
     );

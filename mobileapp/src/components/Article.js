@@ -11,8 +11,12 @@ import {
   Dimensions,
   Image,
   Share,
-  StyleSheet
+  StyleSheet,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import {
   Body,
   Button,
@@ -157,9 +161,14 @@ class _ArticleButtons extends Component {
 const ArticleButtons = articleController(_ArticleButtons);
 
 
-export default class Article extends Component {
+class Article extends Component {
+  _onPressArticle(article) {
+    // this.fetchEvent("pressOnItem", "itemClickedTitle : "+item.title+" itemClickedUrl : "+item.url);
+    this.props.navigation.navigate('ArticleView', article);
+  }
+
   render() {
-    const { article, source } = this.props;
+    const { article, source, navigation } = this.props;
     const { height } = Dimensions.get('window');
     const icon = `data:image/png;base64,${source.icon}`;
 
@@ -173,28 +182,44 @@ export default class Article extends Component {
       var dateRel = '???';
     }
 
+    const Touchable = navigation ? (function (props) {
+      return (
+        <TouchableOpacity onPress={ this._onPressArticle.bind(this, article) }>
+          { props.children }
+        </TouchableOpacity>
+      );
+    }).bind(this) : (function (props) {
+      return (
+        <TouchableWithoutFeedback>
+          <View>{ props.children }</View>
+        </TouchableWithoutFeedback>
+      );
+    });
+
     return (
       <Card>
-        <CardItem>
-          <Left>
-            <Thumbnail source={{ uri: icon }} small />
+        <Touchable>
+          <CardItem>
+            <Left>
+              <Thumbnail source={{ uri: icon }} small />
+              <Body>
+                <Text style={{ fontWeight: 'bold' }}>{ source.name }</Text>
+              </Body>
+            </Left>
+            <Right>
+              <Text note>{ dateRel }</Text>
+            </Right>
+          </CardItem>
+          <CardItem>
             <Body>
-              <Text style={{ fontWeight: 'bold' }}>{ source.name }</Text>
+              <Text>{ article.title }</Text>
+              <Image
+                source={{ uri: article.image }}
+                style={[ styles.articleImage, { height: height / 4.0 } ]}
+              />
             </Body>
-          </Left>
-          <Right>
-            <Text note>{ dateRel }</Text>
-          </Right>
-        </CardItem>
-        <CardItem>
-          <Body>
-            <Text>{ article.title }</Text>
-            <Image
-              source={{ uri: article.image }}
-              style={[ styles.articleImage, { height: height / 4.0 } ]}
-            />
-          </Body>
-        </CardItem>
+          </CardItem>
+        </Touchable>
         <CardItem style={{ paddingTop: 0, paddingBottom: 0 }}>
           <ArticleButtons article={ article } />
         </CardItem>
@@ -202,6 +227,24 @@ export default class Article extends Component {
     );
   }
 }
+
+
+// For some reason useNavigation can only be used in a function component,
+// but it's still more convenient than having to pass the navigation down
+// through props manually.
+// I suspect there's a better way, since useNavigation works through the
+// Context API but the docs don't tell us, so I'd have to dig deeper...
+// TODO: This withNavigation HOC could be useful elsewhere so it should be
+// defined in a utility module.
+function withNavigation(WrappedComponent) {
+  return function (props) {
+    const navigation = useNavigation();
+    return (<WrappedComponent { ...props } navigation={ navigation } />);
+  }
+}
+
+
+export default withNavigation(Article);
 
 
 const styles = StyleSheet.create({

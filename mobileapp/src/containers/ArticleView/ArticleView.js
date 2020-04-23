@@ -167,7 +167,7 @@ export class ArticleHeader extends Component {
 }
 
 
-export default class Article extends Component {
+export default class ArticleView extends Component {
   constructor(props) {
     super(props)
     this.state = {

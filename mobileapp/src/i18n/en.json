@@ -89,5 +89,8 @@
   "no_connection" : "No Internet Connection",
 
   "hello world": "hello world",
-  "greeting": "Hi!"
+  "greeting": "Hi!",
+  "share_message_1": "Hello, you might find the article",
+  "share_message_2": "interesting!",
+  "share_subject": "I recommend the article:"
 }

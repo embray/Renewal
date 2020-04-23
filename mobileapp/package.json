@@ -20,6 +20,8 @@
     "expo-permissions": "~8.1.0",
     "expo-screen-orientation": "~1.0.0",
     "expo-sensors": "~8.1.0",
+    "intl": "^1.2.4",
+    "javascript-time-ago": "^2.0.7",
     "native-base": "2.13.8",
     "prop-types": "^15.7.2",
     "query-string": "^6.12.0",

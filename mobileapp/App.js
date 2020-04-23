@@ -1,5 +1,11 @@
+/* Polyfill for Intl support */
+import 'intl';
+import 'intl/locale-data/jsonp/en';
+import 'intl/locale-data/jsonp/fr';
+
 import React, { Component } from 'react';
 import { AppLoading } from 'expo';
+import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import * as Font from 'expo-font';
 import Roboto from 'native-base/Fonts/Roboto.ttf'
 import RobotoMedium from 'native-base/Fonts/Roboto_medium.ttf'
@@ -8,7 +14,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 
 import Config from './config';
 import Home from './src/containers/Home';
-import Article, { ArticleHeader } from './src/containers/Article';
+import ArticleView, { ArticleHeader } from './src/containers/ArticleView';
 
 if (Config.debug) {
     console.log(`Config: ${JSON.stringify(Config)}`);
@@ -40,7 +46,7 @@ export default class App extends Component {
           <Stack.Screen name="Home" component={Home}
             options={ {headerShown: false} }
           />
-          <Stack.Screen name="Article" component={Article}
+          <Stack.Screen name="ArticleView" component={ArticleView}
             options={{ header: (props) => <ArticleHeader {...props} /> }}
           />
         </Stack.Navigator>
@@ -54,6 +60,8 @@ export default class App extends Component {
       Roboto: Roboto,
       Roboto_medium: RobotoMedium,
       Arial: Roboto,
+      ...Ionicons.font,
+      ...MaterialCommunityIcons.font
     });
   }
 }

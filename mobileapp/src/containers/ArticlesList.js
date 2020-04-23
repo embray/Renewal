@@ -5,7 +5,6 @@ import {
   ActivityIndicator,
   Animated,
   Dimensions,
-  Image,
   PixelRatio,
   Platform,
   SafeAreaView,
@@ -14,6 +13,8 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+
+import Article from '../components/Article';
 
 const screen = Dimensions.get('window');
 const db = SQLite.openDatabase('db.db');
@@ -246,10 +247,15 @@ export default class ArticlesList extends Component {
 
   _renderArticle(url, index, nativeEvent) {
     const article = this.articles.get(url);
-    // TODO: Replace this with an article card component
+    // TODO: Need a proper way for loading sources alongside articles.
+    // Either they would be fetched simulateneously with articles or cached separately
+    // somehow.  If nothing else we need to cache source logos somewhere or else we'd
+    // have to load them over and over again.
+    const source = DEBUG_SOURCE_DATA[article.source];
     // TODO: Load article images asynchronously outside the main component rendering;
     // makes articles load slowly otherwise.
-    return (
+    return (<Article article={ article } source={ source } />);
+      /*
       <View onPressItem={this._onPressItem}>
         <View style={{flex:1, backgroundColor: article.rating == -1 ? "#484848" : "#fff"}}>
           <TouchableOpacity onPress={article.rating == -1 ? null : this._onPressItem.bind(this, article)} >
@@ -284,6 +290,7 @@ export default class ArticlesList extends Component {
         </View>
       </View>
     );
+      */
   }
 
   // TODO: Decide how to render articles in landscape mode.

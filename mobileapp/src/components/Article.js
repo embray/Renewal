@@ -4,6 +4,7 @@ import I18n from 'ex-react-native-i18n';
 import TimeAgo from 'javascript-time-ago';
 import TimeAgoI18nEn from 'javascript-time-ago/locale/en';
 import TimeAgoI18nFr from 'javascript-time-ago/locale/fr';
+import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import {
   Alert,
@@ -47,6 +48,16 @@ const timeAgo = new TimeAgo();
 // be reused throughout the application
 function articleController(WrappedComponent) {
   return class extends WrappedComponent {
+    static propTypes = {
+      // Minimal article props required for this component
+      article: PropTypes.shape({
+        url: PropTypes.string.isRequired,
+        title: PropTypes.string.isRequired,
+        rating: PropTypes.oneOf([-1, 0, 1]).isRequired,
+        saved: PropTypes.bool.isRequired
+      }).isRequired
+    }
+
     constructor(props) {
       super(props);
 

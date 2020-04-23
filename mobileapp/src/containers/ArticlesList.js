@@ -1,23 +1,17 @@
-import * as SQLite from 'expo-sqlite';
 import { Icon } from 'native-base';
 import React, { Component } from 'react';
 import {
   ActivityIndicator,
   Animated,
   Dimensions,
-  PixelRatio,
-  Platform,
   SafeAreaView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View
 } from 'react-native';
 
 import Article from '../components/Article';
 
-const screen = Dimensions.get('window');
-const db = SQLite.openDatabase('db.db');
 
 // TODO: Originally this data include the user's saved articles and rejected
 // articles in the same data structure; this excludes them for now because
@@ -84,95 +78,7 @@ export default class ArticlesList extends Component {
   }
 
   async componentDidMount() {
-    //await this._initSqlTable();
     await this._fetchArticles();
-
-    // TODO: ignore the rest of this function for now until we get the basics
-    // working.
-    return;
-
-    // TODO: Need to figure out what's going on with this sqlite storage
-    // and if we still have a use for it or not.
-    await this._updateSelectedItems()
-    try {
-      AsyncStorage.getItem('token', (err, result)=>{
-       this.setState({token: result});
-       //console.log("mon token de merde "+result)
-       })
-     } catch (error) {
-       // Error saving data
-       //console.log("oh mon dieu le token a disparu")
-     }
-    this.fetchEvent("launch",null)
-    Dimensions.addEventListener('change', () => {
-      //var {height, width} = Dimensions.get('window');
-      var deviceHeight = Dimensions.get('window').height;
-      var deviceWidth = Dimensions.get('window').width;
-      this.setState({
-          orientation: deviceHeight > deviceWidth ? 'portrait' : 'landscape',
-          height : deviceHeight > deviceWidth ? deviceHeight : deviceWidth,
-          width : deviceWidth > deviceHeight ? deviceWidth : deviceHeight,
-
-      });
-    });
-  }
-
-  fetchEvent = async (something, someData)=>{
-    return someData === null ?
-      console.log("[{Event : "+something+", timestamp :"+Date.now()+"}]")
-      :
-      console.log("[{Event : "+something+", timestamp :"+Date.now()+","+someData+"}]")
-  }
-
-  executeSql = async (sql, params = []) => {
-    return new Promise((resolve, reject) => db.transaction(tx => {
-      tx.executeSql(sql, params, (_, { rows }) => resolve(rows._array), reject)
-    }))
-  }
-
-  _initSqlTable = async () => {
-    //await this.executeSql('DROP TABLE newscastSaved;');
-    //await this.executeSql('DROP TABLE newscasts;');
-    await this.executeSql('create table if not exists newscastSaved (id integer primary key , done int, title text,image text,url text);');
-    //await this.executeSql('create table if not exists newscasts ( id integer primary key , title text not null,image text not null,url text not null,isSaved integer default 0, isRejected integer default 0 );');
-  }
-
-  _updateSelectedItems = async()=>{
-    //console.log("update")
-    await this.executeSql('select * from newscastSaved', []).then(newscastSavedState => this.setState({newscastSavedState})  );
-    await this._checkSavedItems();
-  }
-
-  _downloadSqlTableSaved= async () => {
-    await this.executeSql('select * from newscastSaved', []).then(newscastSavedState => this.setState({newscastSavedState})  );
-  }
-
-  _checkSavedItems(){
-    let display = this.state.displayDataSource;
-    if(this.state.newscastSavedState != null){
-      //console.log(this.state.newscastSavedState[0])
-      for(let j=0;this.state.displayDataSource.length!=j;j++){
-        //console.log(this.state.newscastSavedState[i].url)
-        display[j].saved = false;
-        for(let i=0;this.state.newscastSavedState.length !=i;i++){
-          //console.log(this.state.displayDataSource[j].url)
-          if(this.state.newscastSavedState[i].url === this.state.displayDataSource[j].url ){
-            //console.log("it's match!")
-            display[j].saved = true;
-
-          }
-        }
-      }
-      this.setState({
-        displayDataSource : display
-      })
-    }
-  }
-
-  _onPressItem(item) {
-    console.log(item);
-    this.fetchEvent("pressOnItem", "itemClickedTitle : "+item.title+" itemClickedUrl : "+item.url);
-    this.props.navigation.navigate('Article', item);
   }
 
   // TODO: Eventually this will use the API for the backend to fetch
@@ -215,36 +121,6 @@ export default class ArticlesList extends Component {
     }));
   }
 
-  _toggleFav = async({ item, index })=>{
-
-    let display = this.state.displayDataSource;
-    display[index].saved = !display[index].saved
-    this.setState({
-      displayDataSource : display
-    })
-
-    display[index].saved ?
-      await this.executeSql('insert into newscastSaved (done, title, image, url ) values (0, ?, ?, ?)', [display[index].title, display[index].image, display[index].url])
-      :
-      await this.executeSql('delete from newscastSaved  where title = ?', [display[index].title])
-    display[index].saved ?
-      this.fetchEvent('savedNews'," title : "+display[index].title+", url : "+display[index].url)
-      :
-      this.fetchEvent('unsavedNews'," title : "+display[index].title+", url : "+display[index].url)
-
-  }
-  _toggleReject = async({ item, index })=>{
-    let display = this.state.displayDataSource;
-    display[index].rating = 0
-    this.setState({
-      displayDataSource : display
-    })
-    display[index].rating == -1 ?
-      this.fetchEvent('rejectNews'," title : "+display[index].title+", url : "+display[index].url)
-      :
-      this.fetchEvent('unrejectNews'," title : "+display[index].title+", url : "+display[index].url)
-  }
-
   _renderArticle(url, index, nativeEvent) {
     const article = this.articles.get(url);
     // TODO: Need a proper way for loading sources alongside articles.
@@ -255,78 +131,7 @@ export default class ArticlesList extends Component {
     // TODO: Load article images asynchronously outside the main component rendering;
     // makes articles load slowly otherwise.
     return (<Article article={ article } source={ source } />);
-      /*
-      <View onPressItem={this._onPressItem}>
-        <View style={{flex:1, backgroundColor: article.rating == -1 ? "#484848" : "#fff"}}>
-          <TouchableOpacity onPress={article.rating == -1 ? null : this._onPressItem.bind(this, article)} >
-            <Image source = {{ uri: article.image }}
-              style={{
-                //height: this.state.height / 5,
-                height : PixelRatio.roundToNearestPixel(70),//94.5,//135,
-                height : Platform.OS === 'ios' ? PixelRatio.roundToNearestPixel(140/PixelRatio.get()) : PixelRatio.roundToNearestPixel(70),
-                opacity: article.rating == -1 ? 0.3:1,
-                margin: 1,
-                borderRadius : 7,
-                justifyContent: 'center',
-                alignItems: 'center',
-
-              }}//style={styles.imageView}
-              onPress={this._onPressItem.bind(this, article)
-              //onPress={this._onScrollItem(nativeEvent)
-
-              }
-              progressiveRenderingEnabled
-               />
-          </TouchableOpacity>
-          <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width:'100%',
-                        //height: this.state.height / 17
-
-                        height : Platform.OS === 'ios' ? PixelRatio.roundToNearestPixel(100/PixelRatio.get()) : PixelRatio.roundToNearestPixel(50)
-          }}>
-            <Icon name="md-download" style={styles.iconStyle}    onPress={()=>article.rating == -1 ? console.log("error") :this._toggleFav( { article, index } )} />
-            <Text numberOfLines={2} style={styles.textView} onPress={article.rating == -1 ? null : this._onPressItem.bind(this, article)}>{article.title}</Text>
-            <Icon name={article.rating == -1 ? "md-checkmark" : "md-close"}  style={{color: 'black', width :'10%', paddingLeft: '3%', alignItems: 'center', justifyContent: 'center',color: article.rating == -1 ? "green" :"red"}}   onPress={()=>this._toggleReject( { article, index } )} />
-          </View>
-        </View>
-      </View>
-    );
-      */
   }
-
-  // TODO: Decide how to render articles in landscape mode.
-  renderItemLandscape=({item, index, nativeEvent}) => (
-    <View  onPressItem={this._onPressItem}  >
-      <View style={{flex:1, flexDirection: 'row', backgroundColor: item.rating == -1 ? "#484848" : "#fff"}}>
-        <TouchableOpacity onPress={item.rating == -1 ? null : this._onPressItem.bind(this, item)} >
-          <Image source = {{ uri: item.image }}
-            style={{
-              //height: this.state.height / 8,
-              height: 90,
-              width : this.state.width/3,
-              opacity: item.rating == -1 ? 0.3:1,
-              margin: 1,
-              borderRadius : 7,
-              justifyContent: 'center',
-              alignItems: 'center',
-
-            }}//style={styles.imageView}
-            onPress={this._onPressItem.bind(this, item)
-            //onPress={this._onScrollItem(nativeEvent)
-
-            }
-             />
-        </TouchableOpacity>
-        <View style={{width:'100%', flexDirection : 'row',  height:90//this.state.height / 8
-          }}>
-          <Text numberOfLines={3} style={styles.textViewLandscape} onPress={item.rating == -1 ? null : this._onPressItem.bind(this, item)}>{item.title}</Text>
-          <View style={{alignItems: 'center', justifyContent: 'center', flexDirection : 'column'}} >
-            <Icon name="md-download" onPress={()=>item.rating == -1 ? console.log("error") :this._toggleFav( { item, index } )} />
-            <Icon name={item.rating == -1 ? "md-checkmark" :"md-close"}  style={{color: 'black', alignItems: 'center', justifyContent: 'center',color: item.rating == -1 ? "green" :"red"}}   onPress={()=>this._toggleReject( { item, index } )} />
-          </View>
-        </View>
-      </View>
-    </View>
-  )
 
   _onRefresh() {
     console.log('refreshing');
@@ -415,61 +220,5 @@ const styles = StyleSheet.create({
   endFooterText: {
     color: 'black',
     fontWeight: 'bold'
-  },
-  imageView: {
-    height: screen.height / 5,
-
-    margin: 7,
-    borderRadius : 7,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  offlineContainer: {
-    backgroundColor: '#b52424',
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
-    width : screen.width,
-    position: 'absolute',
-    top: 30
-  },
-  offlineText: { color: '#fff' },
-  textView: {
-    textAlignVertical:'center',
-    textAlign: 'center',
-    padding:10,
-    color: '#000',
-    width : '80%',
-    margin:0,
-    padding:0
-
-  },
-  textViewLandscape: {
-      //width: screen.height < screen.width ?  screen.width/1.6 : screen.height/2,
-      width: '63%',
-      textAlignVertical:'center',
-      alignItems: 'center',
-      textAlign: 'left',
-      //textAlign: 'left',
-      //paddingTop:screen.height / 20,
-      paddingTop: 30,
-      //paddingBottom : 30,
-      paddingLeft : 10,
-      paddingRight : 10,
-      //padding : 30,
-
-      color: '#000',
-     // backgroundColor : 'yellow'
-
-  },
-  iconStyle:{
-    color: 'black',
-    width :'10%',
-    paddingLeft: '3%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop : 0,
-    paddingBottom : 0
   }
 });

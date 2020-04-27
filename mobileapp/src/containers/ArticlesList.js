@@ -27,13 +27,13 @@ const DEBUG_SOURCE_DATA = require('../data/debug_sources.json');
 
 
 function _fake_article_statuses(articles) {
-  // Here we cycle through saved statuses and ratings for each debug article
-  var _saved = false;
+  // Here we cycle through bookmarked statuses and ratings for each debug article
+  var _bookmarked = false;
   var _rating = 0;
   articles.forEach((article) => {
-    article.saved = _saved;
+    article.bookmarked = _bookmarked;
     article.rating = _rating;
-    _saved = !_saved;
+    _bookmarked = !_bookmarked;
     _rating = _rating == 1 ? -1 : _rating + 1;
   });
   return articles;

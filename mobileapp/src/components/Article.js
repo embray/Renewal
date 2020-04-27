@@ -58,7 +58,7 @@ function articleController(WrappedComponent) {
         url: PropTypes.string.isRequired,
         title: PropTypes.string.isRequired,
         rating: PropTypes.oneOf([-1, 0, 1]).isRequired,
-        saved: PropTypes.bool.isRequired
+        bookmarked: PropTypes.bool.isRequired
       }).isRequired
     }
 
@@ -93,7 +93,7 @@ function articleController(WrappedComponent) {
       // state change through the global application state.  Same with the
       // toogleSaved method.
       this.setState((prevState) => ({
-        article: { ...prevState.article, saved: !prevState.article.saved }
+        article: { ...prevState.article, bookmarked: !prevState.article.bookmarked }
       }));
     }
 
@@ -128,7 +128,7 @@ class _ArticleButtons extends Component {
   }
 
   render() {
-    const { rating, saved } = this.state.article;
+    const { rating, bookmarked } = this.state.article;
 
     return (
       <Grid>
@@ -144,7 +144,7 @@ class _ArticleButtons extends Component {
         </Col>
         <Col>
           <Button transparent onPress={ this.toggleSaved }>
-            <Icon name="bookmark" active={ saved } />
+            <Icon name="bookmark" active={ bookmarked } />
           </Button>
         </Col>
         <Col>

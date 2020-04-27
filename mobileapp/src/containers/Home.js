@@ -18,7 +18,7 @@ import I18n from 'ex-react-native-i18n';
 import Recommendations from './Recommendations';
 import {
   Menu,
-  Favorites,
+  Bookmarks,
   History,
   Account,
   Settings
@@ -58,10 +58,10 @@ const SCREEN_OPTIONS = new Map([
     label: I18n.t('side_menu_recommendation'),
     icon: iconFactory('md-home')
   }],
-  ['favorites', {
-    component: Favorites,
-    label: I18n.t('side_menu_fav'),
-    icon: iconFactory('md-star')
+  ['bookmarks', {
+    component: Bookmarks,
+    label: I18n.t('side_menu_bookmarks'),
+    icon: iconFactory('md-bookmark')
   }],
   ['history', {
     component: History,

@@ -18,43 +18,33 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Text, List, ListItem } from 'native-base';
 const screen = Dimensions.get('window');
 const db = SQLite.openDatabase('db.db');
-import I18n from 'ex-react-native-i18n';
 
 import SideHeader from './SideHeader';
 
 
-I18n.fallbacks = true
-const deviceLocale = I18n.locale
+const BookmarksStack = createStackNavigator();
 
-I18n.translations = {
-  'en': require("../../i18n/en"),
-  'fr': require('../../i18n/fr'),
-};
-
-
-const FavoritesStack = createStackNavigator();
-
-// Wrapper class needed to put the Favorites header in a StackNavigator
+// Wrapper class needed to put the Bookmarks header in a StackNavigator
 // TODO: This code is repeated in a number of places; I wonder if it could
 // be refactored.
-export default class Favorites extends Component {
+export default class Bookmarks extends Component {
   render() {
     return (
-      <FavoritesStack.Navigator
+      <BookmarksStack.Navigator
         screenOptions={{ header: (props) => <SideHeader {...props} /> }}
       >
-        <FavoritesStack.Screen name="favorites"
-          component={ FavoritesContent }
+        <BookmarksStack.Screen name="bookmarks"
+          component={ BookmarksContent }
       />
-      </FavoritesStack.Navigator>
+      </BookmarksStack.Navigator>
     );
   }
 }
 
 
-// TODO: Much of this is currently broken; need to make some dummy favorites
+// TODO: Much of this is currently broken; need to make some dummy bookmarks
 // for testing.
-class FavoritesContent extends Component {
+class BookmarksContent extends Component {
   constructor(props) {
     super(props);
     this.state = {

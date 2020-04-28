@@ -11,6 +11,7 @@ import {
 import React, { Component } from 'react';
 import { Animated, Dimensions, StyleSheet } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { connect } from 'react-redux';
 
 import ArticlesList from './ArticlesList';
 
@@ -81,7 +82,7 @@ export default class Recommendations extends Component {
 }
 
 
-class RecommendationsContent extends Component {
+class _RecommendationsContent extends Component {
   constructor(props) {
     super(props);
 
@@ -114,6 +115,18 @@ class RecommendationsContent extends Component {
     );
   }
 }
+
+
+function mapStateToProps(state) {
+  return {
+    articleIds: state.articles.recommendationsList
+  };
+}
+
+
+const RecommendationsContent = connect(
+  mapStateToProps
+)(_RecommendationsContent);
 
 
 const styles = StyleSheet.create({

@@ -9,34 +9,58 @@ import {
   Text,
   View
 } from 'react-native';
+import { connect } from 'react-redux';
 
-import Article from '../components/Article';
-
-
-// TODO: Originally this data include the user's saved articles and rejected
-// articles in the same data structure; this excludes them for now because
-// the dummy data is not user-specific.  We might later include this
-// either via a separate API request, or part of the same request with some
-// kind of graphql query; for debugging we can load these randomly or according
-// to some pattern.
-// TODO: Later these will be loaded conditionally depending on whether we're in
-// debug mode (if this is even possible).
-const DEBUG_ARTICLE_DATA = _fake_article_statuses(
-  require('../data/debug_articles.json'));
-const DEBUG_SOURCE_DATA = require('../data/debug_sources.json');
+import { articleActions } from '../actions';
+import { Article } from '../components/Article';
 
 
-function _fake_article_statuses(articles) {
+// TODO: These will probably be moved again elsewhere once the backend API is
+// in-place; then the backend API would handle debug simulations.
+// Sort newest first
+const DEBUG_ARTICLES = require('../data/debug_articles.json').sort((a, b) => {
+  if (a.date > b.date) {
+    return -1;
+  } else if (a.date < b.date) {
+    return 1;
+  } else {
+    return 0;
+  }
+});
+
+const DEBUG_SOURCES = require('../data/debug_sources.json');
+
+function _fake_article_interactions(articles) {
   // Here we cycle through bookmarked statuses and ratings for each debug article
-  var _bookmarked = false;
-  var _rating = 0;
+  var bookmarked = false;
+  var rating = 0;
+  let interactions = {};
   articles.forEach((article) => {
-    article.bookmarked = _bookmarked;
-    article.rating = _rating;
-    _bookmarked = !_bookmarked;
-    _rating = _rating == 1 ? -1 : _rating + 1;
+    interactions[article.url] = { rating, bookmarked };
+    bookmarked = !bookmarked;
+    rating = (rating == 1 ? -1 : rating);
   });
-  return articles;
+  return interactions;
+}
+
+const DEBUG_INTERACTIONS = _fake_article_interactions(DEBUG_ARTICLES);
+
+// Fetch fake debug data
+function _debugFetch(lastArticleId, perPage) {
+  // TODO: Here we would actually fetch the data from the backend
+  let start = (lastArticleId ?
+    DEBUG_ARTICLES.findIndex(a => a.url == lastArticleId) + 1 : 0);
+  let end = start + perPage;
+  const articles = DEBUG_ARTICLES.slice(start, end);
+  const interactions = {};
+  const sources = {};
+  // Article fetches include their associated sources and interactions
+  articles.forEach((article) => {
+    interactions[article.url] = DEBUG_INTERACTIONS[article.url];
+    sources[article.source] = DEBUG_SOURCES[article.source];
+  });
+
+  return { articles, interactions, sources };
 }
 
 
@@ -46,23 +70,22 @@ function sleep(ms) {
 }
 
 
-export default class ArticlesList extends Component {
+class ArticlesList extends Component {
   static defaultProps = {
+    articleIds: [],
     perPage: 5
   }
 
   constructor(props) {
     super(props);
 
-    const {height, width} = Dimensions.get('window');
+    const { height, width } = Dimensions.get('window');
 
     this.state = {
       refreshing: false,
       loading: true,
       loadingMore: false,
       endOfData: false,
-      articlesList: [],
-      page: 0,
 
       // TODO: old state variables that may or may not be used
       height : height > width ? height : width,
@@ -70,11 +93,6 @@ export default class ArticlesList extends Component {
       displayDataSource : null,
       newscastSavedState : null,
     }
-
-    // NOTE: Not part of the state; only the list of article keys is
-    // in the state.  For now we key articles on their URLs but later
-    // we'll use something more efficient (i.e. an ID number)
-    this.articles = new Map();
   }
 
   async componentDidMount() {
@@ -85,58 +103,44 @@ export default class ArticlesList extends Component {
   // articles, and may include a built-in layer for article caching,
   // as well as the fallback that loads demo data in debug mode.
   async _fetchArticles() {
-    const { perPage } = this.props;
-    const { page } = this.state;
+    const { articleIds, perPage } = this.props;
+    const lastArticleId = articleIds[articleIds.length - 1];
 
-    console.log(`fetching articles page ${page} with ${perPage} per page`);
     // Simulate data being refreshed
     // TODO: Only do this in debug mode--simul
     await sleep(50);
 
     // TODO: Here we would actually fetch the data from the backend
-    const response = DEBUG_ARTICLE_DATA.slice(page * perPage,
-                                              (page + 1) * perPage);
-    const newArticles = [];
+    const response = _debugFetch(lastArticleId, perPage);
 
-    // TODO: This line is debug only to test refreshing
-    // to simulate getting new articles.
-    if (page == 0) {
-      this.articles.clear();
-    }
-
-    for (let article of response) {
-      if (!this.articles.has(article.url)) {
-        newArticles.push(article.url);
-        this.articles.set(article.url, article);
-      }
-    }
+    this.props.newRecommendations(
+      response.articles,
+      response.articleInteractions,
+      response.sources
+    );
 
     this.setState((prevState) => ({
-      articlesList: (prevState.page === 0 ?
-        newArticles : [...prevState.articlesList, ...newArticles]),
       refreshing: false,
       loading: false,
       loadingMore: false,
-      endOfData: (response.length === 0)
+      endOfData: (response.articles.length === 0)
     }));
   }
 
   _renderArticle(url, index, nativeEvent) {
-    const article = this.articles.get(url);
     // TODO: Need a proper way for loading sources alongside articles.
     // Either they would be fetched simulateneously with articles or cached separately
     // somehow.  If nothing else we need to cache source logos somewhere or else we'd
     // have to load them over and over again.
-    const source = DEBUG_SOURCE_DATA[article.source];
     // TODO: Load article images asynchronously outside the main component rendering;
     // makes articles load slowly otherwise.
-    return (<Article article={ article } source={ source } />);
+    return (<Article articleId={ url } />);
   }
 
   _onRefresh() {
     console.log('refreshing');
     this.setState(
-      { page: 0, refreshing: true },
+      { refreshing: true },
       this._fetchArticles
     );
   }
@@ -144,7 +148,6 @@ export default class ArticlesList extends Component {
   _onEndReached(info) {
     console.log(`loading more: ${JSON.stringify(info)}`);
     this.setState((prevState) => ({
-      page: prevState.page + 1,
       loadingMore: true
     }), () => { this._fetchArticles() });
   }
@@ -176,7 +179,7 @@ export default class ArticlesList extends Component {
         { !this.state.loading ? (
           <Animated.FlatList
             { ...this.props }
-            data={ this.state.articlesList }
+            data={ this.props.articleIds }
             keyExtractor={ (item, index) => item }
             renderItem={ ({item}) => this._renderArticle(item) }
             initialNumToRender={ this.props.perPage }
@@ -196,6 +199,12 @@ export default class ArticlesList extends Component {
     );
   }
 }
+
+
+// Doesn't need any props from the global state (it takes the array of
+// article IDs in ownProps) but does need dispatch
+export default connect(null, articleActions)(ArticlesList);
+
 
 const styles = StyleSheet.create({
   container: {

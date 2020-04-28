@@ -24,11 +24,6 @@ import ArticlesList from './ArticlesList';
 const RecommendationsStack = createStackNavigator();
 
 
-// This is required as a workaround to
-// https://reactnavigation.org/docs/troubleshooting/#i-get-the-warning-non-serializable-values-were-found-in-the-navigation-state
-const headerExtraParams = {}
-
-
 // This is the "main" home screen header.
 class RecommendationsHeader extends Component {
   _onMenuButtonPress() {
@@ -36,19 +31,19 @@ class RecommendationsHeader extends Component {
   }
 
   render() {
-    const { name } = this.props.scene.route;
+    const { name } = this.props.route;
+    const { translateYAnim } = this.props;
     //const headerTop = headerExtraParams.headerTop;
-    const headerTranslateY = headerExtraParams.headerTranslateY;
     const width = Dimensions.get('window').width;
     //const translateY = (headerTop !== undefined ? headerTop : 0);
-    const translateY = (headerTranslateY !== undefined ? headerTranslateY : 0);
+    const translateY = (translateYAnim !== undefined ? translateYAnim : 0);
     const transform = [{ translateY }];
     // Modify the flexbox for the main heading to put the title in
     // the center
     const flexStyle = {'flex': 1, 'justifyContent': 'center'};
 
     return (
-      <Animated.View style={[ styles.headerContainer, { width, transform } ]}>
+      <Animated.View style={[ styles.headerContainer, { width, translateY } ]}>
         <Header style={ styles.header }>
           <Left style={ flexStyle }>
             <Button transparent onPress={ this._onMenuButtonPress.bind(this) }>
@@ -71,9 +66,17 @@ class RecommendationsHeader extends Component {
 // embedded in the DrawerNavigator
 export default class Recommendations extends Component {
   render() {
+    // Hack: We set the navigation header to null here, which just leaves
+    // a blank space in the header content area.  The header content will
+    // be filled by RecommendationsHeader, but because it is absolutely
+    // positioned in order to make the animation look good, it cannot
+    // receive touch events unless it is actually lower in the DOM than
+    // other components.  Basically absolutely positioned elements get
+    // implicit negative zorder than can't be overridden unless they are
+    // positioned later in the DOM--this is true of web development as well.
     return (
       <RecommendationsStack.Navigator
-        screenOptions={{ header: (props) => <RecommendationsHeader {...props} /> }}
+        screenOptions={{ header: (props) => null }}
       >
         <RecommendationsStack.Screen name="recommendations"
           component={ RecommendationsContent }
@@ -98,7 +101,7 @@ class _RecommendationsContent extends Component {
     // simply the difference between scrollYAnim's current and previous values
     // clamped to the range [0, headerHeight]; the interpolation then
     // merely inverts the value to set the header translation
-    headerExtraParams.headerTranslateY = Animated.diffClamp(
+    this.headerTranslateYAnim = Animated.diffClamp(
       this.scrollYAnim, 0, headerHeight).interpolate({
         inputRange: [0, 1],
         outputRange: [0, -1]
@@ -116,15 +119,28 @@ class _RecommendationsContent extends Component {
     // Note: overScrollMode prevents a 'bounce' on android when reaching
     // the top of the last that can cause the header to get bumped out of
     // place a bit; can't figure out how to prevent that otherwise.
+    // the center
+    //
+    // Hack!!  We include RecommendationsHeader here *after* ArticlesList
+    // since it's an absolutely positioned element and can't be interacted
+    // with otherwise.  See note the Recommendations.render() method for more
+    // details.
+    const flexStyle = {'flex': 1, 'justifyContent': 'center'};
     return (
-      <ArticlesList { ...this.props }
-        style={{ paddingTop: ThemeVariables.toolbarHeight }}
-        onScroll={ Animated.event([{
-          nativeEvent: {contentOffset: {y: this.scrollYAnim}}
-        }], { useNativeDriver: true }) }
-        scrollEventThrottle={ 16 }
-        overScrollMode={ 'never' }
-      />
+      <>
+        <ArticlesList { ...this.props }
+          style={{ paddingTop: ThemeVariables.toolbarHeight }}
+          onScroll={ Animated.event([{
+            nativeEvent: {contentOffset: {y: this.scrollYAnim}}
+          }], { useNativeDriver: true }) }
+          scrollEventThrottle={ 16 }
+          overScrollMode={ 'never' }
+        />
+        <RecommendationsHeader route={ this.props.route }
+          navigation={ this.props.navigation }
+          translateYAnim={ this.headerTranslateYAnim }
+        />
+      </>
     );
   }
 }

@@ -37,9 +37,11 @@ class RecommendationsHeader extends Component {
 
   render() {
     const { name } = this.props.scene.route;
-    const headerTop = headerExtraParams.headerTop;
+    //const headerTop = headerExtraParams.headerTop;
+    const headerTranslateY = headerExtraParams.headerTranslateY;
     const width = Dimensions.get('window').width;
-    const translateY = (headerTop !== undefined ? headerTop : 0);
+    //const translateY = (headerTop !== undefined ? headerTop : 0);
+    const translateY = (headerTranslateY !== undefined ? headerTranslateY : 0);
     const transform = [{ translateY }];
     // Modify the flexbox for the main heading to put the title in
     // the center
@@ -90,11 +92,17 @@ class _RecommendationsContent extends Component {
     // Here we are just using the default theme.
     const headerHeight = ThemeVariables.toolbarHeight;
     this.scrollYAnim = new Animated.Value(0);
-    headerExtraParams.headerTop = this.scrollYAnim.interpolate({
-      inputRange: [0, headerHeight],
-      outputRange: [0, -headerHeight],
-      extrapolate: 'clamp'
-    });
+
+    // Using Animated.diffClamp ensures that the raw scroll
+    // animation value (the contentOffset.y of the page) is
+    // simply the difference between scrollYAnim's current and previous values
+    // clamped to the range [0, headerHeight]; the interpolation then
+    // merely inverts the value to set the header translation
+    headerExtraParams.headerTranslateY = Animated.diffClamp(
+      this.scrollYAnim, 0, headerHeight).interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, -1]
+      });
   }
 
   render() {
@@ -104,13 +112,18 @@ class _RecommendationsContent extends Component {
     // figure out exactly why this is where the padding is needed
     // and why, say, a margin wouldn't work instead, but this seems
     // to do the trick.
+    //
+    // Note: overScrollMode prevents a 'bounce' on android when reaching
+    // the top of the last that can cause the header to get bumped out of
+    // place a bit; can't figure out how to prevent that otherwise.
     return (
       <ArticlesList { ...this.props }
         style={{ paddingTop: ThemeVariables.toolbarHeight }}
         onScroll={ Animated.event([{
           nativeEvent: {contentOffset: {y: this.scrollYAnim}}
         }], { useNativeDriver: true }) }
-        scrollEventThrottle={ 100 }
+        scrollEventThrottle={ 16 }
+        overScrollMode={ 'never' }
       />
     );
   }

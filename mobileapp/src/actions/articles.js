@@ -87,6 +87,8 @@ export const reducer = createReducer(initialState, {
     Object.assign(state.articleInteractions, articleInteractions);
     Object.assign(state.sources, sources);
 
+    const articlesSet = new Set(list.list);
+
     // Now update the appropriate articles array and update the articles
     // object for each article passed to the action
     articles.forEach((article) => {
@@ -94,7 +96,9 @@ export const reducer = createReducer(initialState, {
       if (state.articleInteractions[article.url] === undefined) {
         state.articleInteractions[article.url] = articleInteractionsInitialState;
       }
-      list.list.push(article.url);
+      if (!articlesSet.has(article.url)) {
+        list.list.push(article.url);
+      }
     });
   },
 
@@ -122,7 +126,7 @@ export const reducer = createReducer(initialState, {
     }
     if (articleInteractions.bookmarked) {
       // Remove bookmark
-      bookmarks.splice(bookmarks.findIndex(i => { i == articleId }), 1);
+      bookmarks.splice(bookmarks.findIndex(i => ( i == articleId )), 1);
     } else {
       // Insert bookmark
       bookmarks.splice(0, 0, articleId);

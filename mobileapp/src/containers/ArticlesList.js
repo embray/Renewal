@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { connect } from 'react-redux';
 
+import Config from '../../config';
 import { articleActions } from '../actions';
 import { Article } from '../components/Article';
 
@@ -18,46 +19,45 @@ import { Article } from '../components/Article';
 // TODO: These will probably be moved again elsewhere once the backend API is
 // in-place; then the backend API would handle debug simulations.
 // Sort newest first
-const DEBUG_ARTICLES = require('../data/debug_articles.json').sort((a, b) => {
-  if (a.date > b.date) {
-    return -1;
-  } else if (a.date < b.date) {
-    return 1;
-  } else {
-    return 0;
-  }
-});
-
+const DEBUG_ARTICLES = require('../data/debug_articles.json');
 const DEBUG_SOURCES = require('../data/debug_sources.json');
-
-function _fake_article_interactions(articles) {
-  // Here we cycle through bookmarked statuses and ratings for each debug article
-  var bookmarked = false;
-  var rating = 0;
-  let interactions = {};
-  articles.forEach((article) => {
-    interactions[article.url] = { rating, bookmarked };
-    bookmarked = !bookmarked;
-    rating = (rating == 1 ? -1 : rating + 1);
-  });
-  return interactions;
-}
-
-const DEBUG_INTERACTIONS = _fake_article_interactions(DEBUG_ARTICLES);
+const DEBUG_DATA_SOURCE = {
+  articles: Object.fromEntries(DEBUG_ARTICLES.map((a) => [a.url, a])),
+  articleLists: {
+    recommendations: DEBUG_ARTICLES.sort((a, b) => {
+      if (a.date > b.date) {
+        return -1;
+      } else if (a.date < b.date) {
+        return 1;
+      } else {
+        return 0;
+      }
+    }).map((a) => a.url),
+    bookmarks : []
+  },
+  articleInteractions: [],
+  sources: DEBUG_SOURCES
+};
 
 // Fetch fake debug data
-function _debugFetch(lastArticleId, perPage) {
+function _debugFetch(listName, lastArticleId, perPage) {
   // TODO: Here we would actually fetch the data from the backend
+  let articles = DEBUG_DATA_SOURCE.articleLists[listName];
+
   let start = (lastArticleId ?
-    DEBUG_ARTICLES.findIndex(a => a.url == lastArticleId) + 1 : 0);
+    articles.findIndex(id => id == lastArticleId) + 1 : 0);
   let end = start + perPage;
-  const articles = DEBUG_ARTICLES.slice(start, end);
+
+  articles = articles.slice(start, end);
+  articles = articles.map((id) => DEBUG_DATA_SOURCE.articles[id])
+
   const interactions = {};
-  const sources = {};
+  const sources = {}
+
   // Article fetches include their associated sources and interactions
   articles.forEach((article) => {
-    interactions[article.url] = DEBUG_INTERACTIONS[article.url];
-    sources[article.source] = DEBUG_SOURCES[article.source];
+    interactions[article.url] = DEBUG_DATA_SOURCE.articleInteractions[article.url];
+    sources[article.source] = DEBUG_DATA_SOURCE.sources[article.source];
   });
 
   return { articles, interactions, sources };
@@ -96,18 +96,22 @@ class ArticlesList extends Component {
 
   async componentDidMount() {
     await this._fetchArticles();
-    this.flatList.current.getNode().scrollToIndex({
-      index: this.props.articleList.current || 0,
-      viewPosition: 0.5,
-      animated: false
-    });
+    if (this.props.articleList.list.length) {
+      // If the list is empty this will try to scroll to a non-existent
+      // item resulting in a warning.
+      this.flatList.current.getNode().scrollToIndex({
+        index: this.props.articleList.current || 0,
+        viewPosition: 0.5,
+        animated: false
+      });
+    }
   }
 
   // TODO: Eventually this will use the API for the backend to fetch
   // articles, and may include a built-in layer for article caching,
   // as well as the fallback that loads demo data in debug mode.
   async _fetchArticles() {
-    const { articleList, perPage } = this.props;
+    const { listName, articleList, perPage } = this.props;
     const list = articleList.list;
     const lastArticleId = list[list.length - 1];
 
@@ -116,7 +120,7 @@ class ArticlesList extends Component {
     await sleep(50);
 
     // TODO: Here we would actually fetch the data from the backend
-    const response = _debugFetch(lastArticleId, perPage);
+    const response = _debugFetch(listName, lastArticleId, perPage);
 
     this.props.newArticles(
       response.articles,
@@ -160,7 +164,13 @@ class ArticlesList extends Component {
   _onViewableItemsChanged({ viewableItems, changed }) {
     // The top-most viewable item is set as the current
     // item in this ArticlesList
-    this.props.setCurrentArticle(viewableItems[0].index);
+    // NOTE: Sometimes when deleting items (such as when removing
+    // bookmarks from the bookmarks view) it's possible to get in
+    // a situation where no items are viewable (i.e. neither is
+    // 50% on screen).  In this case just ignore the change
+    if (viewableItems.length) {
+      this.props.setCurrentArticle(viewableItems[0].index);
+    }
   }
 
   _onScrollToIndexFailed(error) {
@@ -224,7 +234,7 @@ class ArticlesList extends Component {
           />
         ) : (
           <>
-            <Text style={ styles.loadingText }>Loading news...</Text>
+            <Text style={ styles.loadingText }>Loading { this.props.listName }...</Text>
             <ActivityIndicator size="large" />
           </>
         )}
@@ -237,6 +247,16 @@ class ArticlesList extends Component {
 // Doesn't need any props from the global state (it takes the array of
 // article IDs in ownProps) but does need dispatch
 function mapStateToProps(state, ownProps) {
+  if (Config.debug) {
+    // TODO: Debug only--remove when we fix the debug article fetching
+    // Fill the debug article interactions and bookmarks from the state.
+    const interactions = state.articles.articleInteractions;
+    const bookmarksList = state.articles.articleLists.bookmarks.list;
+
+    Object.assign(DEBUG_DATA_SOURCE.articleInteractions, interactions);
+    DEBUG_DATA_SOURCE.articleLists.bookmarks = [ ...bookmarksList ];
+  }
+
   return {
     articleList: state.articles.articleLists[ownProps.listName]
   };

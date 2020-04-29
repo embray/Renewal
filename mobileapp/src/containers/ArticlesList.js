@@ -98,6 +98,7 @@ class ArticlesList extends Component {
     await this._fetchArticles();
     this.flatList.current.getNode().scrollToIndex({
       index: this.props.articleList.current || 0,
+      viewPosition: 0.5,
       animated: false
     });
   }
@@ -173,6 +174,7 @@ class ArticlesList extends Component {
       if (this.props.articleList.list !== 0 && this.flatList !== null) {
         this.flatList.current.getNode().scrollToIndex({
           index: error.index,
+          viewPosition: 0.5,
           animated: false
         });
       }

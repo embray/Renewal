@@ -73,25 +73,17 @@ function sleep(ms) {
 class ArticlesList extends Component {
   static defaultProps = {
     articleIds: [],
-    perPage: 5
+    perPage: 10
   }
 
   constructor(props) {
     super(props);
-
-    const { height, width } = Dimensions.get('window');
 
     this.state = {
       refreshing: false,
       loading: true,
       loadingMore: false,
       endOfData: false,
-
-      // TODO: old state variables that may or may not be used
-      height : height > width ? height : width,
-      width : width > height ? width : height,
-      displayDataSource : null,
-      newscastSavedState : null,
     }
   }
 
@@ -172,10 +164,10 @@ class ArticlesList extends Component {
 
   render() {
     // TODO: Need to figure out a more precise number for
-    // onEndReachedThreshold, perhaps based on the size of the screen
-    // and the article cards?
+    // onEndReachedThreshold, perhaps based on the size of the screen and the
+    // article cards?
     return (
-      <SafeAreaView style={ styles.container }>
+      <SafeAreaView>
         { !this.state.loading ? (
           <Animated.FlatList
             { ...this.props }
@@ -207,14 +199,10 @@ export default connect(null, articleActions)(ArticlesList);
 
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   loadingText: {
     alignSelf: 'center'
   },
   loadingFooter: {
-    position: 'relative',
     paddingVertical: 20,
     borderTopWidth: 1,
     borderColor: '#f2f2f2',
@@ -222,7 +210,6 @@ const styles = StyleSheet.create({
     marginBottom: 10
   },
   endFooter: {
-    position: 'relative',
     height: 20,
     alignItems: 'center'
   },

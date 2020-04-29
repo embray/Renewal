@@ -93,7 +93,7 @@ class _RecommendationsContent extends Component {
 
     // This is a fixed constant hard-coded in native-base.
     // Here we are just using the default theme.
-    const headerHeight = ThemeVariables.toolbarHeight;
+    this.headerHeight = ThemeVariables.toolbarHeight;
     this.scrollYAnim = new Animated.Value(0);
 
     // Using Animated.diffClamp ensures that the raw scroll
@@ -102,7 +102,7 @@ class _RecommendationsContent extends Component {
     // clamped to the range [0, headerHeight]; the interpolation then
     // merely inverts the value to set the header translation
     this.headerTranslateYAnim = Animated.diffClamp(
-      this.scrollYAnim, 0, headerHeight).interpolate({
+      this.scrollYAnim, 0, this.headerHeight).interpolate({
         inputRange: [0, 1],
         outputRange: [0, -1]
       });
@@ -125,16 +125,15 @@ class _RecommendationsContent extends Component {
     // since it's an absolutely positioned element and can't be interacted
     // with otherwise.  See note the Recommendations.render() method for more
     // details.
-    const flexStyle = {'flex': 1, 'justifyContent': 'center'};
     return (
       <>
         <ArticlesList { ...this.props }
-          style={{ paddingTop: ThemeVariables.toolbarHeight }}
           onScroll={ Animated.event([{
             nativeEvent: {contentOffset: {y: this.scrollYAnim}}
           }], { useNativeDriver: true }) }
           scrollEventThrottle={ 16 }
           overScrollMode={ 'never' }
+          contentContainerStyle={{ paddingTop: this.headerHeight }}
         />
         <RecommendationsHeader route={ this.props.route }
           navigation={ this.props.navigation }

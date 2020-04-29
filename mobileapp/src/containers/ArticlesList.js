@@ -85,10 +85,21 @@ class ArticlesList extends Component {
       loadingMore: false,
       endOfData: false,
     }
+
+    this.flatList = React.createRef();
+
+    // Mysteriously, this is need just for this event handler, otherwise
+    // an error results every time the component's state changes; see
+    // https://github.com/facebook/react-native/issues/17408
+    this._onViewableItemsChanged = this._onViewableItemsChanged.bind(this);
   }
 
   async componentDidMount() {
     await this._fetchArticles();
+    this.flatList.current.getNode().scrollToIndex({
+      index: this.props.articleList.current || 0,
+      animated: false
+    });
   }
 
   // TODO: Eventually this will use the API for the backend to fetch
@@ -145,6 +156,29 @@ class ArticlesList extends Component {
     }), () => { this._fetchArticles() });
   }
 
+  _onViewableItemsChanged({ viewableItems, changed }) {
+    // The top-most viewable item is set as the current
+    // item in this ArticlesList
+    this.props.setCurrentArticle(viewableItems[0].index);
+  }
+
+  _onScrollToIndexFailed(error) {
+    const flatList = this.flatList.current.getNode();
+    flatList.scrollToOffset({
+      offset: error.averageItemLength * error.index,
+      animated: false
+    });
+
+    setTimeout(() => {
+      if (this.props.articleList.list !== 0 && this.flatList !== null) {
+        this.flatList.current.getNode().scrollToIndex({
+          index: error.index,
+          animated: false
+        });
+      }
+    }, 100);
+  }
+
   _renderFooter() {
     const { height, width } = Dimensions.get('window');
 
@@ -172,6 +206,7 @@ class ArticlesList extends Component {
         { !this.state.loading ? (
           <Animated.FlatList
             { ...this.props }
+            ref={ this.flatList }
             data={ this.props.articleList.list }
             keyExtractor={ (item, index) => item }
             renderItem={ ({item}) => this._renderArticle(item) }
@@ -180,6 +215,9 @@ class ArticlesList extends Component {
             onRefresh={ this._onRefresh.bind(this) }
             onEndReached={ this._onEndReached.bind(this) }
             onEndReachedThreshold={ 0.75 }
+            onViewableItemsChanged={ this._onViewableItemsChanged }
+            onScrollToIndexFailed={ this._onScrollToIndexFailed.bind(this) }
+            viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
             ListFooterComponent={ this._renderFooter.bind(this) }
           />
         ) : (

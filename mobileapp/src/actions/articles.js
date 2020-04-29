@@ -9,20 +9,28 @@ import { createAction, createReducer } from '@reduxjs/toolkit';
 
 
 /* Action constants */
-const NEW_RECOMMENDATIONS = 'articles/new_recommendations';
-const NEW_BOOKMARKS = 'articles/new_bookmarks';
+const NEW_ARTICLES = 'articles/new_articles';
+const SET_CURRENT_ARTICLE = 'articles/set_current_article';
 const SET_INTERACTION = 'articles/set_interaction';
 const TOGGLE_BOOKMARKED = 'articles/toggle_bookmarked';
 
 
 /* Initial state for articles */
+const articleListInitialState = {
+  list: [],
+  current: 0
+}
+
 export const initialState = {
   sources: {},
   articles: {},
   articleInteractions: {},
-  recommendationsList: [],
-  bookmarksList: []
+  articleLists: {
+    recommendations: { ...articleListInitialState },
+    bookmarks: { ...articleListInitialState },
+  }
 };
+
 
 const articleInteractionsInitialState = {
   rating: 0,
@@ -32,43 +40,49 @@ const articleInteractionsInitialState = {
 
 /* Action creators for articles */
 
-// Creates a payload for actions that update an article list from a list of new
-// articles
-// For use with the newRecommendations and newBookmarks actions.
-function articleListAction(articles, articleInteractions, sources) {
-  return {
-    payload: { articles, articleInteractions, sources }
-  };
-}
-
 const actions = {
-  newRecommendations: createAction(NEW_RECOMMENDATIONS, articleListAction),
-  newBookmarks: createAction(NEW_BOOKMARKS, articleListAction),
+  newArticles: createAction(NEW_ARTICLES,
+    (listName, articles, articleInteractions, sources) => {
+      return {
+        payload: { listName, articles, articleInteractions, sources }
+      };
+    }
+  ),
+
+  setCurrentArticle: createAction(SET_CURRENT_ARTICLE,
+    (listName, current) => ({
+      payload: { listName, current }
+    })
+  ),
+
   setInteraction: createAction(SET_INTERACTION, (articleId, interaction) => ({
     payload: { articleId, interaction }
   })),
+
   toggleBookmarked: createAction(TOGGLE_BOOKMARKED)
 };
 
 
 /* Reducers for article actions */
+
 // NOTE: Per the Redux Toolkit docs
 // <https://redux-toolkit.js.org/api/createReducer>, createReducer uses
 // immer <https://immerjs.github.io/immer/>, so although it appears we
 // are mutating the state rather than returning a new one, this is just
 // an illusion.
+export const reducer = createReducer(initialState, {
+  [actions.newArticles]: (state, action) => {
+    // TODO: Right now this is stupid and just appends to the list; in practice
+    // this will want to do something more complicated--it may want to either
+    // append or prepend, or as discussed at
+    // https://github.com/RenewalResearch/Renewal/issues/3 it may even want to
+    // maintain a heap invariant
+    const { listName, articles, articleInteractions, sources } = action.payload;
+    let list = state.articleLists[listName];
+    if (list === undefined) {
+      list = state.articleLists[listName] = articleListInitialState;
+    }
 
-// Creates a reducer for updating an articles list, for use with
-// newRecommendations and newBookmarks; this higher-order function just
-// specifies which list to update.
-function articleListReducer(listProperty) {
-  // TODO: Right now this is stupid and just appends to the list;
-  // in practice this will want to do something more complicated--it may
-  // want to either append or prepend, or as discussed at
-  // https://github.com/RenewalResearch/Renewal/issues/3 it may even want to
-  // maintain a heap invariant
-  return function(state, action) {
-    const { articles, articleInteractions, sources } = action.payload;
     // Update articleInteractions, and sources
     Object.assign(state.articleInteractions, articleInteractions);
     Object.assign(state.sources, sources);
@@ -80,14 +94,15 @@ function articleListReducer(listProperty) {
       if (state.articleInteractions[article.url] === undefined) {
         state.articleInteractions[article.url] = articleInteractionsInitialState;
       }
-      state[listProperty].push(article.url);
+      list.list.push(article.url);
     });
-  }
-}
+  },
 
-export const reducer = createReducer(initialState, {
-  [actions.newRecommendations]: articleListReducer('recommendationsList'),
-  [actions.newBookmarks]: articleListReducer('bookmarksList'),
+  [actions.setCurrentArticle]: (state, action) => {
+    const { listName, current } = action.payload;
+    state.articleLists[listName].current = current;
+  },
+
   [actions.setInteraction]: (state, action) => {
     const { articleId, interaction } = action.payload;
     let articleInteractions = state.articleInteractions[articleId];
@@ -96,9 +111,10 @@ export const reducer = createReducer(initialState, {
     }
     Object.assign(state.articleInteractions[articleId], interaction);
   },
+
   [actions.toggleBookmarked]: (state, action) => {
     const articleId = action.payload;
-    const bookmarks = state.bookmarksList;
+    const bookmarks = state.articleLists.bookmarks.list;
     let articleInteractions = state.articleInteractions[articleId];
     if (articleInteractions === undefined) {
       articleInteractions = articleInteractionsInitialState;

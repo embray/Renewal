@@ -11,7 +11,6 @@ import {
 import React, { Component } from 'react';
 import { Animated, Dimensions, StyleSheet } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { connect } from 'react-redux';
 
 import ArticlesList from './ArticlesList';
 
@@ -87,7 +86,7 @@ export default class Recommendations extends Component {
 }
 
 
-class _RecommendationsContent extends Component {
+class RecommendationsContent extends Component {
   constructor(props) {
     super(props);
 
@@ -128,6 +127,7 @@ class _RecommendationsContent extends Component {
     return (
       <>
         <ArticlesList { ...this.props }
+          listName={ 'recommendations' }
           onScroll={ Animated.event([{
             nativeEvent: {contentOffset: {y: this.scrollYAnim}}
           }], { useNativeDriver: true }) }
@@ -143,18 +143,6 @@ class _RecommendationsContent extends Component {
     );
   }
 }
-
-
-function mapStateToProps(state) {
-  return {
-    articleIds: state.articles.recommendationsList
-  };
-}
-
-
-const RecommendationsContent = connect(
-  mapStateToProps
-)(_RecommendationsContent);
 
 
 const styles = StyleSheet.create({

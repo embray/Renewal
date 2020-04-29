@@ -72,7 +72,7 @@ function sleep(ms) {
 
 class ArticlesList extends Component {
   static defaultProps = {
-    articleIds: [],
+    articleList: { list: {}, current: 0 },
     perPage: 10
   }
 
@@ -95,8 +95,9 @@ class ArticlesList extends Component {
   // articles, and may include a built-in layer for article caching,
   // as well as the fallback that loads demo data in debug mode.
   async _fetchArticles() {
-    const { articleIds, perPage } = this.props;
-    const lastArticleId = articleIds[articleIds.length - 1];
+    const { articleList, perPage } = this.props;
+    const list = articleList.list;
+    const lastArticleId = list[list.length - 1];
 
     // Simulate data being refreshed
     // TODO: Only do this in debug mode--simul
@@ -105,7 +106,7 @@ class ArticlesList extends Component {
     // TODO: Here we would actually fetch the data from the backend
     const response = _debugFetch(lastArticleId, perPage);
 
-    this.props.newRecommendations(
+    this.props.newArticles(
       response.articles,
       response.articleInteractions,
       response.sources
@@ -171,7 +172,7 @@ class ArticlesList extends Component {
         { !this.state.loading ? (
           <Animated.FlatList
             { ...this.props }
-            data={ this.props.articleIds }
+            data={ this.props.articleList.list }
             keyExtractor={ (item, index) => item }
             renderItem={ ({item}) => this._renderArticle(item) }
             initialNumToRender={ this.props.perPage }
@@ -195,7 +196,28 @@ class ArticlesList extends Component {
 
 // Doesn't need any props from the global state (it takes the array of
 // article IDs in ownProps) but does need dispatch
-export default connect(null, articleActions)(ArticlesList);
+function mapStateToProps(state, ownProps) {
+  return {
+    articleList: state.articles.articleLists[ownProps.listName]
+  };
+}
+
+function mapDispatchToProps(dispatch, ownProps) {
+  // Curry the ArticleList's listName into the action creators
+  const { listName } = ownProps;
+  return {
+    newArticles: (articles, articleInteractions, sources) => {
+      dispatch(articleActions.newArticles(
+        listName, articles, articleInteractions, sources
+      ))
+    },
+    setCurrentArticle: (current) => {
+      dispatch(articleActions.setCurrentArticle(listName, current))
+    }
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(ArticlesList);
 
 
 const styles = StyleSheet.create({

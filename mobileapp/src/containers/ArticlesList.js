@@ -38,7 +38,7 @@ function _fake_article_interactions(articles) {
   articles.forEach((article) => {
     interactions[article.url] = { rating, bookmarked };
     bookmarked = !bookmarked;
-    rating = (rating == 1 ? -1 : rating);
+    rating = (rating == 1 ? -1 : rating + 1);
   });
   return interactions;
 }
@@ -120,7 +120,7 @@ class ArticlesList extends Component {
 
     this.props.newArticles(
       response.articles,
-      response.articleInteractions,
+      response.interactions,
       response.sources
     );
 

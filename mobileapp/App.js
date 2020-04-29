@@ -12,6 +12,9 @@ import React, { Component } from 'react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { createLogger } from 'redux-logger';
+import { persistStore, persistReducer } from 'redux-persist';
+import { PersistGate } from 'redux-persist/integration/react'
+import { AsyncStorage } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
@@ -28,7 +31,7 @@ if (Config.debug) {
 
 
 
-// Global Redux store for the App
+// Global Redux store for the App, with persistence
 const middleware = [];
 
 if (Config.debug) {
@@ -37,11 +40,18 @@ if (Config.debug) {
   }));
 }
 
+const persistedReducer = persistReducer({
+  key: 'root',
+  storage: AsyncStorage
+}, rootReducer);
+
 const store = configureStore({
-  reducer: rootReducer,
+  reducer: persistedReducer,
   middleware: middleware,
   devTools: !Config.debug
 });
+
+const persistedStore = persistStore(store);
 
 
 const Stack = createStackNavigator();
@@ -70,16 +80,18 @@ export default class App extends Component {
 
     return (
       <Provider store={ store }>
-        <NavigationContainer>
-          <Stack.Navigator initialRouteName="Home">
-            <Stack.Screen name="Home" component={Home}
-              options={ {headerShown: false} }
-            />
-            <Stack.Screen name="ArticleView" component={ArticleView}
-              options={{ header: (props) => <ArticleHeader {...props} /> }}
-            />
-          </Stack.Navigator>
-        </NavigationContainer>
+        <PersistGate loading={ <AppLoading /> } persistor={ persistedStore }>
+          <NavigationContainer>
+            <Stack.Navigator initialRouteName="Home">
+              <Stack.Screen name="Home" component={Home}
+                options={ {headerShown: false} }
+              />
+              <Stack.Screen name="ArticleView" component={ArticleView}
+                options={{ header: (props) => <ArticleHeader {...props} /> }}
+              />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </PersistGate>
       </Provider>
     );
   }

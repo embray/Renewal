@@ -1,36 +1,27 @@
+import Constants from 'expo-constants';
 import {
   Body,
   Button,
   Container,
-  Content,
-  Footer,
-  FooterTab,
   Header,
-  Icon,
   Left,
-  List,
   ListItem,
   Right,
+  Separator,
   Text,
-  Title
+  Title,
+  View
 } from 'native-base';
-import React from 'react';
+import React, { Component } from 'react';
 import { StyleSheet } from 'react-native';
 import {
   DrawerContentScrollView,
   DrawerItemList
 } from '@react-navigation/drawer';
-import Constants from 'expo-constants';
+import { purgeStoredState } from 'redux-persist';
 
-import I18n from 'ex-react-native-i18n';
-
-I18n.fallbacks = true
-const deviceLocale = I18n.locale
-
-I18n.translations = {
-  'en': require("../../i18n/en"),
-  'fr': require('../../i18n/fr'),
-};
+import Config from '../../../config';
+import { persistConfig } from '../../storage';
 
 
 export default function Menu(props) {
@@ -45,9 +36,35 @@ export default function Menu(props) {
       </Header>
       <DrawerContentScrollView {...props}>
         <DrawerItemList {...props} />
+        { Config.debug && (<DevMenu />) }
       </DrawerContentScrollView>
     </Container>
   );
+}
+
+
+// Additional menu items for development; this is easier than for example trying
+// add additional items to the react-native development menu
+class DevMenu extends Component {
+  // Clear the redux-persist state from AsyncStorage to start from a fresh
+  // state.
+  _clearPersistedState() {
+    purgeStoredState(persistConfig);
+    console.warn("State cleared; reload app to reset the in-memory state");
+  }
+
+  render() {
+    return (
+      <View style={ styles.devMenuContainer }>
+        <Separator bordered>
+          <Text>Dev menu</Text>
+        </Separator>
+        <Button light onPress={ this._clearPersistedState.bind(this) }>
+          <Text>Clear Persisted State</Text>
+        </Button>
+      </View>
+    );
+  }
 }
 
 
@@ -58,5 +75,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: 'white'
+  },
+  devMenuContainer: {
+    marginTop: 10
   }
 });

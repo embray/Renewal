@@ -85,13 +85,13 @@ class Article extends Component {
             </Right>
           </CardItem>
           <CardItem>
-            <Body>
-              <Text>{ article.title }</Text>
-              <Image
-                source={{ uri: article.image }}
-                style={[ styles.articleImage, { height: height / 4.0 } ]}
-              />
-            </Body>
+            <Text>{ article.title }</Text>
+          </CardItem>
+          <CardItem>
+            <Image
+              source={{ uri: article.image }}
+              style={[ styles.articleImage, { height: height / 4.0 } ]}
+            />
           </CardItem>
         </Touchable>
         <CardItem style={{ paddingTop: 0, paddingBottom: 0 }}>

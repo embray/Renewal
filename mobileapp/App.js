@@ -10,48 +10,19 @@ import Roboto from 'native-base/Fonts/Roboto.ttf'
 import RobotoMedium from 'native-base/Fonts/Roboto_medium.ttf'
 import React, { Component } from 'react';
 import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
-import { createLogger } from 'redux-logger';
-import { persistStore, persistReducer } from 'redux-persist';
 import { PersistGate } from 'redux-persist/integration/react'
-import { AsyncStorage } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
 import Config from './config';
-import { rootReducer } from './src/actions';
 import Home from './src/containers/Home';
 import ArticleView, { ArticleHeader } from './src/containers/ArticleView';
-import { loggerStateTransformer } from './src/utils';
+import persistedStore, { store } from './src/storage';
+
 
 if (Config.debug) {
     console.log(`Config: ${JSON.stringify(Config)}`);
 }
-
-
-
-
-// Global Redux store for the App, with persistence
-const middleware = [];
-
-if (Config.debug) {
-  middleware.push(createLogger({
-    stateTransformer: loggerStateTransformer
-  }));
-}
-
-const persistedReducer = persistReducer({
-  key: 'root',
-  storage: AsyncStorage
-}, rootReducer);
-
-const store = configureStore({
-  reducer: persistedReducer,
-  middleware: middleware,
-  devTools: !Config.debug
-});
-
-const persistedStore = persistStore(store);
 
 
 const Stack = createStackNavigator();

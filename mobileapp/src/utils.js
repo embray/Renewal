@@ -20,3 +20,14 @@ export function loggerStateTransformer(state) {
   }
   return state;
 }
+
+
+export function objectSlice(obj, ...keys) {
+  return keys.reduce((out, key) => {
+    let val = obj[key];
+    if (val !== undefined) {
+      out[key] = val;
+    }
+    return out
+  }, {});
+}

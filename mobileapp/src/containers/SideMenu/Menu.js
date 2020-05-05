@@ -21,6 +21,7 @@ import {
 import { purgeStoredState } from 'redux-persist';
 
 import Config from '../../../config';
+import { signOut } from '../../auth';
 import { persistConfig } from '../../storage';
 
 
@@ -48,9 +49,14 @@ export default function Menu(props) {
 class DevMenu extends Component {
   // Clear the redux-persist state from AsyncStorage to start from a fresh
   // state.
-  _clearPersistedState() {
+  _onClearPersistedState() {
     purgeStoredState(persistConfig);
     console.warn("State cleared; reload app to reset the in-memory state");
+  }
+
+  async _onSignOut() {
+    await signOut();
+    console.warn("Signed out from the user account");
   }
 
   render() {
@@ -59,8 +65,11 @@ class DevMenu extends Component {
         <Separator bordered>
           <Text>Dev menu</Text>
         </Separator>
-        <Button light onPress={ this._clearPersistedState.bind(this) }>
+        <Button light onPress={ this._onClearPersistedState.bind(this) }>
           <Text>Clear Persisted State</Text>
+        </Button>
+        <Button danger onPress={ this._onSignOut.bind(this) }>
+          <Text>Sign Out</Text>
         </Button>
       </View>
     );

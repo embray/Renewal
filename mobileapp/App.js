@@ -15,6 +15,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
 import Config from './config';
+import { signInAnonymously } from './src/auth';
 import Home from './src/containers/Home';
 import ArticleView, { ArticleHeader } from './src/containers/ArticleView';
 import persistedStore, { store } from './src/storage';
@@ -69,12 +70,15 @@ export default class App extends Component {
 
   // Passed to AppLoading.startAsync; should return a Promise
   async _loadResourcesAsync() {
-    return Font.loadAsync({
-      Roboto: Roboto,
-      Roboto_medium: RobotoMedium,
-      Arial: Roboto,
-      ...Ionicons.font,
-      ...MaterialCommunityIcons.font
-    });
+    return Promise.all([
+      Font.loadAsync({
+        Roboto: Roboto,
+        Roboto_medium: RobotoMedium,
+        Arial: Roboto,
+        ...Ionicons.font,
+        ...MaterialCommunityIcons.font
+      }),
+      signInAnonymously()
+    ]);
   }
 }

@@ -39,7 +39,6 @@ const articleInteractionsInitialState = {
 
 
 /* Action creators for articles */
-
 const actions = {
   newArticles: createAction(NEW_ARTICLES,
     (listName, articles, articleInteractions, sources) => {
@@ -64,7 +63,6 @@ const actions = {
 
 
 /* Reducers for article actions */
-
 // NOTE: Per the Redux Toolkit docs
 // <https://redux-toolkit.js.org/api/createReducer>, createReducer uses
 // immer <https://immerjs.github.io/immer/>, so although it appears we

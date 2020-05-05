@@ -87,7 +87,6 @@ export default class Home extends Component {
     this.state = {
       appState: AppState.currentState,
       isLoading: true,
-      token : undefined
     }
     this.unsubscribeConnectivityChange = () => {};
   }
@@ -101,16 +100,7 @@ export default class Home extends Component {
     });
 
     AppState.addEventListener('change', this._handleAppStateChange);
-    try {
-      AsyncStorage.getItem('token', (err, result)=>{
-        setTimeout(() => this.setState({ token:result }))//this.setState({token: result});
-       console.log("mon token de merde "+result)
-       })
-     } catch (error) {
-       // Error saving data
-       console.log("oh mon dieu le token a disparu")
-     }
-     setTimeout(() => this.setState({ isLoading: false }))
+    this.setState({ isLoading: false })
   }
 
   componentWillUnmount() {

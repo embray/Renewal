@@ -19,6 +19,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { connect } from 'react-redux';
 
 import accountActions from '../../actions/account';
+import { mapToObject } from '../../utils';
 import Dialog from '../../components/Dialog';
 import SideHeader from './SideHeader';
 
@@ -195,17 +196,20 @@ class _AccountContent extends Component {
 
   constructor(props) {
     super(props);
-    this.accountChanged = false;
+    this.accountChanges = new Map();
     this.navigationUnsubscribe = null;
   }
 
   componentDidMount() {
     this.navigationUnsubscribe = this.props.navigation.addListener(
       'blur', () => {
-        // TODO: Asynchronously persist account changes to firebase
-        // upon leaving the view (in a single request, rather than
-        // updating each property individually)
-    })
+        if (this.accountChanges.size) {
+          // copy the Map to an object before passing through to the redux
+          // action in case the original Map gets mutated again
+          this.props.save(mapToObject(this.accountChanges));
+          this.accountChanges.clear();
+        }
+    });
   }
 
   componentWillUnmount() {
@@ -218,7 +222,7 @@ class _AccountContent extends Component {
     this.setState({ 'visibleDialog': null });
     if (value !== undefined && value !== this.props.account[prop]) {
       this.props.update({[prop]: value});
-      this.accountChanged = true;
+      this.accountChanges.set(prop, value);
     }
   }
 

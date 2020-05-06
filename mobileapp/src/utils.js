@@ -43,3 +43,12 @@ export function objectNonNull(obj) {
   }
   return newObj;
 }
+
+
+// Convert a Map to a plain Object
+export function mapToObject(map) {
+  return [...map.entries()].reduce(
+    (obj, [key, value]) => (obj[key] = value, obj),
+    {}
+  );
+}

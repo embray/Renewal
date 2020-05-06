@@ -1,6 +1,6 @@
 import { createAction, createReducer } from '@reduxjs/toolkit';
 
-import { signInAnonymously, signOut } from '../auth';
+import { signInAnonymously, signOut, saveAccount } from '../auth';
 import { objectSlice, objectNonNull } from '../utils';
 
 
@@ -8,9 +8,18 @@ import { objectSlice, objectNonNull } from '../utils';
 const SIGN_IN_BEGIN = 'account/sign_in/begin';
 const SIGN_IN_SUCCEEDED = 'account/sign_in/succeeded';
 const SIGN_IN_FAILED = 'account/sign_in/failed';
+
 const SIGN_OUT_BEGIN = 'account/sign_out/begin';
 const SIGN_OUT_SUCCEEDED = 'account/sign_out/succeeded';
 const SIGN_OUT_FAILED = 'account/sign_out/failed';
+
+const SAVE_BEGIN = 'account/save/begin';
+const SAVE_SUCCEEDED = 'account/save/succeeded';
+const SAVE_FAILED = 'account/save/failed';
+
+// NOTE: This action only updates the in-memory account state;
+// use SAVE_* to save the account details to firebase (or whatever
+// the backend is)
 const UPDATE = 'account/update';
 
 
@@ -75,6 +84,21 @@ const actions = {
   signOutSucceeded: createAction(SIGN_OUT_SUCCEEDED),
   signOutFailed: createAction(SIGN_OUT_FAILED),
 
+  /* Save actions */
+  save: (changes) => {
+    return (dispatch) => {
+      // Argument to saveBegin currently not used, but recorded for logging
+      dispatch(actions.saveBegin(changes));
+      return saveAccount(changes).then(
+        (responses) => dispatch(actions.saveSucceeded(responses)),
+        (error) => dispatch(actions.saveFailed(error))
+      );
+    };
+  },
+  saveBegin: createAction(SAVE_BEGIN),
+  saveSucceeded: createAction(SAVE_SUCCEEDED),
+  saveFailed: createAction(SAVE_FAILED),
+
   /* Other actions */
   update: createAction(UPDATE)
 }
@@ -115,6 +139,22 @@ export const reducer = createReducer(initialState, {
   [actions.signOutFailed]: (state, action) => {
     console.error(`sign-out failed: ${action.payload}`);
     state.isAuthenticating = false;
+  },
+
+  /* Save actions */
+  [actions.saveBegin]: (state, action) => {
+    state.isSaving = true;
+  },
+  [actions.saveSucceeded]: (state, action) => {
+    // TODO: Maybe flash a Toast when saving suceeded/failed; need to figure
+    // out how to do that.
+    console.log('saving account changes succeeded');
+    state.isSaving = false;
+  },
+  [actions.saveFailed]: (state, action) => {
+    console.log(`saving account changes failed: ${action.payload}`);
+    state.isSaving = false;
+    // TODO: Maybe revert the changes to the in-memory state as well?
   },
 
   /* Other actions */

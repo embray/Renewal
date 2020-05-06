@@ -1,6 +1,6 @@
 import { createAction, createReducer } from '@reduxjs/toolkit';
 
-import { objectSlice } from '../utils';
+import { objectSlice, objectNonNull } from '../utils';
 
 
 /* Action constants */
@@ -49,9 +49,9 @@ export const reducer = createReducer(initialState, {
     // user.providerData; we'll see...
     // TODO: Is there any valid reason we should want to ask for the user's
     // phone number??
-    Object.assign(state, objectSlice(user,
+    Object.assign(state, objectNonNull(objectSlice(user,
       'uid', 'isAnonymous', 'displayName', 'photoURL', 'email',
-      'phoneNumber'));
+      'phoneNumber')));
   },
   [actions.signOut]: (state, action) => {
     return { ...initialState };

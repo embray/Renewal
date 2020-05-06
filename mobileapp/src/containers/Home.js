@@ -6,12 +6,11 @@ import {
   AppState,
   AsyncStorage,
   Dimensions,
-  StyleSheet,
-  View
+  StyleSheet
 } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { Icon, Root, Text } from 'native-base';
+import { Icon, Text, View } from 'native-base';
 
 import I18n from 'ex-react-native-i18n';
 
@@ -149,9 +148,7 @@ export default class Home extends Component {
   render() {
     if (this.state.isLoading) {
       return (
-        <Root>
-          <AppLoading />
-        </Root>
+        <AppLoading />
       );
     }
 

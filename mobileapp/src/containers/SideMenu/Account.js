@@ -5,21 +5,21 @@ import {
   Content,
   Icon,
   Input,
-  Item,
   Left,
   List,
   ListItem,
+  Radio,
   Right,
   Text
 } from 'native-base';
 import React, { Component } from 'react';
 import { StyleSheet } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import Dialog from "react-native-dialog";
 import { createStackNavigator } from '@react-navigation/stack';
 import { connect } from 'react-redux';
 
 import accountActions from '../../actions/account';
+import Dialog from '../../components/Dialog';
 import SideHeader from './SideHeader';
 
 
@@ -86,134 +86,108 @@ function DatePicker(props) {
 }
 
 
-class LocationDialog extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { location: props.value };
-  }
-
-  _onChangeText(location) {
-    this.setState({ location })
-  }
-
-  render() {
-    // TODO: For location, add an option to detect location automatically
-    // (given user location permissions)
-    return (
-      <Dialog.Container visible={ this.props.visible }>
-        <Dialog.Title>{I18n.t('account_location')}</Dialog.Title>
-        <Dialog.Description>
-          {I18n.t('account_location_popup')}
-        </Dialog.Description>
-        <Item>
-          <Input onChangeText={ this._onChangeText.bind(this) }>
-            { this.props.location }
-          </Input>
-        </Item>
-        <Dialog.Button label="Cancel" onPress={ () => this.props.onChange() } />
-        <Dialog.Button label="OK"
-          onPress={ () => this.props.onChange(this.state.location) }
-        />
-      </Dialog.Container>
-    );
-  }
-}
+const NameDialog = Dialog(
+  I18n.t('account_displayname'),
+  I18n.t('account_displayname_popup')
+)
 
 
-// TODO: This is almost verbatim same as LocationDialog; come up with maybe
-// a more generic dialog component...
-class EmailDialog extends Component {
-  static regExp = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-
-  constructor(props) {
-    super(props);
-    this.state = {
-      email: props.value,
-      valid: this._validate(props.value)
-    };
-  }
-
-  _validate(email) {
-    return EmailDialog.regExp.test(email || '');
-  }
-
-  _onChangeText(email) {
-    email = email.trim();
-    this.setState({
-      email,
-      valid: this._validate(email)
-    })
-  }
-
-  render() {
-    const inputStyle = {};
-    let inputIcon = 'close-circle';
-    if (this.state.valid) {
-      inputStyle['success'] = true;
-      inputIcon = 'checkmark-circle';
-    } else {
-      inputStyle['error'] = true;
+// TODO: This dialog needs i18n support
+// GenderDialog implements a non-trivial inputter that allows selecting
+// male, female, or a custom-input other gender
+const GenderDialog = Dialog(
+  I18n.t('account_gender'),
+  I18n.t('account_gender_popup'),
+  function() {
+    const onPressBinary = (value) => {
+      return () => { this.setState((prevState) => {
+        return {
+          value,
+          otherValue: getOtherValue(prevState.value)
+        };
+      }) }
     }
+
+    const onPressOther = () => {
+      this.setState({
+        value: this.state.otherValue || null
+      }, () => {
+        if (this.otherRef && !this.otherRef._root.isFocused()) {
+          this.otherRef._root.focus();
+        }
+      });
+    }
+
+    const getOtherValue = (value) => (
+      value && value != 'male' && value != 'female' ?
+      value : this.state.otherValue
+    );
+
+    let otherSelected = this.state.value == getOtherValue(this.state.value);
+
     return (
-      <Dialog.Container visible={ this.props.visible }>
-        <Dialog.Title>{I18n.t('account_email')}</Dialog.Title>
-        <Dialog.Description>
-        {I18n.t('account_email_popup')}
-        </Dialog.Description>
-        <Item { ...inputStyle }>
-          <Input onChangeText={ this._onChangeText.bind(this) }
-                 keyboardType="email-address" autoCompleteType="email"
-          >
-            {this.state.email}
-          </Input>
-          <Icon name={ inputIcon } />
-        </Item>
-        <Dialog.Button label="Cancel" onPress={ () => this.props.onChange() } />
-        <Dialog.Button label="OK"
-          onPress={ () => this.props.onChange(this.state.email) }
-          disabled={ !this.state.valid }
-        />
-      </Dialog.Container>
+      <>
+        <ListItem onPress={ onPressBinary('male') }>
+          <Left><Text>Male</Text></Left>
+          <Right>
+            <Radio selected={ this.state.value == 'male' }
+                   onPress={ onPressBinary('male') }
+            />
+          </Right>
+        </ListItem>
+        <ListItem onPress={ onPressBinary('female') }>
+          <Left><Text>Female</Text></Left>
+          <Right>
+            <Radio selected={ this.state.value == 'female' }
+                   onPress={ onPressBinary('female') }
+            />
+          </Right>
+        </ListItem>
+        <ListItem onPress={ onPressOther }>
+          <Left>
+            <Input placeholder="Other"
+              value={ getOtherValue(this.state.value) }
+              onChangeText={ (value) => {
+                this.setState({ value: value })
+              }}
+              ref={ (ref) => this.otherRef = ref }
+              onFocus={ onPressOther }
+            />
+          </Left>
+          <Right>
+            <Radio selected={ otherSelected }
+              onPress={ onPressOther }
+            />
+          </Right>
+        </ListItem>
+      </>
     );
   }
-}
+);
 
 
-// TODO: Again, largely repetitive; this could be cleaned up significantly.
-class PhoneNumberDialog extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { phoneNumber: props.value };
+const LocationDialog = Dialog(
+  I18n.t('account_location'),
+  I18n.t('account_location_popup')
+)
+
+
+const EmailDialog = Dialog(
+  I18n.t('account_email'),
+  I18n.t('account_email_popup'),
+  { keyboardType: "email-address", autoCompleteType: "email" },
+  (value) => {
+    const regExp = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+    return regExp.test(value || '');
   }
+)
 
-  _onChangeText(phoneNumber) {
-    this.setState({ phoneNumber })
-  }
 
-  render() {
-    // TODO: For location, add an option to detect location automatically
-    // (given user location permissions)
-    return (
-      <Dialog.Container visible={ this.props.visible }>
-        <Dialog.Title>{I18n.t('account_phonenumber')}</Dialog.Title>
-        <Dialog.Description>
-          {I18n.t('account_phonenumber_popup')}
-        </Dialog.Description>
-        <Item>
-          <Input onChangeText={ this._onChangeText.bind(this) }
-                 keyboardType="phone-pad" autoCompleteType="tel"
-          >
-            { this.props.phoneNumber }
-          </Input>
-        </Item>
-        <Dialog.Button label="Cancel" onPress={ () => this.props.onChange() } />
-        <Dialog.Button label="OK"
-          onPress={ () => this.props.onChange(this.state.phoneNumber) }
-        />
-      </Dialog.Container>
-    );
-  }
-}
+const PhoneNumberDialog = Dialog(
+  I18n.t('account_phonenumber'),
+  I18n.t('account_phonenumber_popup'),
+  { keyboardType: "phone-pad", autoCompleteType: "tel" }
+)
 
 
 class _AccountContent extends Component {
@@ -280,8 +254,10 @@ class _AccountContent extends Component {
               </Body>
               <Right style={{ flex: 1 }} />
             </ListItem>
-            { this.renderItem('displayname', 'person', '#0063DC') }
-            { this.renderItem('gender', 'transgender', '#FF087F') }
+            { this.renderItem('displayName', 'person', '#0063DC', NameDialog) }
+            { this.renderItem('gender', 'transgender', '#FF087F',
+                              GenderDialog)
+            }
             { this.renderItem('birthdate', 'calendar', '#33CCFF', DatePicker,
                               'select date',
                               (date) => new Date(date).toLocaleDateString())

@@ -6,6 +6,7 @@ import 'intl/locale-data/jsonp/fr';
 import { AppLoading } from 'expo';
 import * as Font from 'expo-font';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { Root } from 'native-base';
 import Roboto from 'native-base/Fonts/Roboto.ttf'
 import RobotoMedium from 'native-base/Fonts/Roboto_medium.ttf'
 import React, { Component } from 'react';
@@ -51,20 +52,22 @@ export default class App extends Component {
     }
 
     return (
-      <Provider store={ store }>
-        <PersistGate loading={ <AppLoading /> } persistor={ persistedStore }>
-          <NavigationContainer>
-            <Stack.Navigator initialRouteName="Home">
-              <Stack.Screen name="Home" component={Home}
-                options={ {headerShown: false} }
-              />
-              <Stack.Screen name="ArticleView" component={ArticleView}
-                options={{ header: (props) => <ArticleHeader {...props} /> }}
-              />
-            </Stack.Navigator>
-          </NavigationContainer>
-        </PersistGate>
-      </Provider>
+      <Root>
+        <Provider store={ store }>
+          <PersistGate loading={ <AppLoading /> } persistor={ persistedStore }>
+            <NavigationContainer>
+              <Stack.Navigator initialRouteName="Home">
+                <Stack.Screen name="Home" component={Home}
+                  options={ {headerShown: false} }
+                />
+                <Stack.Screen name="ArticleView" component={ArticleView}
+                  options={{ header: (props) => <ArticleHeader {...props} /> }}
+                />
+              </Stack.Navigator>
+            </NavigationContainer>
+          </PersistGate>
+        </Provider>
+      </Root>
     );
   }
 

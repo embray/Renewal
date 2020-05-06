@@ -69,7 +69,9 @@
   "side_menu_concept" : "Le concept",
 
   "account_displayname": "Nom",
+  "account_displayname_popup": "configurez votre nom",
   "account_gender" : "Genre",
+  "account_gender_popup" : "configurez votre genre",
   "account_birthdate" : "Date",
   "account_location" : "Position",
   "account_location_popup" : "configurez votre emplacement",

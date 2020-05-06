@@ -72,14 +72,17 @@
 
 
   "account_displayname": "Name",
+  "account_displayname_popup": "enter your name",
+  "account_displayname": "Name",
   "account_gender": "Gender",
+  "account_gender_popup": "enter your gender",
   "account_birthdate": "Birthday",
   "account_location": "Location",
-  "account_location_popup": "setup your location",
+  "account_location_popup": "enter your location",
   "account_email": "Email",
-  "account_email_popup": "setup your email",
+  "account_email_popup": "enter your e-mail address",
   "account_phonenumber": "Phone",
-  "account_phonenumber_popup": "setup your phone number",
+  "account_phonenumber_popup": "enter your phone number",
   "account_social_network": "Connect with social network",
   "account_button_disconnect": "Disconnect",
 

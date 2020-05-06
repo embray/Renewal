@@ -31,3 +31,15 @@ export function objectSlice(obj, ...keys) {
     return out
   }, {});
 }
+
+
+// Returns a copy of an object with all null/undefined values filter out
+export function objectNonNull(obj) {
+  let newObj = {};
+  for (let e of Object.entries(obj)) {
+    if (e[1] !== null && e[1] !== undefined) {
+      newObj[e[0]] = e[1];
+    }
+  }
+  return newObj;
+}

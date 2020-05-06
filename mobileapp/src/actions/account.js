@@ -1,22 +1,20 @@
-import { createAction, createReducer } from '@reduxjs/toolkit';
+import {
+  createAction,
+  createAsyncThunk,
+  createReducer
+} from '@reduxjs/toolkit';
 
 import { signInAnonymously, signOut, saveAccount } from '../auth';
-import { objectSlice, objectNonNull } from '../utils';
 
+// TODO: Consider using createSlice from redux-toolkit
+// now that I understand how it works (I didn't previously) I can see that
+// it reduces the amount of boilerplate even more--this can be used in
+// account actions as well.
 
 /* Action constants */
-const SIGN_IN_BEGIN = 'account/sign_in/begin';
-const SIGN_IN_SUCCEEDED = 'account/sign_in/succeeded';
-const SIGN_IN_FAILED = 'account/sign_in/failed';
-
-const SIGN_OUT_BEGIN = 'account/sign_out/begin';
-const SIGN_OUT_SUCCEEDED = 'account/sign_out/succeeded';
-const SIGN_OUT_FAILED = 'account/sign_out/failed';
-
-const SAVE_BEGIN = 'account/save/begin';
-const SAVE_SUCCEEDED = 'account/save/succeeded';
-const SAVE_FAILED = 'account/save/failed';
-
+const SIGN_IN = 'account/sign_in';
+const SIGN_OUT = 'account/sign_out';
+const SAVE = 'account/save';
 // NOTE: This action only updates the in-memory account state;
 // use SAVE_* to save the account details to firebase (or whatever
 // the backend is)
@@ -50,56 +48,10 @@ export const initialState = {
 
 
 /* Action creators for account */
-// TODO: Creating asynchronous actions is currently very verbose; it would
-// be easy to write a helper function to simplify this.
 const actions = {
-  /* Sign-in actions */
-  signIn: () => {
-    /* returns a thunk */
-    return (dispatch) => {
-      dispatch(actions.signInBegin());
-      // Don't use catch; there is a warning in the redux-thunk docs
-      // about this; instead pass an error callback to then()
-      return signInAnonymously().then(
-        (cred) => dispatch(actions.signInSucceeded(cred.user)),
-        (error) => dispatch(actions.signInFailed(error))
-      );
-    }
-  },
-  signInBegin: createAction(SIGN_IN_BEGIN),
-  signInSucceeded: createAction(SIGN_IN_SUCCEEDED),
-  signInFailed: createAction(SIGN_IN_FAILED),
-
-  /* Sign-out actions */
-  signOut: () => {
-    return (dispatch) => {
-      dispatch(actions.signOutBegin);
-      return signOut().then(
-        () => dispatch.actions(signOutSucceeded()),
-        (error) => dispatch.actions(signOutFailed(error))
-      );
-    }
-  },
-  signOutBegin: createAction(SIGN_OUT_BEGIN),
-  signOutSucceeded: createAction(SIGN_OUT_SUCCEEDED),
-  signOutFailed: createAction(SIGN_OUT_FAILED),
-
-  /* Save actions */
-  save: (changes) => {
-    return (dispatch) => {
-      // Argument to saveBegin currently not used, but recorded for logging
-      dispatch(actions.saveBegin(changes));
-      return saveAccount(changes).then(
-        (responses) => dispatch(actions.saveSucceeded(responses)),
-        (error) => dispatch(actions.saveFailed(error))
-      );
-    };
-  },
-  saveBegin: createAction(SAVE_BEGIN),
-  saveSucceeded: createAction(SAVE_SUCCEEDED),
-  saveFailed: createAction(SAVE_FAILED),
-
-  /* Other actions */
+  signIn: createAsyncThunk(SIGN_IN, signInAnonymously),
+  signOut: createAsyncThunk(SIGN_OUT, signOut),
+  save: createAsyncThunk(SAVE, saveAccount),
   update: createAction(UPDATE)
 }
 
@@ -107,10 +59,10 @@ const actions = {
 /* Reducers for article account */
 export const reducer = createReducer(initialState, {
   /* Sign-in actions */
-  [actions.signInBegin]: (state, action) => {
+  [actions.signIn.pending]: (state, action) => {
     state.isAuthenticating = true;
   },
-  [actions.signInSucceeded]: (state, action) => {
+  [actions.signIn.fulfilled]: (state, action) => {
     const user = action.payload;
     // For displayName and photoURL I'm not sure if those are
     // automatically updated to some default the first time the
@@ -119,39 +71,37 @@ export const reducer = createReducer(initialState, {
     // TODO: Is there any valid reason we should want to ask for the user's
     // phone number??
     console.log(`user signed in successfully: ${JSON.stringify(user)}`);
-    Object.assign(state, objectNonNull(objectSlice(user,
-      'uid', 'isAnonymous', 'displayName', 'photoURL', 'email',
-      'phoneNumber')));
+    Object.assign(state, user);
     state.isAuthenticating = false;
   },
-  [actions.signInFailed]: (state, action) => {
+  [actions.signIn.rejected]: (state, action) => {
     console.error(`sign-in failed: ${action.payload}`);
     state.isAuthenticating = false;
   },
 
   /* Sign-out actions */
-  [actions.signOutBegin]: (state, action) => {
+  [actions.signOut.pending]: (state, action) => {
     state.isAuthenticating = true;
   },
-  [actions.signOutSucceeded]: (state, action) => {
+  [actions.signOut.fulfilled]: (state, action) => {
     return { ...initialState };
   },
-  [actions.signOutFailed]: (state, action) => {
+  [actions.signOut.rejected]: (state, action) => {
     console.error(`sign-out failed: ${action.payload}`);
     state.isAuthenticating = false;
   },
 
   /* Save actions */
-  [actions.saveBegin]: (state, action) => {
+  [actions.save.pending]: (state, action) => {
     state.isSaving = true;
   },
-  [actions.saveSucceeded]: (state, action) => {
+  [actions.save.fulfilled]: (state, action) => {
     // TODO: Maybe flash a Toast when saving suceeded/failed; need to figure
     // out how to do that.
     console.log('saving account changes succeeded');
     state.isSaving = false;
   },
-  [actions.saveFailed]: (state, action) => {
+  [actions.save.rejected]: (state, action) => {
     console.log(`saving account changes failed: ${action.payload}`);
     state.isSaving = false;
     // TODO: Maybe revert the changes to the in-memory state as well?

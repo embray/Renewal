@@ -2,6 +2,7 @@ import * as firebase from 'firebase/app';
 import 'firebase/auth';
 
 import Config from '../config';
+import { objectSlice, objectNonNull } from './utils';
 
 
 // Prevent reinitialization of the app when hot-reloading
@@ -12,7 +13,12 @@ if (!firebase.apps.length) {
 
 export function signInAnonymously() {
   // Returns a Promise
-  return firebase.auth().signInAnonymously();
+  return firebase.auth().signInAnonymously().then(
+    // Extract any new user properties from the sign-in
+    (cred) => objectNonNull(objectSlice(cred.user,
+      'uid', 'isAnonymous', 'displayName', 'photoURL', 'email',
+      'phoneNumber'))
+  );
 }
 
 

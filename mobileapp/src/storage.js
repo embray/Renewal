@@ -2,15 +2,20 @@
 import { AsyncStorage } from 'react-native';
 import { createLogger } from 'redux-logger';
 import { persistStore, persistReducer } from 'redux-persist';
-import thunkMiddleware from 'redux-thunk';
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
 
 import Config from '../config';
 import { rootReducer } from './actions';
 import { loggerStateTransformer } from './utils';
 
 
-const middleware = [ thunkMiddleware ];
+const middleware = getDefaultMiddleware({
+  serializableCheck: {
+    // redux-persist uses some special actions that are non-serializable,
+    // so we want to ignore those in the serializable check
+    ignoredActions: ['persist/PERSIST']
+  }
+});
 
 if (Config.debug) {
   middleware.push(createLogger({

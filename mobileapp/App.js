@@ -3,20 +3,22 @@ import 'intl';
 import 'intl/locale-data/jsonp/en';
 import 'intl/locale-data/jsonp/fr';
 
-import { AppLoading } from 'expo';
+import { AppLoading, SplashScreen } from 'expo';
+import { Asset } from 'expo-asset';
 import * as Font from 'expo-font';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { Root } from 'native-base';
 import Roboto from 'native-base/Fonts/Roboto.ttf'
 import RobotoMedium from 'native-base/Fonts/Roboto_medium.ttf'
 import React, { Component } from 'react';
-import { Provider } from 'react-redux';
+import { Image, View } from 'react-native';
+import { Provider, connect } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react'
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
 import Config from './config';
-import { signInAnonymously } from './src/auth';
+import accountActions from './src/actions/account';
 import Home from './src/containers/Home';
 import ArticleView, { ArticleHeader } from './src/containers/ArticleView';
 import persistedStore, { store } from './src/storage';
@@ -30,58 +32,96 @@ if (Config.debug) {
 const Stack = createStackNavigator();
 
 
-export default class App extends Component {
-  state = {
-    isReady: false
-  };
+class _RootContainer extends Component {
+  state = { isReady: false }
+
+  componentDidMount() {
+    this._loadAsync()
+  }
 
   render() {
-    if (!this.state.isReady) {
-      // NOTE: We use the Redux provider here too in case we want to
-      // mutate some of the state, e.g. upon retrieving user login
-      // or loading the state from persistent storage
+    // Display splash screen
+    if (this.props.isAuthenticating || !this.state.isReady) {
+      // See https://docs.expo.io/versions/latest/sdk/splash-screen/#example-without-any-flickering-between-splashscreen-and
       return (
-        <Provider store={ store }>
-          <AppLoading
-            startAsync={ this._loadResourcesAsync }
-            onFinish={ () => this.setState({ isReady: true }) }
-            onError={ console.warn }
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <Image
+            style={{ width: '100%' }}
+            source={ require('./assets/splash.png') }
+            resizeMode="contain"
+            onLoadEnd={ () => SplashScreen.hide() }
+            fadeDuration={ 0 }
           />
-        </Provider>
+        </View>
       );
     }
 
     return (
       <Root>
-        <Provider store={ store }>
-          <PersistGate loading={ <AppLoading /> } persistor={ persistedStore }>
-            <NavigationContainer>
-              <Stack.Navigator initialRouteName="Home">
-                <Stack.Screen name="Home" component={Home}
-                  options={ {headerShown: false} }
-                />
-                <Stack.Screen name="ArticleView" component={ArticleView}
-                  options={{ header: (props) => <ArticleHeader {...props} /> }}
-                />
-              </Stack.Navigator>
-            </NavigationContainer>
-          </PersistGate>
-        </Provider>
+        <NavigationContainer>
+          <Stack.Navigator initialRouteName="Home">
+            <Stack.Screen name="Home" component={Home}
+              options={ {headerShown: false} }
+            />
+            <Stack.Screen name="ArticleView" component={ArticleView}
+              options={{ header: (props) => <ArticleHeader {...props} /> }}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
       </Root>
     );
   }
 
-  // Passed to AppLoading.startAsync; should return a Promise
-  async _loadResourcesAsync() {
-    return Promise.all([
-      Font.loadAsync({
+  async _loadAsync() {
+    this.props.dispatch(accountActions.signIn());
+    await Font.loadAsync({
         Roboto: Roboto,
         Roboto_medium: RobotoMedium,
         Arial: Roboto,
         ...Ionicons.font,
         ...MaterialCommunityIcons.font
-      }),
-      signInAnonymously()
-    ]);
+    });
+    this.setState({ isReady: true });
+  }
+}
+
+function mapStateToProps(state) {
+  return { isAuthenticating: state.account.isAuthenticating };
+}
+
+
+const RootContainer = connect(mapStateToProps)(_RootContainer);
+
+
+export default class App extends Component {
+  state = {
+    isSplashReady: false,
+  };
+
+  render() {
+    if (!this.state.isSplashReady) {
+      return (
+        <AppLoading
+          startAsync={ this._loadSplashResourcesAsync }
+          onFinish={ () => { this.setState({ isSplashReady: true })} }
+          onError={ console.warn }
+          autoHideSplash={ false }
+        />
+      );
+    }
+
+    return (
+      <Provider store={ store }>
+        <PersistGate persistor={ persistedStore }>
+          <RootContainer />
+        </PersistGate>
+      </Provider>
+    );
+  }
+
+  // Passed to AppLoading.startAsync; should return a Promise
+  async _loadSplashResourcesAsync() {
+    const splash = require('./assets/splash.png');
+    return Asset.loadAsync(splash);
   }
 }

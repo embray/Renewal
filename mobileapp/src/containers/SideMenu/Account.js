@@ -193,10 +193,32 @@ const PhoneNumberDialog = Dialog(
 class _AccountContent extends Component {
   state = { visibleDialog: null }
 
+  constructor(props) {
+    super(props);
+    this.accountChanged = false;
+    this.navigationUnsubscribe = null;
+  }
+
+  componentDidMount() {
+    this.navigationUnsubscribe = this.props.navigation.addListener(
+      'blur', () => {
+        // TODO: Asynchronously persist account changes to firebase
+        // upon leaving the view (in a single request, rather than
+        // updating each property individually)
+    })
+  }
+
+  componentWillUnmount() {
+    if (this.navigationUnsubscribe) {
+      this.navigationUnsubscribe();
+    }
+  }
+
   _onChangeUser(prop, value) {
     this.setState({ 'visibleDialog': null });
-    if (value !== undefined) {
+    if (value !== undefined && value !== this.props.account[prop]) {
       this.props.update({[prop]: value});
+      this.accountChanged = true;
     }
   }
 

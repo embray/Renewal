@@ -11,7 +11,8 @@ import {
   ListItem,
   Radio,
   Right,
-  Text
+  Text,
+  Thumbnail
 } from 'native-base';
 import React, { Component } from 'react';
 import { StyleSheet } from 'react-native';
@@ -269,8 +270,9 @@ class _AccountContent extends Component {
   render() {
     // TODO: Replace the default account icon with the user's avatar
     // if a user image URL is available.
+    const { account } = this.props;
     const authProviders = getAvailableProviders();
-    const linkedProviders = this.props.account.authProviders;
+    const linkedProviders = account.authProviders;
 
     return (
       <Container>
@@ -279,9 +281,13 @@ class _AccountContent extends Component {
             <ListItem>
               <Left style={{ flex: 1 }} />
               <Body style={ styles.accountIcon }>
-                <Icon name="account-circle" type="MaterialCommunityIcons"
-                      style={{ fontSize: 56, color: 'gray' }}
-                />
+                { account.photoURL ? (
+                  <Thumbnail large source={{ uri: account.photoURL }} />
+                ) : (
+                  <Icon name="account-circle" type="MaterialCommunityIcons"
+                        style={{ fontSize: 80, color: 'gray' }}
+                  />
+                )}
               </Body>
               <Right style={{ flex: 1 }} />
             </ListItem>

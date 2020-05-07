@@ -1,5 +1,7 @@
+import * as Google from 'expo-google-app-auth';
 import * as firebase from 'firebase/app';
 import 'firebase/auth';
+import { Platform } from 'react-native';
 
 import Config from '../config';
 import { objectSlice, objectNonNull } from './utils';
@@ -11,13 +13,59 @@ if (!firebase.apps.length) {
 }
 
 
-export function signInAnonymously() {
+function userToObj(user) {
+  const obj = {};
+  const keys = [ 'uid', 'isAnonymous', 'displayName', 'photoURL', 'email',
+                 'phoneNumber' ];
+  for (let providerData of user.providerData.reverse()) {
+    Object.assign(obj, objectNonNull(objectSlice(providerData, ...keys)));
+  }
+
+  Object.assign(obj, objectNonNull(objectSlice(user, ...keys)));
+  return obj;
+}
+
+
+// TODO: Clean up handling of different auth providers; each one needs
+// to implement slightly different workflows for providing credentials, etc.
+export function getAvailableProviders() {
+  const providers = ['anonymous', 'email'];
+  if (Config.auth.google[Platform.OS].clientId) {
+    providers.push('google');
+  }
+  return providers;
+}
+
+
+export function checkAuth(callback) {
+  // Register an onAuthStateChanged handler to check the
+  // user's current logged-in status.
+  firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+      callback(userToObj(user));
+    } else {
+      callback(null);
+    }
+  });
+}
+
+
+export function signIn(provider = 'anonymous') {
+  let signInPromise = null;
+  console.log(`signing in with ${provider} provider`);
+  switch (provider) {
+    case 'anonymous':
+      signInPromise = firebase.auth().signInAnonymously();
+      break;
+    default:
+      console.error(`unsupported sign-in provider ${provider}`);
+      return;
+  }
   // Returns a Promise
-  return firebase.auth().signInAnonymously().then(
+  return signInPromise.then(
     // Extract any new user properties from the sign-in
-    (cred) => objectNonNull(objectSlice(cred.user,
-      'uid', 'isAnonymous', 'displayName', 'photoURL', 'email',
-      'phoneNumber'))
+    (cred) => userToObj(cred.user),
+    (error) => error
   );
 }
 
@@ -25,6 +73,30 @@ export function signInAnonymously() {
 export async function signOut() {
   // Returns a Promise
   return firebase.auth().signOut();
+}
+
+
+export async function linkAccount(provider) {
+  let linkPromise = null;
+  console.log(`linking account with the ${provider} provider`);
+  switch (provider) {
+    case 'google':
+      linkPromise = Google.logInAsync({
+        clientId: Config.auth.google[Platform.OS].clientId
+      }).then((result) => {
+          const { idToken } = result;
+          const cred = firebase.auth.GoogleAuthProvider.credential(idToken);
+          return firebase.auth().currentUser.linkWithCredential(cred);
+        });
+      break;
+    default:
+      console.error(`unsupported sign-in provider ${provider}`);
+  }
+
+  return linkPromise.then(
+    (cred) => ({ user: userToObj(cred.user), provider }),
+    (error) => Promise.reject(new Error(error.code))
+  );
 }
 
 

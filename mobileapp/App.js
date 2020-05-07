@@ -73,7 +73,7 @@ class _RootContainer extends Component {
   }
 
   async _loadAsync() {
-    this.props.dispatch(accountActions.signIn());
+    this.props.dispatch(accountActions.checkAuth());
     await Font.loadAsync({
         Roboto: Roboto,
         Roboto_medium: RobotoMedium,

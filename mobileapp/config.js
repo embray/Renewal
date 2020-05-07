@@ -1,7 +1,8 @@
 import {
   DEBUG,
   API_RENEWAL_URI,
-  FIREBASE_CONFIG
+  FIREBASE_CONFIG,
+  AUTH_GOOGLE_ANDROID_CLIENT_ID
 } from 'dotenv';
 
 
@@ -23,7 +24,14 @@ const Config = {
   api: {
     uri: API_RENEWAL_URI
   },
-  firebase
+  firebase,
+  auth: {
+    google: {
+      android: {
+        clientId: AUTH_GOOGLE_ANDROID_CLIENT_ID
+      }
+    }
+  }
 };
 
 export default Config;

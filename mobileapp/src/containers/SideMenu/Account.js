@@ -1,6 +1,7 @@
 import I18n from 'ex-react-native-i18n';
 import {
   Body,
+  Button,
   Container,
   Content,
   Icon,
@@ -19,6 +20,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { connect } from 'react-redux';
 
 import accountActions from '../../actions/account';
+import { getAvailableProviders } from '../../auth';
 import { mapToObject } from '../../utils';
 import Dialog from '../../components/Dialog';
 import SideHeader from './SideHeader';
@@ -267,6 +269,9 @@ class _AccountContent extends Component {
   render() {
     // TODO: Replace the default account icon with the user's avatar
     // if a user image URL is available.
+    const authProviders = getAvailableProviders();
+    const linkedProviders = this.props.account.authProviders;
+
     return (
       <Container>
         <Content>
@@ -293,6 +298,38 @@ class _AccountContent extends Component {
             { this.renderItem('phoneNumber', 'ios-phone-portrait', 'black',
                               PhoneNumberDialog)
             }
+            {/* just to add some spacing */}
+            <ListItem noBorder />
+            <ListItem itemDivider>
+              <Text>Link Account</Text>
+            </ListItem>
+            <ListItem noBorder>
+              <Text note>
+                Link your account to an existing authentication provider in
+                order to sync your recommendations between multiple devices.
+              </Text>
+            </ListItem>
+            { authProviders.indexOf('email') >= 0 ? (
+              <Button full light disabled={ linkedProviders.email }
+                      style={ styles.linkButton }
+              >
+                <Icon name="mail" />
+                <Text>
+                  E-mail / Password { linkedProviders.email ? '(linked)': '' }
+                </Text>
+              </Button>
+            ) : null }
+            { authProviders.indexOf('google') >= 0 ? (
+              <Button full disabled={ linkedProviders.google }
+                      style={[ styles.linkButton, styles.googleButton ]}
+                      onPress={ () => this.props.linkAccount('google') }
+              >
+                <Icon name="logo-google" />
+                <Text>
+                  Google { linkedProviders.google ? '(linked)': '' }
+                </Text>
+              </Button>
+            ) : null }
           </List>
         </Content>
       </Container>
@@ -315,5 +352,13 @@ const AccountContent = connect(
 const styles = StyleSheet.create({
   accountIcon: {
     alignItems: 'center',
-  }
+  },
+  linkButton: {
+    margin: 5
+  },
+  googleButton: {
+    backgroundColor: '#dc4e41',
+    borderWidth: .5,
+    borderColor: '#fff'
+  },
 });

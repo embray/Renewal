@@ -10,10 +10,9 @@ import {
 import React, { Component } from 'react';
 import { StyleSheet } from 'react-native';
 
+import { capitalize } from '../../utils';
 
-function capitalize(s) {
-  return s[0].toUpperCase() + s.slice(1);
-}
+
 // Screen header for all side-screens
 // This is distinct from the more stylize home screen header.
 // TODO: Need to centralize header styles; there is currently a lot of

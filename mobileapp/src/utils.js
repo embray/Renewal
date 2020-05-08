@@ -22,6 +22,11 @@ export function loggerStateTransformer(state) {
 }
 
 
+export function capitalize(s) {
+  return s[0].toUpperCase() + s.slice(1);
+}
+
+
 export function objectSlice(obj, ...keys) {
   return keys.reduce((out, key) => {
     let val = obj[key];

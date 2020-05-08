@@ -8,6 +8,10 @@ import articleActions, {
   initialState as articleInitialState,
   reducer as articleReducer
 } from './articles';
+import settingsActions, {
+  initialState as settingsInitialState,
+  reducer as settingsReducer
+} from './settings';
 
 
 // TODO: In practice we will probably load a persisted state from local
@@ -15,20 +19,22 @@ import articleActions, {
 // storage is empty
 export const initialState = {
   account: accountInitialState,
-  settings: {},
+  settings: settingsInitialState,
   articles: articleInitialState
 };
 
 
 export const reducer = combineReducers({
   account: accountReducer,
-  articles: articleReducer
+  articles: articleReducer,
+  settings: settingsReducer
 });
 
 
 const actions = {
   account: accountActions,
-  articles: articleActions
+  articles: articleActions,
+  settings: settingsActions
 };
 
 

@@ -6,18 +6,19 @@
 // ScrollView or a Component derived from ScrollView) and wraps the whole
 // thing in a StackNavigator with a header that hides/shows during scroll.
 
+// If the StackNavigator argument is given, the view is added as a screen on an
+// existing Stack, otherwise a new StackNavigator is created and the screen is
+// wrapped in it and returned as a Component class
+
 import { variables as ThemeVariables } from 'native-base';
 import React, { Component } from 'react';
 import { Animated, Dimensions, StyleSheet } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 
 
-export default function AnimatedHeaderScrollView(screenName, Header, Content) {
+export default function AnimatedHeaderScrollView(
+  screenName, Header, Content, StackNavigator) {
   class AnimatedHeaderHeaderWrapper extends Component {
-    constructor(props) {
-      super(props);
-    }
-
     render() {
       const { translateYAnim } = this.props;
       //const headerTop = headerExtraParams.headerTop;
@@ -98,7 +99,19 @@ export default function AnimatedHeaderScrollView(screenName, Header, Content) {
 
   // https://github.com/react-navigation/react-navigation/issues/1632
   // Not sure why DrawerNavigator screens can't also just have headers...
-  const Stack = createStackNavigator();
+  let Stack = StackNavigator;
+  if (StackNavigator === undefined) {
+    Stack = createStackNavigator();
+  }
+
+  if (Stack === StackNavigator) {
+    return (
+      <Stack.Screen name={ screenName }
+                    component={ AnimatedHeaderContentWrapper }
+                    options={{ header: (props) => null }}
+      />
+    );
+  }
 
   class AnimatedHeaderStackNavigator extends Component {
     render() {
@@ -110,11 +123,13 @@ export default function AnimatedHeaderScrollView(screenName, Header, Content) {
       // components.  Basically absolutely positioned elements get implicit
       // negative zorder than can't be overridden unless they are positioned
       // later in the DOM--this is true of web development as well.
+
+      // Return the screen wrapped in the new StackNavigator
       return (
         <Stack.Navigator screenOptions={{ header: (props) => null }}>
-          <Stack.Screen name={ screenName }>
-            { (props) => <AnimatedHeaderContentWrapper { ...props } /> }
-          </Stack.Screen>
+          <Stack.Screen name={ screenName }
+                        component={ AnimatedHeaderContentWrapper }
+          />
         </Stack.Navigator>
       );
     }

@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import {
   ActivityIndicator,
+  Animated,
   Error,
   Share,
   Slider,
@@ -8,7 +9,6 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import { WebView } from 'react-native-webview';
 import {
   Header,
   Title,
@@ -20,13 +20,10 @@ import {
   Text,
 } from 'native-base';
 
-import I18n from 'ex-react-native-i18n';
-I18n.fallbacks = true
 
-I18n.translations = {
-  'en': require("../../i18n/en"),
-  'fr': require('../../i18n/fr'),
-};
+import ArticleButtons from '../../components/Article/ArticleButtons';
+import WebView from '../../components/AutoHeightWebView';
+import AnimatedHeaderScrollView from '../../components/AnimatedHeaderScrollView';
 import injectionJS from './injectionJS';
 
 
@@ -35,93 +32,6 @@ import injectionJS from './injectionJS';
 // It's also not very clear what the difference is between the two sliders
 // (heart vs sad/happy).  Maybe try to simplify for now.  Do we want a full
 // slider?  Maybe just a +1 -1 or now.  Can make more of a range later.
-
-
-class BottomDrawer extends Component {
-  state = {
-    drawerVisible: false
-  }
-
-  _arrowBarOnPress() {
-    this.setState((prevState) => ({
-      drawerVisible: !prevState.drawerVisible
-    }));
-  }
-
-  render() {
-    if (!this.props.children) {
-      return null;
-    }
-
-    return (
-      <View style={this.props.style}>
-        <TouchableOpacity style={styles.drawerArrowBar}
-          onPress={this._arrowBarOnPress.bind(this)}
-        >
-          <Icon
-            name={this.state.drawerVisible ? "md-arrow-dropdown" : "md-arrow-dropup"}
-            style={{ color: 'black' }}
-          />
-        </TouchableOpacity>
-        {this.state.drawerVisible ? this.props.children : null}
-      </View>
-    );
-  }
-}
-
-
-class RatingPanel extends Component {
-  // TODO: This uses a lot of TouchableOpacities that don't
-  // seem to do anything, and that probably needs to be fixed
-  // (It seems maybe the intent was that clicking on the icons
-  // would move the slider all the way to the left or the right.
-  // TODO: Also the left-hand heart icon needs to be fixed.  Actually
-  // it's not clear what both sliders are for.  They seem to be
-  // redundant.
-  render() {
-    return (
-      <View style={styles.ratingPanel}>
-        <Text style={{ fontWeight: 'bold', fontSize: 22 }}>
-          {I18n.t('wv_opinion')}
-        </Text>
-        <View style={styles.ratingPanelSliderContainer}>
-          <TouchableOpacity>
-            <Icon name="md-heart" style={{ color: 'black' }} />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Slider
-              style={{ width: 150 }}
-              step={1}
-              minimumValue={0}
-              maximumValue={100}
-              value={50}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Icon name="md-heart" style={{ color: 'black' }} />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.ratingPanelSliderContainer}>
-          <TouchableOpacity>
-            <Icon name="md-sad" style={{ color: 'black' }} />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Slider
-                style={{ width: 150 }}
-                step={1}
-                minimumValue={0}
-                maximumValue={100}
-                value={50}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity  >
-            <Icon name="md-happy" style={{ color: 'black' }} />
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-}
 
 
 export class ArticleHeader extends Component {
@@ -142,23 +52,23 @@ export class ArticleHeader extends Component {
   }
 
   render() {
-    const { title } = this.props.scene.route.params;
+    const { title } = this.props.route.params;
 
     return (
-      <Header style={styles.header}>
-        <Left style={styles.headerLeft}>
+      <Header style={ styles.header }>
+        <Left style={ styles.headerLeft }>
           <Button transparent onPress={ this._onBack.bind(this) }>
-            <Icon name='md-arrow-back' style={styles.headerIcon} />
+            <Icon name='md-arrow-back' style={ styles.headerIcon } />
           </Button>
         </Left>
         <Body>
-          <Title style={styles.headerTitle}>{title}</Title>
+          <Title style={ styles.headerTitle }>{ title }</Title>
         </Body>
         <Right>
           <Button transparent
             onPress={ this._setModalVisible.bind(this, true) }
           >
-            <Icon name='md-add' style={styles.headerIcon} />
+            <Icon name='md-add' style={ styles.headerIcon } />
           </Button>
         </Right>
       </Header>
@@ -167,7 +77,7 @@ export class ArticleHeader extends Component {
 }
 
 
-export default class ArticleView extends Component {
+export class ArticleView extends Component {
   constructor(props) {
     super(props)
     this.state = {
@@ -177,25 +87,9 @@ export default class ArticleView extends Component {
     this._webView = null;
   }
 
-  async componentDidMount() {
-    await I18n.initAsync();
-  }
-
-  _shareArticle() {
-    // TODO: This needs to be fixed.
-    const { title, url } = this.props.route.params;
-    Share.share({
-        title: title,
-        message: `Bonjour, \n je pense que l'article : ${title} pourrait t'interresser. \n `,
-        url: url,
-        subject: `Je recommande l'article : ${title}` //  for email
-    }).then(result => console.log(result)).catch(errorMsg => console.log(errorMsg));
-  }
-
   setModalVisible(visible) {
-      this.setState({modalVisible: visible});
+      this.setState({ modalVisible: visible });
   }
-  //WebView content part
 
   /*
   WebView content fixed message
@@ -215,13 +109,6 @@ export default class ArticleView extends Component {
     }
   }
 
-    fetchEvent =  async (something, someData)=>{
-        return someData === null ?
-            console.log("[{Event : "+something+", timestamp :"+Date.now()+"}]")
-            :
-            console.log("[{Event : "+something+", timestamp :"+Date.now()+","+someData+"}]")
-    }
-
   renderLoadingWebView() {
     return (<ActivityIndicator size={'large'} />);
   }
@@ -234,12 +121,12 @@ export default class ArticleView extends Component {
    */
   renderErrorWebView(errorName) {
     return (
-      <View style={{flex:1}}>
-        <Error name={errorName} />
+      <View style={{ flex:1 }}>
+        <Error name={ errorName } />
         <Text>Failed to load site; try reloading later...</Text>
         <Button block rounded danger
-          onPress={() => {this.setModalVisible(!this.state.modalVisible)}}
-          style={{padding: 15, margin: 15}}
+          onPress={ () => { this.setModalVisible(!this.state.modalVisible) } }
+          style={{ padding: 15, margin: 15 }}
         >
           <Text>Refresh</Text>
         </Button>
@@ -248,12 +135,6 @@ export default class ArticleView extends Component {
   }
 
   render() {
-    /* TODO: The original version of this view was very buggy, so I am in the
-     * process of trying to reconstruct it. Not all features, particularly the
-     * ratings view, are re-enabled yet because they were barely working at all.
-     * In particular, the use of ScrollView appears to be broken, since WebView
-     * already has its own scrolling. */
-
     /* TODO: Should use injectedJavaScriptBeforeContentLoaded
       * but it doesn't work on Anroid, see
       * https://github.com/react-native-community/react-native-webview/issues/1095
@@ -262,7 +143,9 @@ export default class ArticleView extends Component {
     const { url } = this.props.route.params;
 
     return (
-      <View style={ styles.container }>
+      <Animated.ScrollView { ...this.props }
+        style={[ this.props.style, styles.container ]}
+      >
         <WebView
           javaScriptEnabled
           injectedJavaScript={ injectionJS }
@@ -272,12 +155,16 @@ export default class ArticleView extends Component {
           ref={ x => {this._webView = x} }
           onMessage={ e => this.onMessageFromWebView(e.nativeEvent.data) }
         />
-        <BottomDrawer style={ styles.bottomDrawer }>
-          <RatingPanel />
-        </BottomDrawer>
-      </View>
+      </Animated.ScrollView>
     );
   }
+}
+
+
+// Create a StackNavigator.Screen for an ArticleView given a StackNavigator
+export default function createArticleViewScreen(screenName, StackNavigator) {
+  return AnimatedHeaderScrollView(
+    screenName, ArticleHeader, ArticleView, StackNavigator);
 }
 
 

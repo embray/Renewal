@@ -20,7 +20,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import Config from './config';
 import accountActions from './src/actions/account';
 import Home from './src/containers/Home';
-import ArticleView, { ArticleHeader } from './src/containers/ArticleView';
+import createArticleViewScreen from './src/containers/ArticleView';
 import persistedStore, { store } from './src/storage';
 
 
@@ -60,12 +60,10 @@ class _RootContainer extends Component {
       <Root>
         <NavigationContainer>
           <Stack.Navigator initialRouteName="Home">
-            <Stack.Screen name="Home" component={Home}
-              options={ {headerShown: false} }
+            <Stack.Screen name="Home" component={ Home }
+              options={{ headerShown: false }}
             />
-            <Stack.Screen name="ArticleView" component={ArticleView}
-              options={{ header: (props) => <ArticleHeader {...props} /> }}
-            />
+            { createArticleViewScreen('ArticleView', Stack) }
           </Stack.Navigator>
         </NavigationContainer>
       </Root>

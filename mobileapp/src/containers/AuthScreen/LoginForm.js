@@ -23,7 +23,8 @@ export default class LoginForm extends Component {
     fullName: '',
     isLoading: true,
   }
-  async componentWillMount() {
+
+  async componentDidMount() {
     await I18n.initAsync();
     this.setState({isLoading:false})
   }
@@ -91,7 +92,7 @@ export default class LoginForm extends Component {
           >
             {I18n.t('form_link_registed')}
           </Text>
-          
+
         </View>
       </View>
     )

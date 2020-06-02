@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, NetInfo } from 'react-native';
-import { Constants, Location, Permissions } from 'expo';
+import * as Permissions from 'expo-permissions';
+import * as Location from 'expo-location';
+import Constants from 'expo-constants';
 
 const timer = require('react-native-timer');
 
@@ -22,7 +23,7 @@ const locationSensor = {
             await Location.watchPositionAsync(GEOLOCATION_OPTIONS, this.locationChanged);
         }
     },
-    locationChanged : async function (location){ 
+    locationChanged : async function (location){
         region = {
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,

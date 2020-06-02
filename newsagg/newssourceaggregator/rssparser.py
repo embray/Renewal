@@ -1,15 +1,14 @@
-import sys, os
-sys.path.append("/".join(os.path.abspath(__file__).split("/")[0:-2]))
-from parser import Parser
-from parser import RequiredDataStruct
-from copy import copy
 import json
+
+from copy import copy
+
+from .parser import Parser, RequiredDataStruct
 
 
 class RssParser(Parser):
 
-    def __init__(self, configfile=None):
-        super().__init__(configfile)
+    def __init__(self, keywords):
+        super().__init__(keywords)
         self.parsedDataList = []
 
     # Returns a list of fully parsed json data from read text containing keys in keywordlist

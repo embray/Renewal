@@ -1,21 +1,20 @@
-import sys, os
-sys.path.append("/".join(os.path.abspath(__file__).split("/")[0:-2]))
-
 import string
 import random
-import pymongo
-from datetime import timedelta
-from bson.json_util import dumps
-from flask import Flask, request
-from bson.objectid import ObjectId
 from datetime import datetime as dt
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from datetime import timedelta
+
+import pymongo
+from bson.json_util import dumps
+from bson.objectid import ObjectId
+from flask import Flask, request
 from flask_restful import Resource, Api
 from passlib.context import CryptContext
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import scoped_session
-from sqlalchemy_declarative import Base, User, Team, System
-from databasetools.mongo import MongoCollection
+
+from .databasetools.mongo import MongoCollection
+from .sqlalchemy_declarative import Base, User, Team, System
 
 __version__ = '0.0.6' # Includes timestamp range request
 MAX_PACKAGE_SIZE = 1000
@@ -379,11 +378,13 @@ if __name__ == '__main__':
     # This collection stores news articles and their data
     # /!\ WARNING : find a way to get the admin username and password out of the code /!\
     collection = MongoCollection("news_db", "news", indexOn=['url'],
-                                 host='localhost', user="hayj", password="renewal42", version=__version__)
+                                 host='localhost', #user="hayj", password="renewal42", version=__version__)
+                                 version=__version__)
 
     # This collection stores all browsing user browsing habits and actions
     eventcollection = MongoCollection("news_db", "events", indexOn=['user_id'],
-                                      host='localhost', user='hayj', password="renewal42", version=__version__)
+                                      host='localhost', #user='hayj', password="renewal42", version=__version__)
+                                      version=__version__)
 
     app = Flask(__name__)
     api = Api(app)
@@ -407,4 +408,5 @@ if __name__ == '__main__':
     api.add_resource(Auth.Test, '/auth/test')
 
     api.add_resource(AppUser.Events, '/user/events/<string:token>/<string:data>')
-    app.run(port=4243, debug=False, host=host)
+    #app.run(port=4243, debug=False, host=host)
+    app.run(port=5000, debug=True)

@@ -1,6 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, NetInfo } from 'react-native';
-import { Gyroscope } from 'expo';
+import { Gyroscope } from 'expo-sensors';
 
 const gyroscopeSensor = {
     _subscribe : function (){

@@ -1,4 +1,3 @@
-from systemtools.basics import *
 import json
 import abc
 
@@ -57,23 +56,12 @@ class RequiredDataStruct:
 
 
 class Parser(abc.ABC):
-    keywordlist = None  # List of all keywords to search for in .json file
-    cfg = None        # Instance of configparser.ConfigParser
-    section = None
+    def __init__(self, keywords):
+        self._keywords = keywords
 
-    def __init__(self, configfile=None):
-        if configfile is None:
-            self.configfile = "./parserconfig.json"
-        else:
-            self.configfile = configfile
-        print(self.configfile)
-        print(os.getcwd() + '/' +  self.configfile)
-        try:
-            self.cfg = open(os.getcwd() + '/' +  self.configfile, 'r')
-            self.keywordlist = json.loads(self.cfg.read())
-            self.cfg.close()
-        except FileNotFoundError:
-            print("[WARNING]: Base file parserconfig.json not found and no file specified in Parser.__init__")
+    @property
+    def keywords(self):
+        return self._keywords
 
     # Returns a dict from read text containing keys in keywordlist
     @abc.abstractmethod
@@ -84,21 +72,3 @@ class Parser(abc.ABC):
     @abc.abstractmethod
     def process(self, filepath=None, fileobject=None):
         pass
-
-    def getKeywordList(self):
-        if self.keywordlist is None:
-            raise FileNotFoundError("No .json file found or configured")
-        if not self.configfile:
-            raise FileNotFoundError("No .json file found or configured")
-        if len(self.keywordlist) > 0:
-            return self.keywordlist
-
-        try:
-            self.cfg = open(self.configfile, 'r')
-            self.keywordlist = json.loads(self.cfg.read())
-            self.cfg.close()
-        except FileNotFoundError as e:
-            print(e)
-            raise FileNotFoundError("No .json file found or configured")
-
-        return self.keywordlist

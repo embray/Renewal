@@ -1,6 +1,12 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, NetInfo, AsyncStorage } from 'react-native';
-import { Accelerometer } from 'expo';
+import {
+  AsyncStorage,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import { Accelerometer } from 'expo-sensors';
 import FetchFunction from '../Fetch/FetchFunction';
 
 const accelerometerSensor = {

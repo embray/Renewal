@@ -1,10 +1,12 @@
 ## All passwords are temporary
 
 import json
+
 from flask import Flask, request
 from sqlalchemy import create_engine
 from flask_restful import Resource, Api
-from databasetools.mongo import MongoCollection
+
+from ..databasetools.mongo import MongoCollection
 
 
 class AuthenticationError(Exception):

@@ -14,7 +14,7 @@ I18n.translations = {
 };
 
 export default class SignupForm extends Component {
-  
+
 
   state = {
     email: '',
@@ -23,10 +23,11 @@ export default class SignupForm extends Component {
     isLoading: true,
   }
 
-  async componentWillMount() {
+  async componentDidMount() {
     await I18n.initAsync();
     this.setState({isLoading:false})
   }
+
   hideForm = async () => {
     if (this.buttonRef && this.formRef && this.linkRef) {
       await Promise.all([
@@ -61,7 +62,7 @@ export default class SignupForm extends Component {
     }else{
       return true;
     }
-    
+
   }
   render () {
     const { email, password, fullName } = this.state
@@ -70,7 +71,7 @@ export default class SignupForm extends Component {
     return (
       <View style={styles.container}>
         <View style={styles.form} ref={(ref) => this.formRef = ref}>
-          
+
           <CustomTextInput
             ref={(ref) => this.emailInputRef = ref}
             placeholder={I18n.t('form_email')}
@@ -129,7 +130,7 @@ export default class SignupForm extends Component {
           >
             {I18n.t('form_link_account')}
           </Text>
-          
+
         </View>
       </View>
     )

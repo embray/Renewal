@@ -1,13 +1,14 @@
-import sys, os
-sys.path.append("/".join(os.path.abspath(__file__).split("/")[0:-2]))
-import pika
 import threading
-from api import Auth
-from api import AppUser
-from api import News
-from time import sleep
-from systeminterface import SystemInterface
 from collections import namedtuple
+from time import sleep
+
+import pika
+
+from .systeminterface import SystemInterface
+from ..api import Auth, AppUser, News
+from ..api import AppUser
+from ..api import News
+
 
 Pair = namedtuple("Pair", ["SystemInterface", "RegisteredUsers"])
 # use :     print("First = {}, second = {}".format(pair.first, pair.second))

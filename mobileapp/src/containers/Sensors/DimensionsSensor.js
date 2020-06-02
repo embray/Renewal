@@ -1,6 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, NetInfo, AppState } from 'react-native';
-import { Accelerometer } from 'expo';
+import { AppState } from 'react-native';
 
 const dimensionsSensor = {
     _subscribe : function (){
@@ -9,7 +8,7 @@ const dimensionsSensor = {
     _unsubscribe : function(){
         AppState.removeEventListener('change', appStateSensor._handleAppStateChange);
     },
-    _handleAppStateChange = (nextAppState) => {
+    _handleAppStateChange : (nextAppState) => {
         if (AppState.currentState.match(/inactive|background/) && nextAppState === 'active') {
           console.log('App has come to the foreground!')
         }else{

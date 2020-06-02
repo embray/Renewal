@@ -1,8 +1,7 @@
-import sys, os
-sys.path.append("/".join(os.path.abspath(__file__).split("/")[0:-2]))
 import pika
-from newssender import NewsSender
-from newsreceiver import NewsReceiver
+
+from ..newssender import NewsSender
+from ..newsreceiver import NewsReceiver
 
 REC_REQUEST = 0
 USER_ASSIGN = 1

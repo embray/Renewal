@@ -44,7 +44,6 @@ function getEnvConfig(env) {
       );
     }
   } else {
-    console.log(`loading ${env} config file ${configFile}`);
     Object.assign(config, JSON.parse(fs.readFileSync(configFile, 'utf-8')));
   }
   return config;
@@ -72,7 +71,6 @@ function deepAssign(target, ...sources) {
 
 export default ({ config }) => {
   const env = getReleaseChannel();
-  console.log(`starting up ${config.name} for ${env}`);
   return deepAssign(config, getEnvConfig(env), {
     "extra": {
       "environment": env,

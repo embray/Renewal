@@ -25,7 +25,9 @@ import persistedStore, { store } from './src/storage';
 
 
 if (__DEV__) {
-    console.log(`Config: ${JSON.stringify(Constants.manifest)}`);
+  let config = Constants.manifest;
+  console.log(`Loaded config file from ${config.extra.environmentConfig}`);
+  console.log(`Config: ${JSON.stringify(config)}`);
 }
 
 

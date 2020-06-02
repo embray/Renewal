@@ -8,7 +8,7 @@ import { Platform } from 'react-native';
 import { objectSlice, objectNonNull } from './utils';
 
 
-let FIREBASE_ENABLED = false;
+let FIREBASE_ENABLED = (firebase.app.length > 0);
 // Prevent reinitialization of the app when hot-reloading
 if (!firebase.apps.length) {
   // Read from app.config.js:
@@ -26,8 +26,8 @@ if (!firebase.apps.length) {
         `when in ${extra.environment} mode`);
     }
   } else {
-    FIREBASE_ENABLED = true;
     firebase.initializeApp(FirebaseCore.DEFAULT_WEB_APP_OPTIONS);
+    FIREBASE_ENABLED = true;
   }
 }
 

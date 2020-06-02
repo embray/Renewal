@@ -1,3 +1,14 @@
+import {
+  getTheme,
+  Header,
+  Button,
+  Left,
+  Right,
+  Body,
+  Icon,
+  Text,
+  View
+} from 'native-base';
 import React, { Component } from "react";
 import {
   ActivityIndicator,
@@ -6,32 +17,14 @@ import {
   Share,
   Slider,
   StyleSheet,
-  TouchableOpacity,
-  View
+  TouchableOpacity
 } from "react-native";
-import {
-  Header,
-  Title,
-  Button,
-  Left,
-  Right,
-  Body,
-  Icon,
-  Text,
-} from 'native-base';
-
+import TextTicker from 'react-native-text-ticker';
 
 import ArticleButtons from '../../components/Article/ArticleButtons';
 import WebView from '../../components/AutoHeightWebView';
 import AnimatedHeaderScrollView from '../../components/AnimatedHeaderScrollView';
 import injectionJS from './injectionJS';
-
-
-// TODO: This Component is extremely buggy and will need to be totally
-// redone.
-// It's also not very clear what the difference is between the two sliders
-// (heart vs sad/happy).  Maybe try to simplify for now.  Do we want a full
-// slider?  Maybe just a +1 -1 or now.  Can make more of a range later.
 
 
 export class ArticleHeader extends Component {
@@ -46,11 +39,6 @@ export class ArticleHeader extends Component {
     this.props.navigation.goBack();
   }
 
-  _setModalVisible(visible) {
-    // TODO: Need to figure out how to connect this up, or if we'll even
-    // keep this button
-  }
-
   render() {
     const { title } = this.props.route.params;
 
@@ -61,16 +49,12 @@ export class ArticleHeader extends Component {
             <Icon name='md-arrow-back' style={ styles.headerIcon } />
           </Button>
         </Left>
-        <Body>
-          <Title style={ styles.headerTitle }>{ title }</Title>
+        <Body style={ styles.headerBody }>
+          <TextTicker style={ styles.headerTitle } marqueeDelay={ 1000 }>
+            { title }
+          </TextTicker>
         </Body>
-        <Right>
-          <Button transparent
-            onPress={ this._setModalVisible.bind(this, true) }
-          >
-            <Icon name='md-add' style={ styles.headerIcon } />
-          </Button>
-        </Right>
+        <Right style={{ flex: 0 }} />
       </Header>
     );
   }
@@ -143,19 +127,22 @@ export class ArticleView extends Component {
     const { url } = this.props.route.params;
 
     return (
-      <Animated.ScrollView { ...this.props }
-        style={[ this.props.style, styles.container ]}
-      >
-        <WebView
-          javaScriptEnabled
-          injectedJavaScript={ injectionJS }
-          source={ {uri: url} }
-          renderLoading={ () => this.renderLoadingWebView() }
-          renderError={ (errorName) => this.renderErrorWebView(errorName) }
-          ref={ x => {this._webView = x} }
-          onMessage={ e => this.onMessageFromWebView(e.nativeEvent.data) }
-        />
-      </Animated.ScrollView>
+      <View style={ styles.container }>
+        <Animated.ScrollView { ...this.props }
+          style={[ this.props.style, styles.container ]}
+        >
+          <WebView
+            javaScriptEnabled
+            injectedJavaScript={ injectionJS }
+            source={ {uri: url} }
+            renderLoading={ () => this.renderLoadingWebView() }
+            renderError={ (errorName) => this.renderErrorWebView(errorName) }
+            ref={ x => {this._webView = x} }
+            onMessage={ e => this.onMessageFromWebView(e.nativeEvent.data) }
+          />
+        </Animated.ScrollView>
+        <ArticleButtons style={ styles.buttons } articleId={ url } />
+      </View>
     );
   }
 }
@@ -173,34 +160,29 @@ export default function createArticleViewScreen(screenName, StackNavigator) {
 // the board.
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { backgroundColor: '#212121' },
+  header: {
+    backgroundColor: '#212121',
+    flexDirection: 'row'
+  },
   headerIcon: {
     color: '#fff'
   },
   headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start'
+    alignItems: 'flex-start',
+    flex: 0.2
+  },
+  headerBody: {
+    flex: 1,
+    alignItems: 'flex-start'
   },
   headerTitle: {
+    ...getTheme()['NativeBase.Title'],
+    marginLeft: 0,
     color: '#fff'
   },
-  ratingPanel: {
-    alignItems: 'center',
-    paddingBottom: 20
-  },
-  ratingPanelSliderContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-  },
-  bottomDrawer: {
-    justifyContent: 'center',
-    backgroundColor : "white"
-  },
-  drawerArrowBar: {
-    alignItems: 'center',
-    borderTopColor: 'black',
-    borderTopWidth: 1
+  buttons: {
+    flex: 0,
+    height: 48,
+    backgroundColor: 'white'
   }
 })

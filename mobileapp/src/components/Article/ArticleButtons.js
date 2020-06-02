@@ -1,7 +1,7 @@
 import I18n from 'ex-react-native-i18n';
 import { Button, Col, Grid } from 'native-base';
 import React, { Component } from 'react';
-import { Share } from 'react-native';
+import { Share, StyleSheet } from 'react-native';
 import { connect } from 'react-redux';
 
 import { articleActions } from '../../actions';
@@ -13,6 +13,13 @@ I18n.translations = {
   'en': require("../../i18n/en"),
   'fr': require('../../i18n/fr'),
 };
+
+
+const styles = StyleSheet.create({
+  button: {
+    justifyContent: 'center'
+  }
+});
 
 
 // Component for the strip of article control buttons at the bottom of an
@@ -45,25 +52,32 @@ class ArticleButtons extends Component {
     const { rating, bookmarked } = this.props;
 
     return (
-      <Grid>
+      <Grid style={ this.props.style }>
         <Col>
-          <Button transparent onPress={ this._toggleRating.bind(this, 1) }>
+          <Button style={ styles.button } transparent
+                  onPress={ this._toggleRating.bind(this, 1) }
+          >
             <Icon name="thumbs-up" active={ rating == 1 } />
           </Button>
         </Col>
         <Col>
-          <Button transparent
-            onPress={ this._toggleRating.bind(this, -1) }>
+          <Button style={ styles.button } transparent
+            onPress={ this._toggleRating.bind(this, -1) }
+          >
             <Icon name="thumbs-down" active={ rating == -1 } />
           </Button>
         </Col>
         <Col>
-          <Button transparent onPress={ this.props.toggleBookmarked }>
+          <Button style={ styles.button } transparent
+                  onPress={ this.props.toggleBookmarked }
+          >
             <Icon name="bookmark" active={ bookmarked } />
           </Button>
         </Col>
         <Col>
-          <Button transparent onPress={ this._share.bind(this) }>
+          <Button style={ styles.button } transparent
+                  onPress={ this._share.bind(this) }
+          >
             <Icon name="share" />
           </Button>
         </Col>

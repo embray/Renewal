@@ -4,7 +4,6 @@ import { createLogger } from 'redux-logger';
 import { persistStore, persistReducer } from 'redux-persist';
 import { configureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
 
-import Config from '../config';
 import { rootReducer } from './actions';
 import { loggerStateTransformer } from './utils';
 
@@ -17,7 +16,7 @@ const middleware = getDefaultMiddleware({
   }
 });
 
-if (Config.debug) {
+if (__DEV__) {
   middleware.push(createLogger({
     stateTransformer: loggerStateTransformer
   }));
@@ -33,7 +32,7 @@ const persistedReducer = persistReducer(persistConfig, rootReducer);
 const store = configureStore({
   reducer: persistedReducer,
   middleware: middleware,
-  devTools: !Config.debug
+  devTools: __DEV__
 });
 
 const persistedStore = persistStore(store);

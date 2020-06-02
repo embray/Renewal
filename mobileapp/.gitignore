@@ -5,5 +5,13 @@
 .env
 .env.*
 
+# Environment-specific app.json files (replace use of .env files from earlier
+# versions, but .env files are still ignored too)
+app.config.*.json
+
+# Service-specific config files that should not be committed
+google-services.json
+google-services.*.json
+
 # Dependency directories
 node_modules/

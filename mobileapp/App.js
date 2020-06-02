@@ -5,6 +5,7 @@ import 'intl/locale-data/jsonp/fr';
 
 import { AppLoading, SplashScreen } from 'expo';
 import { Asset } from 'expo-asset';
+import Constants from 'expo-constants';
 import * as Font from 'expo-font';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { Root } from 'native-base';
@@ -17,15 +18,14 @@ import { PersistGate } from 'redux-persist/integration/react'
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
-import Config from './config';
 import accountActions from './src/actions/account';
 import Home from './src/containers/Home';
 import createArticleViewScreen from './src/containers/ArticleView';
 import persistedStore, { store } from './src/storage';
 
 
-if (Config.debug) {
-    console.log(`Config: ${JSON.stringify(Config)}`);
+if (__DEV__) {
+    console.log(`Config: ${JSON.stringify(Constants.manifest)}`);
 }
 
 

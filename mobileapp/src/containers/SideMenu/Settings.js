@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import I18n from 'ex-react-native-i18n';
 import {
   Body,
@@ -16,7 +17,6 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { connect } from 'react-redux';
 import { Alert, Linking, StyleSheet } from 'react-native';
 
-import Config from '../../../config';
 import settingsActions from '../../actions/settings';
 import { capitalize } from '../../utils';
 import SideHeader from './SideHeader';
@@ -45,6 +45,9 @@ export default class Settings extends Component {
     );
   }
 }
+
+
+const CONTACT_EMAIL = Constants.manifest.extra.contactEmail;
 
 
 class _SettingsContents extends Component {
@@ -78,7 +81,7 @@ class _SettingsContents extends Component {
     // will be a webpage for Renewal and policies on that site.
     links: [{
       name: 'assistance',
-      uri: `mailto:${Config.contact_email}?subject=Renewal:assistance`
+      uri: `mailto:${CONTACT_EMAIL}?subject=Renewal:assistance`
     }, {
       name: 'privacy',
       uri: 'https://www.facebook.com/privacy/explanation'

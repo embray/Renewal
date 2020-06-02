@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { connect } from 'react-redux';
 
-import Config from '../../config';
 import { articleActions } from '../actions';
 import { Article } from '../components/Article';
 
@@ -247,7 +246,7 @@ class ArticlesList extends Component {
 // Doesn't need any props from the global state (it takes the array of
 // article IDs in ownProps) but does need dispatch
 function mapStateToProps(state, ownProps) {
-  if (Config.debug) {
+  if (__DEV__) {
     // TODO: Debug only--remove when we fix the debug article fetching
     // Fill the debug article interactions and bookmarks from the state.
     const interactions = state.articles.articleInteractions;

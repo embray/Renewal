@@ -20,7 +20,6 @@ import {
 } from '@react-navigation/drawer';
 import { purgeStoredState } from 'redux-persist';
 
-import Config from '../../../config';
 import { signOut } from '../../auth';
 import { persistConfig } from '../../storage';
 
@@ -37,7 +36,7 @@ export default function Menu(props) {
       </Header>
       <DrawerContentScrollView {...props}>
         <DrawerItemList {...props} />
-        { Config.debug && (<DevMenu />) }
+        { __DEV__ && (<DevMenu />) }
       </DrawerContentScrollView>
     </Container>
   );

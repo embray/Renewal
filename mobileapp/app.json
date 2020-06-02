@@ -32,5 +32,8 @@
     "androidNavigationBar": {
         "barStyle": "light-content"
     }
+  },
+  "extras": {
+    "contactEmail": "hay.julien1@gmail.com"
   }
 }

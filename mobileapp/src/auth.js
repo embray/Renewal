@@ -1,15 +1,34 @@
+import Constants from 'expo-constants';
+import * as FirebaseCore from 'expo-firebase-core';
 import * as Google from 'expo-google-app-auth';
 import * as firebase from 'firebase/app';
 import 'firebase/auth';
 import { Platform } from 'react-native';
 
-import Config from '../config';
 import { objectSlice, objectNonNull } from './utils';
 
 
+let FIREBASE_ENABLED = false;
 // Prevent reinitialization of the app when hot-reloading
 if (!firebase.apps.length) {
-  firebase.initializeApp(Config.firebase);
+  // Read from app.config.js:
+  // https://docs.expo.io/versions/latest/sdk/firebase-core/#constants
+  if (FirebaseCore.DEFAULT_WEB_APP_OPTIONS === undefined) {
+    let extras = Constants.manifest.extras;
+    if (extras.environment == "dev") {
+      console.warn(
+        `web.config.firebase not configured in ${extras.environmentConfig}; ` +
+        `features depending on firebase (authentication, user database) ` +
+        `will be disabled`);
+    } else {
+      console.error(
+        `web.config.firebase must be defined in ${extras.environmentConfig} ` +
+        `when in ${extras.environment} mode`);
+    }
+  } else {
+    FIREBASE_ENABLED = true;
+    firebase.initializeApp(FirebaseCore.DEFAULT_WEB_APP_OPTIONS);
+  }
 }
 
 
@@ -29,8 +48,29 @@ function userToObj(user) {
 // TODO: Clean up handling of different auth providers; each one needs
 // to implement slightly different workflows for providing credentials, etc.
 export function getAvailableProviders() {
+  if (!FIREBASE_ENABLED) {
+    return ['anonymous'];
+  }
+
   const providers = ['anonymous', 'email'];
-  if (Config.auth.google[Platform.OS].clientId) {
+  if (FirebaseCore.DEFAULT_APP_OPTIONS === undefined) {
+    if (extras.environment == "dev") {
+      console.warn(
+        `${Platform.OS}.googleServicesFile not configured in ` +
+        `${extras.environmentConfig}; Google authentication services ` +
+        `will be disabled`);
+    } else {
+      // TODO: Perhaps we could add a section in the manifest extras
+      // to specify which authentication providers are enabled, in which
+      // case this will not be an error if google auth is not enabled
+      // for some build...
+      // But for now we require it...
+      console.error(
+        `${Platform.OS}.googleServicesFile must be defined in `
+        `${extras.environmentConfig} or else Google authentication services ` +
+        `will not be available`);
+    }
+  } else {
     providers.push('google');
   }
   return providers;
@@ -38,6 +78,9 @@ export function getAvailableProviders() {
 
 
 export function checkAuth(callback) {
+  if (!FIREBASE_ENABLED) {
+    callback({});
+  }
   // Register an onAuthStateChanged handler to check the
   // user's current logged-in status.
   firebase.auth().onAuthStateChanged((user) => {
@@ -51,6 +94,9 @@ export function checkAuth(callback) {
 
 
 export function signIn(provider = 'anonymous') {
+  if (!FIREBASE_ENABLED) {
+    return;
+  }
   let signInPromise = null;
   console.log(`signing in with ${provider} provider`);
   switch (provider) {
@@ -71,19 +117,24 @@ export function signIn(provider = 'anonymous') {
 
 
 export async function signOut() {
+  if (!FIREBASE_ENABLED) {
+    return;
+  }
   // Returns a Promise
   return firebase.auth().signOut();
 }
 
 
 export async function linkAccount(provider) {
+  if (!FIREBASE_ENABLED) {
+    return;
+  }
   let linkPromise = null;
   console.log(`linking account with the ${provider} provider`);
   switch (provider) {
     case 'google':
-      linkPromise = Google.logInAsync({
-        clientId: Config.auth.google[Platform.OS].clientId
-      }).then((result) => {
+      const clientId = FirebaseCore.DEFAULT_APP_OPTIONS.clientId;
+      linkPromise = Google.logInAsync({ clientId }).then((result) => {
           const { idToken } = result;
           const cred = firebase.auth.GoogleAuthProvider.credential(idToken);
           return firebase.auth().currentUser.linkWithCredential(cred);
@@ -102,6 +153,9 @@ export async function linkAccount(provider) {
 
 // Save changes to the user's account
 export function saveAccount(accountUpdates) {
+  if (!FIREBASE_ENABLED) {
+    return;
+  }
   const currentUser = firebase.auth().currentUser;
   if (currentUser == null) {
     console.log('no authenticated user to update');

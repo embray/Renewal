@@ -15,7 +15,7 @@ import {
   Thumbnail
 } from 'native-base';
 import React, { Component } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, YellowBox } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { createStackNavigator } from '@react-navigation/stack';
 import { connect } from 'react-redux';
@@ -183,6 +183,12 @@ class _AccountContent extends Component {
     super(props);
     this.accountChanges = new Map();
     this.navigationUnsubscribe = null;
+    // TODO: Actually fix the source of this warning; it seems like it might
+    // actually be a slight bug in Expo (it has something to do with the
+    // Root component being unmounted) but I'm not sure
+    YellowBox.ignoreWarnings([
+      "Can't perform a React state update on an unmounted component"
+    ]);
   }
 
   componentDidMount() {

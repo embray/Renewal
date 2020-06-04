@@ -42,6 +42,8 @@ export const initialState = {
 };
 
 
+// TODO: Perhaps this should be part of the state, but it should
+// not be persisted.
 let checkAuthRegistered = false;
 
 
@@ -63,10 +65,16 @@ const actions = {
       if (user) {
         thunkAPI.dispatch(actions.signIn.fulfilled(user));
       } else {
-        // If we are not already in the process of a manually
-        // initiated signIn/Out procedure.
-        thunkAPI.dispatch(actions.signIn({ provider: 'anonymous' }))
+        if (!checkAuthRegistered) {
+          // This is the initial call to firebase.auth().onAuthStateChanged
+          // If it returns null then the user is not signed in, so sign
+          // in anonymously; otherwise we are processing a sign-out
+          thunkAPI.dispatch(actions.signIn({ provider: 'anonymous' }));
+        } else {
+          thunkAPI.dispatch(actions.signOut.fulfilled())
+        }
       }
+      checkAuthRegistered = true;
     });
   }),
   signIn: createAsyncThunk(SIGN_IN, auth.signIn),
@@ -108,7 +116,6 @@ const account = createSlice({
     },
     [actions.signOut.fulfilled]: (state, action) => {
       state.isAuthenticating = false;
-      return { ...initialState };
     },
     [actions.signOut.rejected]: (state, action) => {
       console.error(`sign-out failed: ${JSON.stringify(action.error)}`);
@@ -125,8 +132,6 @@ const account = createSlice({
     },
     [actions.linkAccount.fulfilled]: (state, action) => {
       const { user, provider } = action.payload;
-      // TODO: Is there any valid reason we should want to ask for the user's
-      // phone number??
       console.log(
         `user successfully linked to ${provider}: ${JSON.stringify(user)}`);
       if (state.isAnonymous) {

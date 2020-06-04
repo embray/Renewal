@@ -1,12 +1,16 @@
 import Constants from 'expo-constants';
-import * as FirebaseCore from 'expo-firebase-core';
 import * as Google from 'expo-google-app-auth';
 import * as firebase from 'firebase/app';
 import 'firebase/auth';
 import 'firebase/firestore';
 import { Platform, YellowBox } from 'react-native';
 
-import { objectSlice, objectNonNull, getNested } from './utils';
+import {
+  initializeFirebase,
+  objectSlice,
+  objectNonNull,
+  getNested
+} from './utils';
 
 
 // This is a warning which comes from react-native when using the
@@ -18,28 +22,7 @@ import { objectSlice, objectNonNull, getNested } from './utils';
 YellowBox.ignoreWarnings(['Setting a timer for a long period of time']);
 
 
-let FIREBASE_ENABLED = (firebase.app.length > 0);
-// Prevent reinitialization of the app when hot-reloading
-if (!firebase.apps.length) {
-  // Read from app.config.js:
-  // https://docs.expo.io/versions/latest/sdk/firebase-core/#constants
-  if (FirebaseCore.DEFAULT_WEB_APP_OPTIONS === undefined) {
-    let extra = Constants.manifest.extra;
-    if (extra.environment == "dev") {
-      console.warn(
-        `web.config.firebase not configured in ${extra.environmentConfig}; ` +
-        `features depending on firebase (authentication, user database) ` +
-        `will be disabled`);
-    } else {
-      console.error(
-        `web.config.firebase must be defined in ${extra.environmentConfig} ` +
-        `when in ${extra.environment} mode`);
-    }
-  } else {
-    firebase.initializeApp(FirebaseCore.DEFAULT_WEB_APP_OPTIONS);
-    FIREBASE_ENABLED = true;
-  }
-}
+const FIREBASE_ENABLED = initializeFirebase();
 
 
 function userToObj(user) {

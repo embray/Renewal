@@ -115,7 +115,7 @@ class _SettingsContents extends Component {
           });
           // copy the Map to an object before passing through to the redux
           // action in case the original Map gets mutated again
-          this.props.save(changes);
+          this.props.save({ changes, prevSettings: this.origSettings });
           this.origSettings = { ...this.props.settings };
         }
     });

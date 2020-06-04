@@ -1,4 +1,10 @@
+import * as firebase from 'firebase/app';
+import 'firebase/firestore';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+
+import { initializeFirebase, objectPrefix } from '../utils';
+
+const FIREBASE_ENABLED = initializeFirebase();
 
 /* Action constants */
 // NOTE: Some of these are generated automatically by createSlice
@@ -25,9 +31,18 @@ export const initialState = {
 
 
 const actions = {
-  save: createAsyncThunk(SAVE, () => {
-    // TODO: This is just a dummy for now in place of a "real" function
-    // that will handle saving settings to the remote database
+  save: createAsyncThunk(SAVE, async ({ changes, prevSettings }, thunkAPI) => {
+    if (!FIREBASE_ENABLED) {
+      return;
+    }
+    const db = firebase.firestore();
+    const uid = thunkAPI.getState().account.uid;
+    const settings = objectPrefix(changes, 'settings.');
+    try {
+      return await db.collection('users').doc(uid).update(settings);
+    } catch (err) {
+      return thunkAPI.rejectWithValue({ error: err.message, prevSettings });
+    }
   })
 }
 
@@ -44,8 +59,20 @@ const settings = createSlice({
   },
   extraReducers: {
     [actions.save.pending]: (state, action) => {},
-    [actions.save.fulfilled]: (state, action) => {},
-    [actions.save.rejected]: (state, action) => {},
+    [actions.save.fulfilled]: (state, action) => {
+      console.log('successfully saved settings');
+    },
+    [actions.save.rejected]: (state, action) => {
+      if (action.payload) {
+        const { error, prevSettings } = action.payload;
+        // Reset the settings to the previous state if saving them
+        // failed
+        Object.assign(state, prevSettings);
+        console.log(action.error);
+      } else {
+        console.log(action.error);
+      }
+    },
   }
 });
 

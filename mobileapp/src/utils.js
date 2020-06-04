@@ -1,4 +1,38 @@
 /* Miscellaneous utilities */
+import * as FirebaseCore from 'expo-firebase-core';
+import * as firebase from 'firebase/app';
+
+
+// Ensures firebase has been initialized, and returns whether or
+// not firebase could be initialized successfully
+export function initializeFirebase() {
+  // Prevent reinitialization of the app when hot-reloading
+  if (!firebase.apps.length) {
+    // Read from app.config.js:
+    // https://docs.expo.io/versions/latest/sdk/firebase-core/#constants
+    if (FirebaseCore.DEFAULT_WEB_APP_OPTIONS === undefined) {
+      let extra = Constants.manifest.extra;
+      if (extra.environment == "dev") {
+        console.warn(
+          `web.config.firebase not configured in ${extra.environmentConfig}; ` +
+          `features depending on firebase (authentication, user database) ` +
+          `will be disabled`);
+        return false;
+      } else {
+        console.error(
+          `web.config.firebase must be defined in ${extra.environmentConfig} ` +
+          `when in ${extra.environment} mode`);
+        return false;
+      }
+    } else {
+      firebase.initializeApp(FirebaseCore.DEFAULT_WEB_APP_OPTIONS);
+      return true;
+    }
+  }
+
+  return (firebase.apps.length > 0);
+}
+
 
 export function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -36,6 +70,13 @@ export function capitalize(s) {
 // If any of the levels are undefined returns undefined
 export function getNested(obj, ...props) {
   return props.reduce((obj, prop) => (obj !== undefined && obj[prop]), obj);
+}
+
+
+export function objectPrefix(obj, prefix) {
+  // Return a copy of object with all keys prefixed with prefix
+  return Object.entries(obj).reduce(
+    (obj, e) => (obj[prefix + e[0]] = e[1], obj), {});
 }
 
 

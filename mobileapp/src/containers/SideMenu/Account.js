@@ -327,7 +327,10 @@ class _AccountContent extends Component {
             ) : null }
             { authProviders.indexOf('google') >= 0 ? (
               <Button full disabled={ linkedProviders.google }
-                      style={[ styles.linkButton, styles.googleButton ]}
+                      style={[
+                        styles.linkButton,
+                        linkedProviders.google ? {} : styles.googleButton
+                      ]}
                       onPress={ () => this.props.linkAccount('google') }
               >
                 <Icon name="logo-google" />
@@ -360,11 +363,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   linkButton: {
-    margin: 5
-  },
-  googleButton: {
-    backgroundColor: '#dc4e41',
+    margin: 5,
     borderWidth: .5,
     borderColor: '#fff'
+  },
+  googleButton: {
+    backgroundColor: '#dc4e41'
   },
 });

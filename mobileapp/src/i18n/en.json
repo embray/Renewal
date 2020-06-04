@@ -7,10 +7,10 @@
   "concept_sn_explain" : "click here for more information",
   "concept_skip" : "Skip/Connect",
 
-  "opening_email" : "Sign In with email",
+  "opening_email" : "Sign In with e-mail",
   "opening_or" : "Or connect with",
 
-  "form_email" : "Email",
+  "form_email" : "E-mail",
   "form_password" : "Password",
   "form_password_confirm" : "Confirm ur password",
   "form_buttton_login" : "Log In",
@@ -79,7 +79,7 @@
   "account_birthdate": "Birthday",
   "account_location": "Location",
   "account_location_popup": "enter your location",
-  "account_email": "Email",
+  "account_email": "E-mail",
   "account_email_popup": "enter your e-mail address",
   "account_phonenumber": "Phone",
   "account_phonenumber_popup": "enter your phone number",

@@ -7,10 +7,10 @@
   "concept_sn_explain" : "cliquez ici pour plus d'informations",
   "concept_skip" : "Passer / Se connecter",
 
-  "opening_email" : "Connexion avec votre email",
+  "opening_email" : "Connexion avec votre e-mail",
   "opening_or" : "Ou connectez-vous avec",
 
-  "form_email" : "Email",
+  "form_email" : "E-mail",
   "form_password" : "Mot de passe",
   "form_password_confirm" : "Confirmer votre mot de passe",
   "form_buttton_login" : "S'identifier",
@@ -75,7 +75,7 @@
   "account_birthdate" : "Date",
   "account_location" : "Position",
   "account_location_popup" : "configurez votre emplacement",
-  "account_email" : "Email",
+  "account_email" : "E-mail",
   "account_email_popup" : "configurez votre adresse mail",
   "account_phonenumber" : "Téléphone",
   "account_phonenumber_popup" : "configurez votre numéro de téléphone",

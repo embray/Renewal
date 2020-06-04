@@ -86,6 +86,7 @@ export const reducer = createReducer(initialState, {
     Object.assign(state.sources, sources);
 
     const articlesSet = new Set(list.list);
+    const newArticles = [];
 
     // Now update the appropriate articles array and update the articles
     // object for each article passed to the action
@@ -95,9 +96,11 @@ export const reducer = createReducer(initialState, {
         state.articleInteractions[article.url] = articleInteractionsInitialState;
       }
       if (!articlesSet.has(article.url)) {
-        list.list.push(article.url);
+        newArticles.push(article.url);
       }
     });
+
+    list.list = newArticles.reverse().concat(list.list);
   },
 
   [actions.setCurrentArticle]: (state, action) => {

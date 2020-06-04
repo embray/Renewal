@@ -1,18 +1,17 @@
-import { Icon } from 'native-base';
+import { Icon, Text, View } from 'native-base';
 import React, { Component } from 'react';
 import {
   ActivityIndicator,
   Animated,
   Dimensions,
   SafeAreaView,
-  StyleSheet,
-  Text,
-  View
+  StyleSheet
 } from 'react-native';
 import { connect } from 'react-redux';
 
 import { articleActions } from '../actions';
 import { Article } from '../components/Article';
+import TickMessage from '../components/TickMessage';
 import { sleep } from '../utils';
 
 
@@ -25,9 +24,9 @@ const DEBUG_DATA_SOURCE = {
   articles: Object.fromEntries(DEBUG_ARTICLES.map((a) => [a.url, a])),
   articleLists: {
     recommendations: DEBUG_ARTICLES.sort((a, b) => {
-      if (a.date > b.date) {
+      if (a.date < b.date) {
         return -1;
-      } else if (a.date < b.date) {
+      } else if (a.date > b.date) {
         return 1;
       } else {
         return 0;
@@ -40,12 +39,12 @@ const DEBUG_DATA_SOURCE = {
 };
 
 // Fetch fake debug data
-function _debugFetch(listName, lastArticleId, perPage) {
+async function _debugFetch(listName, latestArticleId, perPage) {
   // TODO: Here we would actually fetch the data from the backend
   let articles = DEBUG_DATA_SOURCE.articleLists[listName];
 
-  let start = (lastArticleId ?
-    articles.findIndex(id => id == lastArticleId) + 1 : 0);
+  let start = (latestArticleId ?
+    articles.findIndex(id => id == latestArticleId) + 1 : 0);
   let end = start + perPage;
 
   articles = articles.slice(start, end);
@@ -59,6 +58,9 @@ function _debugFetch(listName, lastArticleId, perPage) {
     interactions[article.url] = DEBUG_DATA_SOURCE.articleInteractions[article.url];
     sources[article.source] = DEBUG_DATA_SOURCE.sources[article.source];
   });
+
+  // Simulate loading time;
+  await sleep(500);
 
   return { articles, interactions, sources };
 }
@@ -75,9 +77,9 @@ class ArticlesList extends Component {
 
     this.state = {
       refreshing: false,
+      showRefreshHint: false,
       loading: true,
-      loadingMore: false,
-      endOfData: false,
+      loadingMore: false
     }
 
     this.flatList = React.createRef();
@@ -89,15 +91,23 @@ class ArticlesList extends Component {
   }
 
   async componentDidMount() {
-    await this._fetchArticles();
-    if (this.props.articleList.list.length) {
+    if (this.props.articleList.list.length == 0) {
+      this._fetchArticles();
+    } else {
       // If the list is empty this will try to scroll to a non-existent
       // item resulting in a warning.
-      this.flatList.current.getNode().scrollToIndex({
-        index: this.props.articleList.current || 0,
-        viewPosition: 0.5,
-        animated: false
-      });
+      // Sometimes this can fail if the flatList reference has not been
+      // assigned yet, so we put it on a timer
+      this.scrollToInterval = setInterval(() => {
+        if (this.flatList.current) {
+          this.flatList.current.getNode().scrollToIndex({
+            index: this.props.articleList.current || 0,
+            viewPosition: 0.5,
+            animated: false
+          });
+          clearInterval(this.scrollToInterval);
+        }
+      }, 50);
     }
   }
 
@@ -107,14 +117,10 @@ class ArticlesList extends Component {
   async _fetchArticles() {
     const { listName, articleList, perPage } = this.props;
     const list = articleList.list;
-    const lastArticleId = list[list.length - 1];
-
-    // Simulate data being refreshed
-    // TODO: Only do this in debug mode--simul
-    await sleep(50);
+    const latestArticleId = list[0];
 
     // TODO: Here we would actually fetch the data from the backend
-    const response = _debugFetch(listName, lastArticleId, perPage);
+    const response = await _debugFetch(listName, latestArticleId, perPage);
 
     this.props.newArticles(
       response.articles,
@@ -124,9 +130,9 @@ class ArticlesList extends Component {
 
     this.setState((prevState) => ({
       refreshing: false,
+      showRefreshHint: false,
       loading: false,
-      loadingMore: false,
-      endOfData: (response.articles.length === 0)
+      loadingMore: false
     }));
   }
 
@@ -143,7 +149,7 @@ class ArticlesList extends Component {
   _onRefresh() {
     console.log('refreshing');
     this.setState(
-      { refreshing: true },
+      { refreshing: true, loadingMore: true },
       this._fetchArticles
     );
   }
@@ -163,7 +169,11 @@ class ArticlesList extends Component {
     // a situation where no items are viewable (i.e. neither is
     // 50% on screen).  In this case just ignore the change
     if (viewableItems.length) {
-      this.props.setCurrentArticle(viewableItems[0].index);
+      let current = viewableItems[0].index;
+      this.props.setCurrentArticle(current);
+      if (current == 0 && current != this.props.articleList.current) {
+        this.setState({ showRefreshHint: true });
+      }
     }
   }
 
@@ -185,20 +195,41 @@ class ArticlesList extends Component {
     }, 100);
   }
 
-  _renderFooter() {
-    const { height, width } = Dimensions.get('window');
-
-    if (this.state.endOfData) {
+  _renderListEmpty() {
+    if (this.state.loading) {
       return (
-        <View style={[ styles.endFooter, { width } ]}>
-          <Text style={ styles.endFooterText}>·</Text>
+        <>
+          <ActivityIndicator size="large" />
+          <TickMessage style={ styles.loadingText }
+            message={ 'Loading ' + this.props.listName }
+          />
+        </>
+      );
+    } else {
+      return null;
+    }
+  }
+
+  _renderHeader() {
+    if (this.state.showRefreshHint) {
+      // Don't show by default, only display when scrolling to the top
+      return (
+        <View style={ styles.refreshHint }>
+          <Icon name='md-arrow-dropdown' />
+          <Text note>pull down to refresh</Text>
+          <Icon name='md-arrow-dropdown' />
         </View>
       );
+    } else {
+      return null;
     }
+  }
 
+  _renderFooter() {
+    const { height, width } = Dimensions.get('window');
     return (
-      <View style={[ styles.loadingFooter, { width, height: height / 2} ]}>
-        <ActivityIndicator animating size="large" />
+      <View style={[ styles.endFooter, { width } ]}>
+        <Text style={ styles.endFooterText}>·</Text>
       </View>
     );
   }
@@ -207,31 +238,25 @@ class ArticlesList extends Component {
     // TODO: Need to figure out a more precise number for
     // onEndReachedThreshold, perhaps based on the size of the screen and the
     // article cards?
+    console.log(this.state.loading);
     return (
       <SafeAreaView>
-        { !this.state.loading ? (
-          <Animated.FlatList
-            { ...this.props }
-            ref={ this.flatList }
-            data={ this.props.articleList.list }
-            keyExtractor={ (item, index) => item }
-            renderItem={ ({item}) => this._renderArticle(item) }
-            initialNumToRender={ this.props.perPage }
-            refreshing={ this.state.refreshing }
-            onRefresh={ this._onRefresh.bind(this) }
-            onEndReached={ this._onEndReached.bind(this) }
-            onEndReachedThreshold={ 0.75 }
-            onViewableItemsChanged={ this._onViewableItemsChanged }
-            onScrollToIndexFailed={ this._onScrollToIndexFailed.bind(this) }
-            viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
-            ListFooterComponent={ this._renderFooter.bind(this) }
-          />
-        ) : (
-          <>
-            <Text style={ styles.loadingText }>Loading { this.props.listName }...</Text>
-            <ActivityIndicator size="large" />
-          </>
-        )}
+        <Animated.FlatList
+          { ...this.props }
+          ref={ this.flatList }
+          data={ this.props.articleList.list }
+          keyExtractor={ (item, index) => item }
+          renderItem={ ({item}) => this._renderArticle(item) }
+          initialNumToRender={ this.props.perPage }
+          refreshing={ this.state.refreshing }
+          onRefresh={ this._onRefresh.bind(this) }
+          onViewableItemsChanged={ this._onViewableItemsChanged }
+          onScrollToIndexFailed={ this._onScrollToIndexFailed.bind(this) }
+          viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
+          ListEmptyComponent={ this._renderListEmpty.bind(this) }
+          ListHeaderComponent={ this._renderHeader.bind(this) }
+          ListFooterComponent={ this._renderFooter.bind(this) }
+        />
       </SafeAreaView>
     );
   }
@@ -275,15 +300,13 @@ export default connect(mapStateToProps, mapDispatchToProps)(ArticlesList);
 
 
 const styles = StyleSheet.create({
+  refreshHint: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    height: 20
+  },
   loadingText: {
     alignSelf: 'center'
-  },
-  loadingFooter: {
-    paddingVertical: 20,
-    borderTopWidth: 1,
-    borderColor: '#f2f2f2',
-    marginTop: 10,
-    marginBottom: 10
   },
   endFooter: {
     height: 20,

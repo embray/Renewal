@@ -21,6 +21,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 // Font for the masthead
 import Chomsky from './assets/Chomsky.otf'
 import accountActions from './src/actions/account';
+import TickMessage from './src/components/TickMessage';
 import Home from './src/containers/Home';
 import createArticleViewScreen from './src/containers/ArticleView';
 import persistedStore, { store } from './src/storage';
@@ -45,33 +46,6 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   }
 });
-
-
-class SplashMessage extends Component {
-  static defaultProps = { message: '' }
-  state = { dots: '' }
-
-  componentDidMount() {
-    this.ticker = setInterval(() => {
-      this.setState((prevState) => ({
-        dots: (prevState.dots == '...' ? '' : prevState.dots + '.')
-      }));
-    }, 500);
-  }
-
-  componentWillUnmount() {
-    clearInterval(this.ticker);
-  }
-
-  render() {
-    return (
-      <View style={{ flexDirection: 'row' }}>
-        <Text>{ this.props.message }</Text>
-        <Text style={{ width: 15 }}>{ this.state.dots }</Text>
-      </View>
-    );
-  }
-}
 
 
 const Stack = createStackNavigator();
@@ -106,7 +80,7 @@ class _RootContainer extends Component {
           fadeDuration={ 0 }
         >
           <View style={ styles.splashMessage }>
-            <SplashMessage message={ splashMessage } />
+            <TickMessage message={ splashMessage } />
           </View>
         </ImageBackground>
       );

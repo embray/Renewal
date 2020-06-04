@@ -34,8 +34,7 @@ if (!firebase.apps.length) {
 
 function userToObj(user) {
   const obj = {};
-  const keys = [ 'uid', 'isAnonymous', 'displayName', 'photoURL', 'email',
-                 'phoneNumber' ];
+  const keys = [ 'uid', 'isAnonymous', 'displayName', 'photoURL', 'email' ];
   for (let providerData of user.providerData.reverse()) {
     Object.assign(obj, objectNonNull(objectSlice(providerData, ...keys)));
   }
@@ -216,22 +215,6 @@ export function saveAccount(accountUpdates) {
       case 'displayName':
         promises.push(currentUser.updateProfile({ displayName: value }));
         break;
-      case 'email':
-        // TODO: Per the docs, this may fail in several cases we also need
-        // to handle; changing their e-mail is not just a matter of setting
-        // a value, for security reasons; see
-        // https://firebase.google.com/docs/reference/js/firebase.User#updateprofile
-        promises.push(currentUser.updateEmail(value));
-        break;
-      case 'phoneNumber':
-        // TODO: Apparently this will only make sense if the user is using
-        // phone-base auth; firebase doesn't store their phone number for any
-        // other reason--this re-raises my earlier question of whether we want
-        // to ask the user for their phone number in the first place...
-        console.log('TODO: phoneNumber not saved currently');
-        break;
-      default:
-        console.log(`TODO: account.${key} needs to be stored in firebase`);
     }
   });
 

@@ -22,7 +22,6 @@ export const initialState = {
   displayName: "",
   photoURL: null,
   email: null,
-  phoneNumber: null,
 
   // These additional attributes are stored in the database (as are copies
   // of most of the above attributes)

@@ -176,24 +176,6 @@ const LocationDialog = Dialog(
 )
 
 
-const EmailDialog = Dialog(
-  I18n.t('account_email'),
-  I18n.t('account_email_popup'),
-  { keyboardType: "email-address", autoCompleteType: "email" },
-  (value) => {
-    const regExp = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-    return regExp.test(value || '');
-  }
-)
-
-
-const PhoneNumberDialog = Dialog(
-  I18n.t('account_phonenumber'),
-  I18n.t('account_phonenumber_popup'),
-  { keyboardType: "phone-pad", autoCompleteType: "tel" }
-)
-
-
 class _AccountContent extends Component {
   state = { visibleDialog: null }
 
@@ -242,7 +224,9 @@ class _AccountContent extends Component {
     }
 
     return (
-      <ListItem icon onPress={ this._onPressItem.bind(this, propName) }>
+      <ListItem icon onPress={
+        Dialog ? this._onPressItem.bind(this, propName) : () => {}
+      }>
         <Left>
           <Icon name={ icon } style={{ color: iconColor }}/>
         </Left>
@@ -261,7 +245,7 @@ class _AccountContent extends Component {
             <Text note>{ placeholder }</Text>) : null
           }
           <Text>{ formattedValue }</Text>
-          <Icon name="arrow-forward" />
+          { Dialog ? <Icon name="arrow-forward" /> : null }
         </Right>
       </ListItem>
     );
@@ -300,9 +284,8 @@ class _AccountContent extends Component {
                               (date) => new Date(date).toLocaleDateString())
             }
             { this.renderItem('location', 'navigate', 'green', LocationDialog) }
-            { this.renderItem('email', 'mail', '#FF3333', EmailDialog) }
-            { this.renderItem('phoneNumber', 'ios-phone-portrait', 'black',
-                              PhoneNumberDialog)
+            { this.renderItem('email', 'mail', '#FF3333', null,
+                              'link account to set e-mail')
             }
             {/* just to add some spacing */}
             <ListItem noBorder />

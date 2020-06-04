@@ -13,6 +13,7 @@ import { connect } from 'react-redux';
 
 import { articleActions } from '../actions';
 import { Article } from '../components/Article';
+import { sleep } from '../utils';
 
 
 // TODO: These will probably be moved again elsewhere once the backend API is
@@ -60,12 +61,6 @@ function _debugFetch(listName, lastArticleId, perPage) {
   });
 
   return { articles, interactions, sources };
-}
-
-
-// TODO: Move this to a utilities module.
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 

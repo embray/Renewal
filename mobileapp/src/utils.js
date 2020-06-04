@@ -1,4 +1,9 @@
 /* Miscellaneous utilities */
+
+export function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // Simplifies the global redux state in order to cut down on some noise
 // in redux-logger.  AFAIK this should *not* mutate the original state.
 // (update: in fact it can't because it gets wrapped in immutable objects).

@@ -8,11 +8,11 @@ import { Asset } from 'expo-asset';
 import Constants from 'expo-constants';
 import * as Font from 'expo-font';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
-import { Root } from 'native-base';
+import { Root, Text } from 'native-base';
 import Roboto from 'native-base/Fonts/Roboto.ttf'
 import RobotoMedium from 'native-base/Fonts/Roboto_medium.ttf'
 import React, { Component } from 'react';
-import { Image, View } from 'react-native';
+import { ImageBackground, View, StyleSheet } from 'react-native';
 import { Provider, connect } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react'
 import { NavigationContainer } from '@react-navigation/native';
@@ -31,30 +31,55 @@ if (__DEV__) {
 }
 
 
+const styles = StyleSheet.create({
+  splashScreen: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center'
+  },
+  splashMessage: {
+    position: 'absolute',
+    bottom: 20,
+    alignItems: 'center'
+  }
+});
+
+
 const Stack = createStackNavigator();
 
 
 class _RootContainer extends Component {
-  state = { isReady: false }
+  state = {
+    isReady: false,
+    splashMessage: ''
+  }
 
   componentDidMount() {
     this._loadAsync()
   }
 
   render() {
+    let splashMessage = this.state.splashMessage;
+    if (!splashMessage.length && this.props.isAuthenticating) {
+      // If there is no other message to display on the splash screen but we
+      // are still waiting on authentication, display the authentication message
+      splashMessage = 'Logging in...';
+    }
     // Display splash screen
     if (this.props.isAuthenticating || !this.state.isReady) {
       // See https://docs.expo.io/versions/latest/sdk/splash-screen/#example-without-any-flickering-between-splashscreen-and
       return (
-        <View style={{ flex: 1, justifyContent: 'center' }}>
-          <Image
-            style={{ width: '100%' }}
-            source={ require('./assets/splash.png') }
-            resizeMode="contain"
-            onLoadEnd={ () => SplashScreen.hide() }
-            fadeDuration={ 0 }
-          />
-        </View>
+        <ImageBackground
+          style={ styles.splashScreen }
+          source={ require('./assets/splash.png') }
+          resizeMode="contain"
+          onLoadEnd={ () => SplashScreen.hide() }
+          fadeDuration={ 0 }
+        >
+          <View style={ styles.splashMessage }>
+            <Text>{ splashMessage }</Text>
+          </View>
+        </ImageBackground>
       );
     }
 
@@ -74,6 +99,7 @@ class _RootContainer extends Component {
 
   async _loadAsync() {
     this.props.dispatch(accountActions.checkAuth());
+    this.setState({ splashMessage: 'Loading assets...' });
     await Font.loadAsync({
         Roboto: Roboto,
         Roboto_medium: RobotoMedium,
@@ -81,7 +107,10 @@ class _RootContainer extends Component {
         ...Ionicons.font,
         ...MaterialCommunityIcons.font
     });
-    this.setState({ isReady: true });
+    this.setState({
+      isReady: true,
+      splashMessage: ''
+    });
   }
 }
 

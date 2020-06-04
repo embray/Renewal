@@ -27,6 +27,13 @@ export function capitalize(s) {
 }
 
 
+// Return a deeply nested property from a nested object
+// If any of the levels are undefined returns undefined
+export function getNested(obj, ...props) {
+  return props.reduce((obj, prop) => (obj !== undefined && obj[prop]), obj);
+}
+
+
 export function objectSlice(obj, ...keys) {
   return keys.reduce((out, key) => {
     let val = obj[key];
@@ -38,7 +45,7 @@ export function objectSlice(obj, ...keys) {
 }
 
 
-// Returns a copy of an object with all null/undefined values filter out
+// Returns a copy of an object with all null/undefined values filtered out
 export function objectNonNull(obj) {
   let newObj = {};
   for (let e of Object.entries(obj)) {

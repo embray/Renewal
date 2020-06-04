@@ -66,7 +66,7 @@ const actions = {
       } else {
         // If we are not already in the process of a manually
         // initiated signIn/Out procedure.
-        thunkAPI.dispatch(actions.signIn('anonymous'))
+        thunkAPI.dispatch(actions.signIn({ provider: 'anonymous' }))
       }
     });
   }),

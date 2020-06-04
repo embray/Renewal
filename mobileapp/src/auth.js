@@ -5,7 +5,7 @@ import * as firebase from 'firebase/app';
 import 'firebase/auth';
 import { Platform } from 'react-native';
 
-import { objectSlice, objectNonNull } from './utils';
+import { objectSlice, objectNonNull, getNested } from './utils';
 
 
 let FIREBASE_ENABLED = (firebase.app.length > 0);
@@ -45,6 +45,20 @@ function userToObj(user) {
 }
 
 
+function getAuthConfig(provider) {
+  // Additional provider-specific authentication options
+  // After much suffering I am reminded that the clientId used by the
+  // web-based non-native Google authentication module is *NOT* the
+  // same as the one included in google-services.json.  The native
+  // auth module (which we have not enabled yet) is the only one that
+  // uses google-services.json, and it has a different clientId.
+  // Unfortunately app.json does not have a fixed placed to put this
+  // web client ID so we include it in extra.auth.
+  const extra = Constants.manifest.extra;
+  return getNested(extra, 'auth', provider, Platform.OS);
+}
+
+
 // TODO: Clean up handling of different auth providers; each one needs
 // to implement slightly different workflows for providing credentials, etc.
 export function getAvailableProviders() {
@@ -53,11 +67,13 @@ export function getAvailableProviders() {
   }
 
   const providers = ['anonymous', 'email'];
-  if (FirebaseCore.DEFAULT_APP_OPTIONS === undefined) {
+  const googleAuthConfig = getAuthConfig('google');
+
+  if (!(googleAuthConfig && googleAuthConfig.clientId)) {
     let extra = Constants.manifest.extra;
     if (extra.environment == "dev") {
       console.warn(
-        `${Platform.OS}.googleServicesFile not configured in ` +
+        `extra.auth.google.${Platform.OS}.clientId not configured in ` +
         `${extra.environmentConfig}; Google authentication services ` +
         `will be disabled`);
     } else {
@@ -67,7 +83,7 @@ export function getAvailableProviders() {
       // for some build...
       // But for now we require it...
       console.error(
-        `${Platform.OS}.googleServicesFile must be defined in `
+        `extra.auth.google.${PlatformOS}.clientId must be defined in `
         `${extra.environmentConfig} or else Google authentication services ` +
         `will not be available`);
     }
@@ -94,7 +110,7 @@ export function checkAuth(callback) {
 }
 
 
-export function signIn(provider = 'anonymous') {
+export function signIn({provider = 'anonymous', credential = null}) {
   if (!FIREBASE_ENABLED) {
     return;
   }
@@ -103,6 +119,9 @@ export function signIn(provider = 'anonymous') {
   switch (provider) {
     case 'anonymous':
       signInPromise = firebase.auth().signInAnonymously();
+      break;
+    case 'google':
+      signInPromise = firebase.auth().signInWithCredential(credential);
       break;
     default:
       console.error(`unsupported sign-in provider ${provider}`);
@@ -134,11 +153,29 @@ export async function linkAccount(provider) {
   console.log(`linking account with the ${provider} provider`);
   switch (provider) {
     case 'google':
-      const clientId = FirebaseCore.DEFAULT_APP_OPTIONS.clientId;
+      const clientId = getAuthConfig('google').clientId;
       linkPromise = Google.logInAsync({ clientId }).then((result) => {
-          const { idToken } = result;
-          const cred = firebase.auth.GoogleAuthProvider.credential(idToken);
-          return firebase.auth().currentUser.linkWithCredential(cred);
+        const { idToken } = result;
+        const cred = firebase.auth.GoogleAuthProvider.credential(idToken);
+        const currentUser = firebase.auth().currentUser;
+        return currentUser.linkWithCredential(cred).then((result) => result,
+          (error) => {
+            if (error.code == 'auth/credential-already-in-use') {
+              // Try to log in with the provided existing credential
+              // TODO: Before we do this, we should probably try to merge
+              // accounts, and following a successful merge delete the old
+              // anonymous account; see
+              // https://github.com/RenewalResearch/Renewal/issues/6
+              // TODO: Until merging is working, at the very least delete
+              // the old account to prevent clutter of anonymous accounts
+              console.log(
+                'credential already in use; trying to sign in to exising ' +
+                'account');
+              return firebase.auth().signInWithCredential(error.credential);
+            } else {
+              return Promise.reject(new Error(error));
+            }
+          });
         });
       break;
     default:
@@ -147,7 +184,7 @@ export async function linkAccount(provider) {
 
   return linkPromise.then(
     (cred) => ({ user: userToObj(cred.user), provider }),
-    (error) => Promise.reject(new Error(error.code))
+    (error) => Promise.reject(new Error(error.message))
   );
 }
 

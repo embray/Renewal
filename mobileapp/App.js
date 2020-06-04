@@ -45,6 +45,33 @@ const styles = StyleSheet.create({
 });
 
 
+class SplashMessage extends Component {
+  static defaultProps = { message: '' }
+  state = { dots: '' }
+
+  componentDidMount() {
+    this.ticker = setInterval(() => {
+      this.setState((prevState) => ({
+        dots: (prevState.dots == '...' ? '' : prevState.dots + '.')
+      }));
+    }, 500);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.ticker);
+  }
+
+  render() {
+    return (
+      <View style={{ flexDirection: 'row' }}>
+        <Text>{ this.props.message }</Text>
+        <Text style={{ width: 15 }}>{ this.state.dots }</Text>
+      </View>
+    );
+  }
+}
+
+
 const Stack = createStackNavigator();
 
 
@@ -63,7 +90,7 @@ class _RootContainer extends Component {
     if (!splashMessage.length && this.props.isAuthenticating) {
       // If there is no other message to display on the splash screen but we
       // are still waiting on authentication, display the authentication message
-      splashMessage = 'Logging in...';
+      splashMessage = 'Logging in';
     }
     // Display splash screen
     if (this.props.isAuthenticating || !this.state.isReady) {
@@ -77,7 +104,7 @@ class _RootContainer extends Component {
           fadeDuration={ 0 }
         >
           <View style={ styles.splashMessage }>
-            <Text>{ splashMessage }</Text>
+            <SplashMessage message={ splashMessage } />
           </View>
         </ImageBackground>
       );
@@ -99,7 +126,7 @@ class _RootContainer extends Component {
 
   async _loadAsync() {
     this.props.dispatch(accountActions.checkAuth());
-    this.setState({ splashMessage: 'Loading assets...' });
+    this.setState({ splashMessage: 'Loading assets' });
     await Font.loadAsync({
         Roboto: Roboto,
         Roboto_medium: RobotoMedium,

@@ -33,7 +33,7 @@ class RecommendationsHeader extends Component {
           </Button>
         </Left>
         <Body style={ [styles.headerBody, flexStyle] }>
-          <Title style={ styles.headerTitle }>RENEWAL</Title>
+          <Title style={ styles.headerTitle }>Renewal</Title>
         </Body>
         <Right style={ flexStyle }>
         </Right>
@@ -61,7 +61,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#212121',
   },
   headerTitle: {
-    color: 'white'
+    color: 'white',
+    fontFamily: 'Chomsky',
+    fontSize: 30
   },
   headerBody: {
     flexDirection: 'row',

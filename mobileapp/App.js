@@ -18,6 +18,8 @@ import { PersistGate } from 'redux-persist/integration/react'
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
+// Font for the masthead
+import Chomsky from './assets/Chomsky.otf'
 import accountActions from './src/actions/account';
 import Home from './src/containers/Home';
 import createArticleViewScreen from './src/containers/ArticleView';
@@ -131,6 +133,7 @@ class _RootContainer extends Component {
         Roboto: Roboto,
         Roboto_medium: RobotoMedium,
         Arial: Roboto,
+        Chomsky: Chomsky,
         ...Ionicons.font,
         ...MaterialCommunityIcons.font
     });

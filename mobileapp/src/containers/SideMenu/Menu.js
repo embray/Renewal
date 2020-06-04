@@ -27,15 +27,15 @@ import { persistConfig } from '../../storage';
 export default function Menu(props) {
   return (
     <Container>
-      <Header style={styles.header}>
+      <Header style={ styles.header }>
         <Left />
         <Body>
-          <Title style={styles.headerTitle}>RENEWAL</Title>
+          <Title style={ styles.headerTitle }>Renewal</Title>
         </Body>
         <Right />
       </Header>
-      <DrawerContentScrollView {...props}>
-        <DrawerItemList {...props} />
+      <DrawerContentScrollView { ...props }>
+        <DrawerItemList { ...props } />
         { __DEV__ && (<DevMenu />) }
       </DrawerContentScrollView>
     </Container>
@@ -82,7 +82,9 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   headerTitle: {
-    color: 'white'
+    color: 'white',
+    fontFamily: 'Chomsky',
+    fontSize: 30
   },
   devMenuContainer: {
     marginTop: 10

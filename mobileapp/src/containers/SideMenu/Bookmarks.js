@@ -28,7 +28,7 @@ export default class Bookmarks extends Component {
 class BookmarksContent extends Component {
   render() {
     return (
-      <ArticlesList { ...this.props } listName="bookmarks" />
+      <ArticlesList { ...this.props } listName="bookmarks" infiniteScroll />
     );
   }
 }

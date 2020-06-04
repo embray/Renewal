@@ -10,6 +10,7 @@ import { createAction, createReducer } from '@reduxjs/toolkit';
 
 /* Action constants */
 const NEW_ARTICLES = 'articles/new_articles';
+const OLD_ARTICLES = 'articles/old_articles';
 const SET_CURRENT_ARTICLE = 'articles/set_current_article';
 const SET_INTERACTION = 'articles/set_interaction';
 const TOGGLE_BOOKMARKED = 'articles/toggle_bookmarked';
@@ -48,6 +49,16 @@ const actions = {
     }
   ),
 
+  oldArticles: createAction(OLD_ARTICLES,
+    // Same as newArticles, but in the reducer we append to the end of the
+    // list rather than to the beginning
+    (listName, articles, articleInteractions, sources) => {
+      return {
+        payload: { listName, articles, articleInteractions, sources }
+      };
+    }
+  ),
+
   setCurrentArticle: createAction(SET_CURRENT_ARTICLE,
     (listName, current) => ({
       payload: { listName, current }
@@ -62,6 +73,50 @@ const actions = {
 };
 
 
+// Reducer for NEW_ARTICLES and OLD_ARTICLES; the only difference
+// is how the state is updated (articles prepended or appended to the
+// list)
+function updateArticles(state, action, old = false) {
+  // TODO: Right now this is stupid and just appends to the list; in practice
+  // this will want to do something more complicated--it may want to either
+  // append or prepend, or as discussed at
+  // https://github.com/RenewalResearch/Renewal/issues/3 it may even want to
+  // maintain a heap invariant
+  // TODO: We may want to impose a limit (perhaps a user-configurable setting?)
+  // of how many older articles to keep cached
+  const { listName, articles, articleInteractions, sources } = action.payload;
+  let list = state.articleLists[listName];
+  if (list === undefined) {
+    list = state.articleLists[listName] = articleListInitialState;
+  }
+
+  // Update articleInteractions, and sources
+  Object.assign(state.articleInteractions, articleInteractions);
+  Object.assign(state.sources, sources);
+
+  const articlesSet = new Set(list.list);
+  const newArticles = [];
+
+  // Now update the appropriate articles array and update the articles
+  // object for each article passed to the action
+  articles.forEach((article) => {
+    state.articles[article.url] = article;
+    if (state.articleInteractions[article.url] === undefined) {
+      state.articleInteractions[article.url] = articleInteractionsInitialState;
+    }
+    if (!articlesSet.has(article.url)) {
+      newArticles.push(article.url);
+    }
+  });
+
+  if (old) {
+    list.list = list.list.concat(newArticles);
+  } else {
+    list.list = newArticles.reverse().concat(list.list);
+  }
+}
+
+
 /* Reducers for article actions */
 // NOTE: Per the Redux Toolkit docs
 // <https://redux-toolkit.js.org/api/createReducer>, createReducer uses
@@ -70,37 +125,11 @@ const actions = {
 // an illusion.
 export const reducer = createReducer(initialState, {
   [actions.newArticles]: (state, action) => {
-    // TODO: Right now this is stupid and just appends to the list; in practice
-    // this will want to do something more complicated--it may want to either
-    // append or prepend, or as discussed at
-    // https://github.com/RenewalResearch/Renewal/issues/3 it may even want to
-    // maintain a heap invariant
-    const { listName, articles, articleInteractions, sources } = action.payload;
-    let list = state.articleLists[listName];
-    if (list === undefined) {
-      list = state.articleLists[listName] = articleListInitialState;
-    }
+    updateArticles(state, action);
+  },
 
-    // Update articleInteractions, and sources
-    Object.assign(state.articleInteractions, articleInteractions);
-    Object.assign(state.sources, sources);
-
-    const articlesSet = new Set(list.list);
-    const newArticles = [];
-
-    // Now update the appropriate articles array and update the articles
-    // object for each article passed to the action
-    articles.forEach((article) => {
-      state.articles[article.url] = article;
-      if (state.articleInteractions[article.url] === undefined) {
-        state.articleInteractions[article.url] = articleInteractionsInitialState;
-      }
-      if (!articlesSet.has(article.url)) {
-        newArticles.push(article.url);
-      }
-    });
-
-    list.list = newArticles.reverse().concat(list.list);
+  [actions.oldArticles]: (state, action) => {
+    updateArticles(state, action, true);
   },
 
   [actions.setCurrentArticle]: (state, action) => {

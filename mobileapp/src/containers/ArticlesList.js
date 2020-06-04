@@ -69,7 +69,8 @@ async function _debugFetch(listName, latestArticleId, perPage) {
 class ArticlesList extends Component {
   static defaultProps = {
     articleList: { list: {}, current: 0 },
-    perPage: 10
+    perPage: 10,
+    infiniteScroll: false
   }
 
   constructor(props) {
@@ -79,7 +80,10 @@ class ArticlesList extends Component {
       refreshing: false,
       showRefreshHint: false,
       loading: true,
-      loadingMore: false
+      loadingMore: false,
+      // If infiniteScrolling is enabled then by default we are not
+      // at the end of the data
+      endOfData: !this.props.infiniteScroll
     }
 
     this.flatList = React.createRef();
@@ -114,25 +118,44 @@ class ArticlesList extends Component {
   // TODO: Eventually this will use the API for the backend to fetch
   // articles, and may include a built-in layer for article caching,
   // as well as the fallback that loads demo data in debug mode.
-  async _fetchArticles() {
+  // If old = true fetch old articles (for infinite scrolling) rather
+  // than newer articles (refreshing)
+  async _fetchArticles(old = false) {
     const { listName, articleList, perPage } = this.props;
     const list = articleList.list;
-    const latestArticleId = list[0];
+    if (old) {
+      var latestArticleId = list[list.length - 1];
+    } else {
+      var latestArticleId = list[0];
+    }
+
 
     // TODO: Here we would actually fetch the data from the backend
+    // Depending on whether old or new we might have an argument
+    // specifying prior/since
     const response = await _debugFetch(listName, latestArticleId, perPage);
 
-    this.props.newArticles(
-      response.articles,
-      response.interactions,
-      response.sources
-    );
+    if (old) {
+      this.props.oldArticles(
+        response.articles,
+        response.interactions,
+        response.sources
+      );
+    } else {
+      this.props.newArticles(
+        response.articles,
+        response.interactions,
+        response.sources
+      );
+    }
 
     this.setState((prevState) => ({
       refreshing: false,
       showRefreshHint: false,
       loading: false,
-      loadingMore: false
+      loadingMore: false,
+      endOfData: (this.props.infiniteScroll ? true :
+                  (old && response.articles.length == 0))
     }));
   }
 
@@ -155,10 +178,12 @@ class ArticlesList extends Component {
   }
 
   _onEndReached(info) {
-    console.log(`loading more: ${JSON.stringify(info)}`);
-    this.setState((prevState) => ({
-      loadingMore: true
-    }), () => { this._fetchArticles() });
+    if (this.props.infiniteScroll) {
+      console.log(`loading more: ${JSON.stringify(info)}`);
+      this.setState((prevState) => ({
+        loadingMore: true
+      }), () => { this._fetchArticles(true) });
+    }
   }
 
   _onViewableItemsChanged({ viewableItems, changed }) {
@@ -227,11 +252,19 @@ class ArticlesList extends Component {
 
   _renderFooter() {
     const { height, width } = Dimensions.get('window');
-    return (
-      <View style={[ styles.endFooter, { width } ]}>
-        <Text style={ styles.endFooterText}>·</Text>
-      </View>
-    );
+    if (this.state.endOfData) {
+      return (
+        <View style={[ styles.endFooter, { width } ]}>
+          <Text style={ styles.endFooterText}>·</Text>
+        </View>
+      );
+    } else {
+      return (
+        <View style={[ styles.loadingFooter, { width, height: height / 2} ]}>
+          <ActivityIndicator animating size="large" />
+        </View>
+      )
+    }
   }
 
   render() {
@@ -250,6 +283,8 @@ class ArticlesList extends Component {
           initialNumToRender={ this.props.perPage }
           refreshing={ this.state.refreshing }
           onRefresh={ this._onRefresh.bind(this) }
+          onEndReached={ this._onEndReached.bind(this) }
+          onEndReachedThreshold={ 0.75 }
           onViewableItemsChanged={ this._onViewableItemsChanged }
           onScrollToIndexFailed={ this._onScrollToIndexFailed.bind(this) }
           viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
@@ -287,6 +322,11 @@ function mapDispatchToProps(dispatch, ownProps) {
   return {
     newArticles: (articles, articleInteractions, sources) => {
       dispatch(articleActions.newArticles(
+        listName, articles, articleInteractions, sources
+      ))
+    },
+    oldArticles: (articles, articleInteractions, sources) => {
+      dispatch(articleActions.oldArticles(
         listName, articles, articleInteractions, sources
       ))
     },

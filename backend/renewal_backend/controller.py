@@ -7,10 +7,13 @@ the last refresh interval.
 """
 
 import asyncio
+import copy
 import logging
+from collections import defaultdict
 from datetime import datetime, timedelta
 from functools import partial
 
+import pymongo
 from bson import ObjectId
 
 from .agent import Agent
@@ -19,6 +22,17 @@ from .utils import dict_slice, truncate_dict
 
 
 class Controller(Agent, MongoMixin):
+    def __init__(self, config, log=None):
+        super().__init__(config, log=log)
+        # These queues are meant to ensure the crawl/scrape pumps aren't
+        # requeing articles/feeds that have already been queued to the messge
+        # queue
+        # This values in this dict are not themeselves queues; rather they are
+        # just sets tracking which actions have been sent to the message queue.
+        # These are removed when the action is resolved (e.g. an article that
+        # was queued to be crawled has been crawled).
+        self.queues = defaultdict(set)
+
     def get_exchanges(self):
         return ['feeds', 'articles']
 
@@ -43,6 +57,11 @@ class Controller(Agent, MongoMixin):
 
         feeds = self.db['feeds'].find(filt)
         for feed in feeds:
+            if feed['_id'] in self.queues['crawled_feeds']:
+                continue
+            else:
+                self.queues['crawled_feeds'].add(feed['_id'])
+
             self.log.info(f'producing {feed["type"]} feed at {feed["url"]}')
             await producer.proxy.crawl_feed(resource=feed)
 
@@ -57,10 +76,6 @@ class Controller(Agent, MongoMixin):
         signature compatibility with `Controller.queue_feeds`.
         """
 
-        # TODO: This might also be used to re-try crawling articles that were
-        # previously down, as well as check for articles that have been
-        # erroring out for too long and remove them from the database (or set
-        # them otherwise to unusable)
         filt = {
             '$and': [
                 {'$or': [
@@ -71,8 +86,18 @@ class Controller(Agent, MongoMixin):
             ]
         }
 
-        articles = self.db['articles'].find(filt)
+        # sort by last_seen descending so that articles that were most recently
+        # seen in the feeds are given priority here; later we might also
+        # consider adding message priorities to give these articles lower
+        # priority than recently found articles
+        sort = [('last_seen', pymongo.DESCENDING)]
+        articles = self.db['articles'].find(filt, sort=sort)
         for article in articles:
+            if article['_id'] in self.queues['crawled_articles']:
+                continue
+            else:
+                self.queues['crawled_articles'].add(article['_id'])
+
             self.log.info(f'producing article {article["url"]}')
             await producer.proxy.crawl_article(resource=article)
 
@@ -134,19 +159,37 @@ class Controller(Agent, MongoMixin):
         updates['$inc'] = {f'times_{type}': 1}
 
         filt = {'url': resource['url']}
-        doc = self.db[collection].find_one_and_update(filt, updates,
-                projection={'_id': False})
+        doc = self.db[collection].find_one_and_update(filt, updates)
+
+        # Key for the local queue tracking resource updates of the given type
+        # (e.g. crawled_articles)
+        queue_key = f'{type}_{collection}'
+        if doc is not None and queue_key in self.queues:
+            try:
+                self.queues[queue_key].remove(doc['_id'])
+            except KeyError:
+                pass
 
         # Create a new resource for the canonical_url
         if is_redirect and doc is not None:
+            doc = copy.deepcopy(doc)
+            del doc['_id']
             doc['url'] = canonical_url
             doc['is_redirect'] = False
             # Add any additional properties that were sent by the crawler
             # for this resource
             doc.update(values)
             # Insert/upsert the resource at the canonical_url
-            self.db[collection].update({'url': doc['url']}, {'$set': doc},
-                                       upsert=True)
+            res = self.db[collection].find_one_and_update(
+                    {'url': doc['url']}, {'$set': doc},
+                    upsert=True)
+            # Also remove the canonical resource from the local queues if
+            # applicable
+            if res is not None and queue_key in self.queues:
+                try:
+                    self.queues[queue_key].remove(res['_id'])
+                except KeyError:
+                    pass
 
     async def start_resource_producer(self, connection, resource):
         """

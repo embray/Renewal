@@ -212,7 +212,7 @@ def load_default_config():
     {...'mongodb': ...}
     """
 
-    modname = __package__ + '.config'
+    modname = __package__.split('.')[0] + '.config'
     mod = importlib.import_module(modname)
     config_vars = [k for k, v in vars(mod).items()
                    if not k.startswith('_') and isinstance(v, dict)]

@@ -58,7 +58,7 @@ class Controller(Agent, MongoMixin):
             self.log.info('inserted new article')
             # Send new article to the crawlers
             if article_producer is not None:
-                await article_producer.proxy.crawl_article(article=article)
+                await article_producer.proxy.crawl_article(resource=article)
 
     def update_resource(self, *, collection, resource, type, values={}):
         """

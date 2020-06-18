@@ -24,6 +24,10 @@ class FeedCrawler(ResourceCrawler):
             # TODO: Again, also ignoring empty feeds for now
             raise NackMessage()
 
+        if result_producer is None:
+            # Shouldn't happen
+            return
+
         # Initial best guess at the post language.  An unfortunate
         # misfeature of RSS is that language is a feed-global
         # attribute; it does not support feeds with multiple language
@@ -40,6 +44,8 @@ class FeedCrawler(ResourceCrawler):
 
             await result_producer.proxy.save_article(
                     article={'url': link, 'lang': lang})
+
+        return None
 
 
 if __name__ == '__main__':

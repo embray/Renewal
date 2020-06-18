@@ -113,6 +113,10 @@ ARTICLE = dict_merge(RESOURCE, {
             'description':
                 "Last time this article was seen by the controller.",
             'bsonType': 'date'
+        },
+        'contents': {
+            'description': 'The raw article contents to be scraped',
+            'type': 'string'
         }
     }
 })

@@ -46,6 +46,36 @@ class Controller(Agent, MongoMixin):
             self.log.info(f'producing {feed["type"]} feed at {feed["url"]}')
             await producer.proxy.crawl_feed(resource=feed)
 
+    async def queue_articles(self, producer, since=None):
+        """
+        Queue articles to be crawled; normally articles will be crawled
+        immediately, but this also works through any backlog of uncrawled
+        articles (e.g. if they were missed while the article crawlers were
+        down).
+
+        The ``since`` argument is currently unused and is only for
+        signature compatibility with `Controller.queue_feeds`.
+        """
+
+        # TODO: This might also be used to re-try crawling articles that were
+        # previously down, as well as check for articles that have been
+        # erroring out for too long and remove them from the database (or set
+        # them otherwise to unusable)
+        filt = {
+            '$and': [
+                {'$or': [
+                    {'is_redirect': False},
+                    {'is_redirect': {'$exists': False}}
+                ]},
+                {'last_crawled': {'$exists': False}}
+            ]
+        }
+
+        articles = self.db['articles'].find(filt)
+        for article in articles:
+            self.log.info(f'producing article {article["url"]}')
+            await producer.proxy.crawl_article(resource=article)
+
     async def save_article(self, *, article, article_producer=None):
         self.log.info(f'inserting article into the articles collection: '
                       f'{article}')
@@ -187,7 +217,10 @@ class Controller(Agent, MongoMixin):
         await self.start_update_resource_worker(connection, 'articles')
         await self.start_save_article_worker(connection)
         # Should run forever
-        await self.start_feed_producer(connection)
+        await asyncio.gather(
+            self.start_resource_producer(connection, 'feeds'),
+            self.start_resource_producer(connection, 'articles')
+        )
 
 
 if __name__ == '__main__':

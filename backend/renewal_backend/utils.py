@@ -174,6 +174,27 @@ class AttrDict(dict):
             raise AttributeError(attr)
 
 
+def truncate_dict(d, value_length=100):
+    """
+    Returns a string representation of `dict` ``d`` but with all values
+    trucated to at most ``value_length``.
+    """
+
+    def truncate(value):
+        r = repr(value)
+        if len(r) > value_length:
+            r = r[:100] + '...'
+
+            # Special case for strings to close their quotes
+            if isinstance(value, str):
+                r += r[0]
+        return r
+
+
+    items = [f'{k!r}: {truncate(v)}...' for k, v in d.items()]
+    return f'{{{", ".join(items)}}}'
+
+
 def load_default_config():
     """
     Loads the config dict from the default configuration in the ``.config``

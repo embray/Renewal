@@ -2,6 +2,7 @@
 
 
 import abc
+import fnmatch
 import hashlib
 from datetime import datetime
 # For parsing/formatting HTTP-date format
@@ -46,7 +47,8 @@ class ResourceCrawler(Agent):
         contents = None
         try:
             resource, contents = await self.retrieve_resource(
-                    resource, only_if_modified=True)
+                    resource, only_if_modified=True,
+                    timeout=self.config.crawler.retrieve_timeout)
         finally:
             if contents is None:
                 # If contents was None then the resource was not updated since
@@ -54,18 +56,24 @@ class ResourceCrawler(Agent):
                 values = {}
             else:
                 values = dict_slice(resource, 'etag', 'last_modified', 'sha1',
-                                    allow_missing=True)
+                                    'canonical_url', allow_missing=True)
             await self._update_resource(resource, 'accessed', source_producer,
                                         values=values)
 
-        # If resource is None, in this case this means the feed was unmodified
+        # If contents is None, in this case this means the feed was unmodified
         # based on stored etags/last-modified date
-        if resource is None:
+        if contents is None:
             self.log.info(f'ignoring unmodified resource at {resource["url"]}')
             return
 
-        await self.crawl(resource, contents, result_producer=result_producer)
-        await self._update_resource(resource, 'crawled', source_producer)
+        # Pass the resource to the crawler using its canonical URL
+        if 'canonical_url' in resource:
+            resource['url'] = resource['canonical_url']
+
+        values = await self.crawl(resource, contents,
+                                  result_producer=result_producer)
+        await self._update_resource(resource, 'crawled', source_producer,
+                                    values=values)
 
     async def start_crawl_resource_worker(self, connection):
         source_producer = await self.create_producer(connection,
@@ -153,6 +161,13 @@ class ResourceCrawler(Agent):
 
                         resource['sha1'] = sha1
 
+                        canonical_url = self._canonical_url(resp.url)
+                        if canonical_url != url:
+                            # This could happen if we followed a redirect, in which
+                            # case we want to share the real URL as
+                            # canonical_url
+                            resource['canonical_url'] = canonical_url
+
                         return (resource, text)
                     except Exception as exc:
                         self.log.warning(
@@ -167,8 +182,29 @@ class ResourceCrawler(Agent):
             raise NackMessage()
 
     @staticmethod
-    async def _update_resource(resource, type, source_producer, values={}):
-        assert type in ('accessed', 'crawled')
+    async def _update_resource(resource, type, source_producer, values=None):
+        if values is None:
+            values = {}
         values.update({f'last_{type}': datetime.utcnow()})
         await source_producer.proxy.update_resource(
                 resource=dict_slice(resource, 'url'), type=type, values=values)
+
+    def _canonical_url(self, url):
+        """
+        Converts the response URL to a canonical URL for the resource.
+
+        This supports excluding various query arguments from the URL,
+        particularly for known URL tracking services.
+        """
+
+        # resp.url is a yarl.URL object; its human_repr()
+        # method gives a nice decoded string version of the URL
+        # first filter the query string
+        qs = {}
+        for k, v in url.query.items():
+            for pat in self.config.crawler.canonical_url.query_exclude:
+                if not fnmatch.fnmatch(k, pat):
+                    qs[k] = v
+
+        url = url.with_query(qs)
+        return url.human_repr()

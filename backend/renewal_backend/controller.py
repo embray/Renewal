@@ -15,6 +15,7 @@ from bson import ObjectId
 
 from .agent import Agent
 from .mongodb import MongoMixin
+from .utils import dict_slice, truncate_dict
 
 
 class Controller(Agent, MongoMixin):
@@ -27,8 +28,18 @@ class Controller(Agent, MongoMixin):
         # bottleneck.
         filt = {}
         if since is not None:
-            filt = {'$or': [{'last_crawled': {'$exists': False}},
-                            {'last_crawled': {'$lte': since}}]}
+            filt = {
+                '$and': [
+                    {'$or': [
+                        {'is_redirect': False},
+                        {'is_redirect': {'$exists': False}}
+                    ]},
+                    {'$or': [
+                        {'last_crawled': {'$exists': False}},
+                        {'last_crawled': {'$lte': since}}
+                    ]}
+                ]
+            }
 
         feeds = self.db['feeds'].find(filt)
         for feed in feeds:
@@ -72,32 +83,68 @@ class Controller(Agent, MongoMixin):
         """
 
         self.log.info(f'updating {collection} resource {resource["url"]}: '
-                      f'with {values}')
+                      f'with {truncate_dict(values)}')
         updates = {}
-        if values:
+        is_redirect = False
+        canonical_url = values.get('canonical_url')
+        if canonical_url and canonical_url != resource['url']:
+            is_redirect = True
+            # In the case of receiving the canonical URL of a resource,
+            # we just update the old resource with the canonical_url
+            # and the last accessed/crawled time; then we will create
+            # or update the resource for the canonical URL
+            updates['$set'] = dict_slice(values, 'canonical_url',
+                                         f'last_{type}', allow_missing=True)
+            # This is equivalent to saying 'url' != 'canonical_url' so is
+            # technically superfluous, but also faster to query on
+            updates['$set']['is_redirect'] = True
+        elif values:
             updates['$set'] = values
 
-        if type in ['accessed', 'crawled']:
-            updates['$inc'] = {f'times_{type}': 1}
-        else:
-            # TODO: Ignore this, or raise an error?
-            pass
+        updates['$inc'] = {f'times_{type}': 1}
 
-        self.db[collection].update_one(resource, updates)
+        filt = {'url': resource['url']}
+        doc = self.db[collection].find_one_and_update(filt, updates,
+                projection={'_id': False})
 
-    async def start_feed_producer(self, connection):
+        # Create a new resource for the canonical_url
+        if is_redirect and doc is not None:
+            doc['url'] = canonical_url
+            doc['is_redirect'] = False
+            # Add any additional properties that were sent by the crawler
+            # for this resource
+            doc.update(values)
+            # Insert/upsert the resource at the canonical_url
+            self.db[collection].update({'url': doc['url']}, {'$set': doc},
+                                       upsert=True)
+
+    async def start_resource_producer(self, connection, resource):
+        """
+        Queue feed and articles from the database to be crawled or
+        re-crawled.
+
+        See `Controller.queue_feeds` and `Controller.queue_articles`.
+
+        Resource can be either 'feeds' or 'articles'.
+        """
         # This channel is dedicated to queuing sources onto
         # sources exchange
-        producer = await self.create_producer(connection, 'feeds')
+        refresh_rate = getattr(self.config.controller,
+                               resource + '_refresh_rate')
+        self.log.info(
+            f'starting {resource} producer; checking {resource} every '
+            f'{refresh_rate} seconds')
+        producer = await self.create_producer(connection, resource)
 
         # When starting up, we could be resuming from a restart, so still only
         # take sources that haven't been updated since the longest possible
         # refresh interval
-        delta = timedelta(seconds=self.config.controller.feeds_refresh_rate)
+        delta = timedelta(seconds=refresh_rate)
+        queue_method = getattr(self, 'queue_' + resource)
         while True:
             since = datetime.now() - delta
-            await self.queue_feeds(producer, since=since)
-            await asyncio.sleep(self.config.controller.feeds_refresh_rate)
+            await queue_method(producer, since=since)
+            await asyncio.sleep(refresh_rate)
 
     async def start_save_article_worker(self, connection):
         producer = await self.create_producer(connection, 'articles')
@@ -105,7 +152,7 @@ class Controller(Agent, MongoMixin):
         await producer.create_worker('save_article', worker, auto_delete=True)
 
     async def start_update_resource_worker(self, connection, exchange,
-                                           collection):
+                                           collection=None):
         """
         Handles messages on a queue bound to the "feeds" exchange with
         routing key "update_resource".
@@ -114,10 +161,16 @@ class Controller(Agent, MongoMixin):
         have successfully crawled a source by setting the last_crawled field
         on the source.
 
+        If ``collection is None`` then the collection has the same name as
+        the exchange.
+
         TODO: This can also be used to signal error conditions on sources.
         NOTE: This has been generalized for handling article updates as well;
         the docstring should be rewritten.
         """
+
+        if collection is None:
+            collection = exchange
 
         producer = await self.create_producer(connection, exchange)
         worker = partial(self.update_resource, collection=collection)
@@ -130,9 +183,8 @@ class Controller(Agent, MongoMixin):
                 'update_resource', worker, auto_delete=True)
 
     async def start_loop(self, connection):
-        await self.start_update_resource_worker(connection, 'feeds', 'feeds')
-        await self.start_update_resource_worker(connection, 'articles',
-                'articles')
+        await self.start_update_resource_worker(connection, 'feeds')
+        await self.start_update_resource_worker(connection, 'articles')
         await self.start_save_article_worker(connection)
         # Should run forever
         await self.start_feed_producer(connection)

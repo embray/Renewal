@@ -50,11 +50,15 @@ broker = {
 # Controller configuration
 controller = {
     # TODO: Update to something more sane like 5 minutes
-    'feeds_refresh_rate': 60  # seconds
+    'feeds_refresh_rate': 300,  # seconds
+    'articles_refresh_rate': 300
 }
 
 
-# Feed crawler configuration
-feed_crawler = {
-    'retrieve_timeout': 10  # seconds
+# Crawler configuration
+crawler = {
+    'retrieve_timeout': 10,  # seconds
+    'canonical_url': {
+        'query_exclude': ['utm_*']
+    }
 }

@@ -27,6 +27,14 @@ RESOURCE = {
             # of the schema: One for standard JSON Schema and one for MongoDB
             #'format': 'uri'
         },
+        'canonical_url': {
+            'description':
+                'The canonical URL of this resource (e.g. if the original URL '
+                'was a redirect).  In this case a new resource is created '
+                'with the canonical URL and this resource only serves as a '
+                'pointer to the original, and should no longer be crawled.',
+            'type': 'string'
+        },
         'lang': {
             'description':
                 "Two letter language code for the contents of the resource.",

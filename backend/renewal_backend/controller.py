@@ -182,7 +182,7 @@ class Controller(Agent, MongoMixin):
             # Insert/upsert the resource at the canonical_url
             res = self.db[collection].find_one_and_update(
                     {'url': doc['url']}, {'$set': doc},
-                    upsert=True)
+                    upsert=True, return_document=pymongo.ReturnDocument.AFTER)
             # Also remove the canonical resource from the local queues if
             # applicable
             if res is not None and queue_key in self.queues:

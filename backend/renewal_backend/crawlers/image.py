@@ -9,8 +9,10 @@ from .resource import ResourceCrawler
 
 
 class ImageCrawler(ResourceCrawler):
+    RESOURCE_TYPE = 'image'
     SOURCE_EXCHANGE = 'images'
     SOURCE_KEY = 'crawl_image'
+    CONTENT_TYPE = 'binary'
 
     async def crawl(self, image, contents, result_producer=None):
         """

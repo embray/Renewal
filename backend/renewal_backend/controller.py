@@ -126,7 +126,7 @@ class Controller(Agent, MongoMixin):
             if article_producer is not None:
                 await article_producer.proxy.crawl_article(resource=article)
 
-    def update_resource(self, *, collection, resource, type, values={}):
+    async def update_resource(self, *, collection, resource, type, values={}):
         """
         Update the given resource, which should be specified by its URL.
 
@@ -226,8 +226,7 @@ class Controller(Agent, MongoMixin):
         worker = partial(self.save_article, article_producer=producer)
         await producer.create_worker('save_article', worker, auto_delete=True)
 
-    async def start_update_resource_worker(self, connection, exchange,
-                                           collection=None):
+    async def start_update_resource_worker(self, connection, resource_type):
         """
         Handles messages on a queue bound to the "feeds" exchange with
         routing key "update_resource".
@@ -244,9 +243,9 @@ class Controller(Agent, MongoMixin):
         the docstring should be rewritten.
         """
 
-        if collection is None:
-            collection = exchange
-
+        # The DB collection and associated exchange names are always the
+        # resource type in plural; e.g. feed -> feeds
+        collection = exchange = resource_type + 's'
         producer = await self.create_producer(connection, exchange)
         worker = partial(self.update_resource, collection=collection)
         # TODO: I think it might be confusing to have a single
@@ -255,11 +254,12 @@ class Controller(Agent, MongoMixin):
         # update feeds vs. articles, but it will likely make sense to have that
         # soon.
         await producer.create_worker(
-                'update_resource', worker, auto_delete=True)
+                f'update_{resource_type}', worker, auto_delete=True)
 
     async def start_loop(self, connection):
-        await self.start_update_resource_worker(connection, 'feeds')
-        await self.start_update_resource_worker(connection, 'articles')
+        for resource_type in ['feed', 'article']:
+            await self.start_update_resource_worker(connection, resource_type)
+
         await self.start_save_article_worker(connection)
         # Should run forever
         await asyncio.gather(

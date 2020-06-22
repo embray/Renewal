@@ -6,6 +6,7 @@ from ..utils import normalize_language
 
 
 class FeedCrawler(ResourceCrawler):
+    RESOURCE_TYPE = 'feed'
     SOURCE_EXCHANGE = 'feeds'
     SOURCE_KEY = 'crawl_feed'
     RESULT_EXCHANGE = 'articles'

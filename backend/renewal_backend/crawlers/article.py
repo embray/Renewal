@@ -2,6 +2,7 @@ from .resource import ResourceCrawler
 
 
 class ArticleCrawler(ResourceCrawler):
+    RESOURCE_TYPE = 'article'
     SOURCE_EXCHANGE = 'articles'
     SOURCE_KEY = 'crawl_article'
 

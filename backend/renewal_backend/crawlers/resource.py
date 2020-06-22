@@ -18,6 +18,7 @@ from ..utils import dict_slice
 
 
 class ResourceCrawler(Agent):
+    RESOURCE_TYPE = abc.abstractproperty()
     SOURCE_EXCHANGE = abc.abstractproperty()
     SOURCE_KEY = abc.abstractproperty()
     RESULT_EXCHANGE = None
@@ -202,13 +203,14 @@ class ResourceCrawler(Agent):
                 f'{url}; sending nack: {exc}')
             raise NackMessage()
 
-    @staticmethod
-    async def _update_resource(resource, type, source_producer, values=None):
+    async def _update_resource(self, resource, type, source_producer,
+                               values=None):
         if values is None:
             values = {}
         values.update({f'last_{type}': datetime.utcnow()})
-        await source_producer.proxy.update_resource(
-                resource=dict_slice(resource, 'url'), type=type, values=values)
+        update = getattr(source_producer.proxy, f'update_{self.RESOURCE_TYPE}')
+        await update(resource=dict_slice(resource, 'url'), type=type,
+                     values=values)
 
     def _canonical_url(self, url):
         """

@@ -1,6 +1,7 @@
 import abc
 import asyncio
 import logging
+import time
 
 from aio_pika import connect_robust
 
@@ -53,7 +54,21 @@ class Agent(metaclass=abc.ABCMeta):
         agent.run()
 
     async def connect_broker(self):
-        return await connect_robust(self.config.broker.uri)
+        # The timeout argument to connect_robust doesn't really do what I want,
+        # because the connection can also fail instantly if the RabbitMQ port
+        # isn't ready yet (e.g. with a ConnectionRefusedError)
+        # So also manually retry until connection_timeout is reached.
+        now = time.time()
+        timeout = self.config.broker.connection_timeout
+        while True:
+            try:
+                return await connect_robust(self.config.broker.uri,
+                                            timeout=timeout)
+            except ConnectionError:
+                if (time.time() - now) < timeout:
+                    time.sleep(1)  # wait a sec and try again
+                else:
+                    raise
 
     async def ensure_exchanges(self, channel):
         """

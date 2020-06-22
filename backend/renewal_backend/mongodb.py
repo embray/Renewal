@@ -10,7 +10,7 @@ class MongoMixin:
         # TODO: Eventually most of this will be configured via a
         # config file; I am still deciding how to organize things
         # though.
-        self.mongo_client = pymongo.MongoClient()
+        self.mongo_client = pymongo.MongoClient(**self.config.mongodb.client)
         self.db = self.mongo_client[self.config.mongodb.renewal_db]
         self._init_collections()
         super().__init__()

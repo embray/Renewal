@@ -257,7 +257,7 @@ class Controller(Agent, MongoMixin):
                 f'update_{resource_type}', worker, auto_delete=True)
 
     async def start_loop(self, connection):
-        for resource_type in ['feed', 'article']:
+        for resource_type in ['feed', 'article', 'image']:
             await self.start_update_resource_worker(connection, resource_type)
 
         await self.start_save_article_worker(connection)

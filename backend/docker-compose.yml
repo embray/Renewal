@@ -1,3 +1,4 @@
+# docker-compose file for development only; do not use in production
 version: "3.6"
 services:
     rabbitmq:
@@ -12,6 +13,59 @@ services:
             - "27017:27017"
         volumes:
             - "mongo:/data/db"
+
+    # backend microservices
+    controller:
+        build: .
+        environment:
+            RABBITMQ_HOST: rabbitmq
+            RABBITMQ_PORT: 5672
+            MONGODB_HOST: mongo
+            MONGODB_PORT: 27017
+        depends_on:
+            - rabbitmq
+            - mongo
+            - crawler.feeds
+            - crawler.articles
+            - crawler.images
+        volumes:
+            - ".:/usr/src/app"
+        command: renewal_backend.controller
+
+    crawler.feeds:
+        build: .
+        environment:
+            RABBITMQ_HOST: rabbitmq
+            RABBITMQ_PORT: 5672
+        depends_on:
+            - rabbitmq
+            - crawler.articles
+        volumes:
+            - ".:/usr/src/app"
+        command: renewal_backend.crawlers.feed
+
+    crawler.articles:
+        build: .
+        environment:
+            RABBITMQ_HOST: rabbitmq
+            RABBITMQ_PORT: 5672
+        depends_on:
+            - rabbitmq
+            - crawler.images
+        volumes:
+            - ".:/usr/src/app"
+        command: renewal_backend.crawlers.article
+
+    crawler.images:
+        build: .
+        environment:
+            RABBITMQ_HOST: rabbitmq
+            RABBITMQ_PORT: 5672
+        depends_on:
+            - rabbitmq
+        volumes:
+            - ".:/usr/src/app"
+        command: renewal_backend.crawlers.image
 
 volumes:
     mongo:

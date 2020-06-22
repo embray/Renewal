@@ -42,6 +42,10 @@ broker = {
         'articles': {
             'name': 'articles',
             'type': 'direct'
+        },
+        'images': {
+            'name': 'images',
+            'type': 'direct'
         }
     }
 }

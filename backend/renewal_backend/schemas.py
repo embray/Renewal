@@ -128,3 +128,14 @@ ARTICLE = dict_merge(RESOURCE, {
         }
     }
 })
+
+
+IMAGE = dict_merge(RESOURCE, {
+    'properties': {
+        'contents': {
+            'description':
+                "Binary blob containing the image data.",
+            'bsonType': 'binData'
+        }
+    }
+})

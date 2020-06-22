@@ -34,7 +34,7 @@ class Controller(Agent, MongoMixin):
         self.queues = defaultdict(set)
 
     def get_exchanges(self):
-        return ['feeds', 'articles']
+        return ['feeds', 'articles', 'images']
 
     async def queue_feeds(self, producer, since=None):
         # TODO: MonogoDB queries are blocking for now; we could try replacing
@@ -160,6 +160,8 @@ class Controller(Agent, MongoMixin):
 
         filt = {'url': resource['url']}
         doc = self.db[collection].find_one_and_update(filt, updates)
+        if doc is None:
+            self.log.warn(f'{resource["url"]} not found in {collection}')
 
         # Key for the local queue tracking resource updates of the given type
         # (e.g. crawled_articles)

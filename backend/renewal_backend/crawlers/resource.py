@@ -21,6 +21,7 @@ class ResourceCrawler(Agent):
     SOURCE_EXCHANGE = abc.abstractproperty()
     SOURCE_KEY = abc.abstractproperty()
     RESULT_EXCHANGE = None
+    CONTENT_TYPE = 'text'  # can be text or binary
 
     def get_exchanges(self):
         exchanges = [self.SOURCE_EXCHANGE]
@@ -131,54 +132,74 @@ class ResourceCrawler(Agent):
 
         try:
             async with ClientSession() as session:
-                async with session.get(url, timeout=timeout) as resp:
-                    if only_if_modified and resp.status == NOT_MODIFIED:
-                        return (resource, None)
-
-                    elif resp.status != OK:
-                        # TODO: Just ignoring non-200 status codes for now
-                        raise NackMessage()
-
-                    try:
-                        for header, xform in [
-                                ('ETag', None),
-                                ('Last-Modified', parsedate_to_datetime)]:
-                            if header in resp.headers:
-                                key = header.lower().replace('-', '_')
-                                value = resp.headers[header]
-                                value = (value if xform is None
-                                               else xform(value))
-                                resource[key] = value
-
-                        text = await resp.text()
-                        sha1 = hashlib.sha1(text.encode('utf-8')).hexdigest()
-
-                        if only_if_modified and resource.get('sha1') == sha1:
-                            # HTTP-based methods failed us, but we can still
-                            # fall back on hash of the full text of the
-                            # resource
-                            return (resource, None)
-
-                        resource['sha1'] = sha1
-
-                        canonical_url = self._canonical_url(resp.url)
-                        if canonical_url != url:
-                            # This could happen if we followed a redirect, in which
-                            # case we want to share the real URL as
-                            # canonical_url
-                            resource['canonical_url'] = canonical_url
-
-                        return (resource, text)
-                    except Exception as exc:
-                        self.log.warning(
-                            f'error decoding response text from '
-                            f'{url}; sending nack: {exc}')
-                        raise NackMessage()
+                req = session.get(url, headers=headers, timeout=timeout)
+                async with req as resp:
+                    return await self._process_response(
+                            resource, resp, only_if_modified)
         except NackMessage:
             raise
         except Exception as exc:
             # Most likely a connection failure of some sort
             self.log.error(f'error retrieving {url}: {exc}')
+            raise NackMessage()
+
+    async def _process_response(self, resource, resp, only_if_modified):
+        """
+        Implements handling of response from
+        `ResourceCralwer.retrieve_resource`.
+
+        In a separate method because it was pretty deeply nested in ``with``
+        and ``try`` blocks.
+        """
+
+        url = resource['url']
+        etag = resource.get('etag')
+        last_modified = resource.get('last_modified')
+
+        if only_if_modified and resp.status == NOT_MODIFIED:
+            return (resource, None)
+
+        elif resp.status != OK:
+            # TODO: Just ignoring non-200 status codes for now
+            raise NackMessage()
+
+        try:
+            for header, xform in [
+                    ('ETag', None),
+                    ('Last-Modified', parsedate_to_datetime)]:
+                if header in resp.headers:
+                    key = header.lower().replace('-', '_')
+                    value = resp.headers[header]
+                    value = (value if xform is None else xform(value))
+                    resource[key] = value
+
+            if self.CONTENT_TYPE == 'text':
+                contents = await resp.text()
+                sha1 = hashlib.sha1(contents.encode('utf-8')).hexdigest()
+            else:
+                contents = await resp.read()
+                sha1 = hashlib.sha1(contents).hexdigest()
+
+            if only_if_modified and resource.get('sha1') == sha1:
+                # HTTP-based methods failed us, but we can still
+                # fall back on hash of the full text of the
+                # resource
+                return (resource, None)
+
+            resource['sha1'] = sha1
+
+            canonical_url = self._canonical_url(resp.url)
+            if canonical_url != url:
+                # This could happen if we followed a redirect, in which
+                # case we want to share the real URL as
+                # canonical_url
+                resource['canonical_url'] = canonical_url
+
+            return (resource, contents)
+        except Exception as exc:
+            self.log.warning(
+                f'error decoding response text from '
+                f'{url}; sending nack: {exc}')
             raise NackMessage()
 
     @staticmethod

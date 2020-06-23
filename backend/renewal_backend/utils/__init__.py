@@ -181,6 +181,9 @@ def truncate_dict(d, value_length=100):
     """
 
     def truncate(value):
+        if isinstance(value, dict):
+            return truncate_dict(value, value_length=100)
+
         r = repr(value)
         if len(r) > value_length:
             r = r[:100] + '...'
@@ -191,7 +194,7 @@ def truncate_dict(d, value_length=100):
         return r
 
 
-    items = [f'{k!r}: {truncate(v)}...' for k, v in d.items()]
+    items = [f'{k!r}: {truncate(v)}' for k, v in d.items()]
     return f'{{{", ".join(items)}}}'
 
 

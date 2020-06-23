@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from functools import partial
 
 import pymongo
+from aio_pika.patterns import NackMessage
 from bson import ObjectId
 
 from .agent import Agent
@@ -126,7 +127,8 @@ class Controller(Agent, MongoMixin):
             if article_producer is not None:
                 await article_producer.proxy.crawl_article(resource=article)
 
-    async def update_resource(self, *, collection, resource, type, values={}):
+    async def update_resource(self, *, connection, collection, resource, type,
+                              values={}):
         """
         Update the given resource, which should be specified by its URL.
 
@@ -154,12 +156,23 @@ class Controller(Agent, MongoMixin):
             # technically superfluous, but also faster to query on
             updates['$set']['is_redirect'] = True
         elif values:
+            update_method_name = f'_update_{type}_{collection}_hook'
+            if hasattr(self, update_method_name):
+                update_method = getattr(self, update_method_name)
+                values = await update_method(connection, resource, values)
             updates['$set'] = values
 
         updates['$inc'] = {f'times_{type}': 1}
 
         filt = {'url': resource['url']}
-        doc = self.db[collection].find_one_and_update(filt, updates)
+        try:
+            doc = self.db[collection].find_one_and_update(filt, updates)
+        except Exception as exc:
+            self.log.error(
+                f'could not make {type} update on {collection} '
+                f'{resource["url"]}; reason: {exc}')
+            raise NackMessage()
+
         if doc is None:
             self.log.warn(f'{resource["url"]} not found in {collection}')
 
@@ -192,6 +205,49 @@ class Controller(Agent, MongoMixin):
                     self.queues[queue_key].remove(res['_id'])
                 except KeyError:
                     pass
+
+    async def _update_scraped_articles_hook(self, connection, article, values):
+        """
+        When an article is scraped the results of the article scrape are
+        returned, along with metadata about the article's site.
+
+        This hook handles saving the article site in the sites collection and
+        replacing the 'site' key with the ID of the document for that site.
+
+        If the site also includes a logo image we create a document for the
+        image resource, save the image resource's ID with the site, and send
+        the image to be downloaded.
+        """
+
+        site = values.pop('site', None)
+        if site is not None:
+            icon_url = site.get('icon_url')
+            if icon_url:
+                icon_doc = await self._maybe_crawl_image(connection, icon_url)
+                if icon_doc:
+                    site['icon_resource_id'] = icon_doc['_id']
+
+            site_doc = self.db['sites'].find_one_and_update(
+                    {'url': site['url']}, {'$set': site}, upsert=True,
+                    return_document=pymongo.ReturnDocument.AFTER)
+            values['site'] = site_doc['_id']
+        return values
+
+    async def _maybe_crawl_image(self, connection, image_url):
+        """
+        Create a resource document for the given image URL, and if the image
+        has not already been saved, send it to be downloaded.
+        """
+
+        img_doc = self.db['images'].find_one_and_update(
+                {'url': image_url}, {'$set': {'url': image_url}},
+                upsert=True, return_document=pymongo.ReturnDocument.AFTER)
+        if img_doc and not img_doc.get('contents'):
+            # Send the icon to be downloaded
+            producer = await self.create_producer(connection, 'images')
+            await producer.proxy.crawl_image(resource=img_doc)
+
+        return img_doc
 
     async def start_resource_producer(self, connection, resource):
         """
@@ -247,7 +303,8 @@ class Controller(Agent, MongoMixin):
         # resource type in plural; e.g. feed -> feeds
         collection = exchange = resource_type + 's'
         producer = await self.create_producer(connection, exchange)
-        worker = partial(self.update_resource, collection=collection)
+        worker = partial(self.update_resource, connection=connection,
+                         collection=collection)
         # TODO: I think it might be confusing to have a single
         # "update_resource" method used for all types of resources (feeds and
         # articles).  Currently there is no need for separate methods to

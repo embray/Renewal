@@ -122,9 +122,48 @@ ARTICLE = dict_merge(RESOURCE, {
                 "Last time this article was seen by the controller.",
             'bsonType': 'date'
         },
+        'last_scraped': {
+            'description':
+                "Last time the resource was successfully scraped.",
+            'bsonType': 'date'
+        },
+        'times_scraped': {
+            'description':
+                "Number of times the resource was successfully scraped.",
+            'bsonType': 'int',
+            'minimum': 0
+        },
         'contents': {
             'description': 'The raw article contents to be scraped',
             'type': 'string'
+        },
+        'site': {
+            'description':
+                'Id of the site this article was retrieved from; this is '
+                'determined by the scraper and gives the ObjectId of a '
+                'document in the sites collection.',
+            'bsonType': ['objectId', 'null']
+        },
+        'scrape': {
+            'description': 'Article metadata returned by the scraper',
+            'type': 'object',
+            'properties': {
+                'publish_date': {'bsonType': 'date'},
+                'title': {'type': 'string'},
+                'authors': {
+                    'type': 'array',
+                    'items': {'type': 'string'}
+                },
+                'summary': {'type': 'string'},
+                'text': {'type': 'string'},
+                'image_url': {
+                    'type': 'string'  # note: should be a url
+                },
+                'keywords': {
+                    'type': 'array',
+                    'items': {'type': 'string'}
+                }
+            }
         }
     }
 })
@@ -139,3 +178,24 @@ IMAGE = dict_merge(RESOURCE, {
         }
     }
 })
+
+
+# Collection of news sites, metadata one which are currently extracted
+# by the scraper.
+SITE = {
+    'properties': {
+        'url': {'type': 'string'},
+        'name': {'type': 'string'},
+        'icon_resource_id': {
+            'description':
+                'when the icon image is downloaded it will be saved as an '
+                'image resource with this ID',
+            'bsonType': 'objectId'
+        },
+        'icon_url': {
+            'description':
+                "URL of the site's logo, if found.",
+            'type': 'string'
+        }
+    }
+}

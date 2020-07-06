@@ -13,6 +13,31 @@ https://docs.mongodb.com/manual/reference/operator/query/jsonSchema/#json-schema
 from .utils import dict_merge
 
 
+# Used for status_crawled, status_scraped, etc...
+STATUS = {
+    'oneOf': [{
+        'properties': {
+            'ok': {
+                'type': 'boolean',
+                #'const': True
+                'enum': [True]
+            }
+        },
+        'additionalProperties': False
+    }, {
+        'properties': {
+            'ok': {
+                'type': 'boolean',
+                #'const': False
+                'enum': [False]
+            },
+            'error_type': {'type': 'string'},
+            'error': {'type': 'string'}
+        }
+    }]
+}
+
+
 # Schema for URL resources; feeds and articles are treated as "subclasses" of
 # resource
 RESOURCE = {
@@ -43,34 +68,20 @@ RESOURCE = {
             # NOTE: Not supported by MongoDB
             #'default': 'en'
         },
-        'last_accessed': {
-            'description':
-                "Last time the resource was successfully accessed.",
-            'bsonType': 'date'
-        },
-        'times_accessed': {
-            'description':
-                "Number of times the resource was successfully accessed.",
-            'bsonType': 'int',
-            'minimum': 0,
-            # NOTE: Not supported by MongoDB
-            #'default': 0
-        },
         'last_crawled': {
             'description':
-                "Last time the contents of the resource were crawled for "
-                "links.",
+                "Last time the contents of the resource were crawled.",
             'bsonType': 'date'
         },
         'times_crawled': {
             'description':
-                "Number of times the resource was successfully crawled for "
-                "links.",
+                "Number of times the resource was successfully crawled.",
             'bsonType': 'int',
             'minimum': 0,
             # NOTE: Not supported by MongoDB
             #'default': 0
         },
+        'status_crawled': STATUS,
         'sha1': {
             'description':
                 "SHA1 hash of the resource contents the last time they were "
@@ -133,6 +144,7 @@ ARTICLE = dict_merge(RESOURCE, {
             'bsonType': 'int',
             'minimum': 0
         },
+        'status_scraped': STATUS,
         'contents': {
             'description': 'The raw article contents to be scraped',
             'type': 'string'

@@ -37,7 +37,7 @@ class Controller(Agent, MongoMixin):
     def get_exchanges(self):
         return ['feeds', 'articles', 'images']
 
-    async def queue_feeds(self, producer, since=None):
+    async def queue_crawl_feeds(self, producer, since=None):
         # TODO: MonogoDB queries are blocking for now; we could try replacing
         # this with the async MonogoDB backend if this appears to be a
         # bottleneck.
@@ -64,9 +64,12 @@ class Controller(Agent, MongoMixin):
                 self.queues['crawled_feeds'].add(feed['_id'])
 
             self.log.info(f'producing {feed["type"]} feed at {feed["url"]}')
+            self.log.debug(
+                f'len(queues.crawled_feeds) = '
+                f'{len(self.queues["crawled_feeds"])}')
             await producer.proxy.crawl_feed(resource=feed)
 
-    async def queue_articles(self, producer, since=None):
+    async def queue_crawl_articles(self, producer, since=None):
         """
         Queue articles to be crawled; normally articles will be crawled
         immediately, but this also works through any backlog of uncrawled
@@ -77,13 +80,37 @@ class Controller(Agent, MongoMixin):
         signature compatibility with `Controller.queue_feeds`.
         """
 
+        # Queue any articles that haven't already been crawled
+        await self._queue_article_updates(producer, 'crawl_article',
+                'crawled_articles', {'last_crawled': {'$exists': False}})
+
+    async def queue_scrape_articles(self, producer, since=None):
+        """
+        Queue articles to be scraped; normally articles will be scraped
+        as soon as they've been successfully crawled for this first time,
+        but this also works through any backlog of unscraped articles (e.g.
+        if they were missed while the article scrapers were down).
+
+        The ``since`` argument is currently unused and is only for
+        signature compatibility with `Controller.queue_feeds`.
+        """
+
+        await self._queue_article_updates(producer, 'scrape_article',
+                'scraped_articles',
+                {'$and': [
+                    {'contents': {'$exists': True}},
+                    {'last_scraped': {'$exists': False}}
+                ]})
+
+    async def _queue_article_updates(self, producer, method_name, queue_key,
+                                     filt):
         filt = {
             '$and': [
                 {'$or': [
                     {'is_redirect': False},
                     {'is_redirect': {'$exists': False}}
                 ]},
-                {'last_crawled': {'$exists': False}}
+                filt
             ]
         }
 
@@ -93,14 +120,18 @@ class Controller(Agent, MongoMixin):
         # priority than recently found articles
         sort = [('last_seen', pymongo.DESCENDING)]
         articles = self.db['articles'].find(filt, sort=sort)
+        method = getattr(producer.proxy, method_name)
+
         for article in articles:
-            if article['_id'] in self.queues['crawled_articles']:
+            if article['_id'] in self.queues[queue_key]:
                 continue
             else:
-                self.queues['crawled_articles'].add(article['_id'])
+                self.queues[queue_key].add(article['_id'])
 
-            self.log.info(f'producing article {article["url"]}')
-            await producer.proxy.crawl_article(resource=article)
+            self.log.info(f'adding article to {queue_key}: {article["url"]}')
+            queue_size = len(self.queues[queue_key])
+            self.log.debug(f'len(queues.{queue_key}) = {queue_size}')
+            await method(resource=article)
 
     async def save_article(self, *, article, article_producer=None):
         self.log.info(f'inserting article into the articles collection: '
@@ -128,45 +159,53 @@ class Controller(Agent, MongoMixin):
                 await article_producer.proxy.crawl_article(resource=article)
 
     async def update_resource(self, *, connection, collection, resource, type,
-                              values={}):
+                              status={'ok': True}, updates={}):
         """
         Update the given resource, which should be specified by its URL.
 
         The collection which the resource is found must be specified (e.g.
         'feeds' or 'articles').
 
-        The update ``type`` is currently either ``'accessed'`` or
-        ``'crawled'``.
+        The update ``type`` is currently either ``'crawled'`` or ``'scraped'``.
         """
 
-        self.log.info(f'updating {collection} resource {resource["url"]}: '
-                      f'with {truncate_dict(values)}')
-        updates = {}
+        self.log.info(f'updating {collection} resource {resource["url"]}; '
+                      f'status: {status}, updates: {truncate_dict(updates)}')
+        _updates = {'$set': {f'status_{type}': status}}
         is_redirect = False
-        canonical_url = values.get('canonical_url')
+        canonical_url = updates.get('canonical_url')
         if canonical_url and canonical_url != resource['url']:
             is_redirect = True
             # In the case of receiving the canonical URL of a resource,
             # we just update the old resource with the canonical_url
             # and the last accessed/crawled time; then we will create
             # or update the resource for the canonical URL
-            updates['$set'] = dict_slice(values, 'canonical_url',
-                                         f'last_{type}', allow_missing=True)
+            partial_update = dict_slice(updates, 'canonical_url',
+                                        f'last_{type}', allow_missing=True)
+            _updates['$set'].update(partial_update)
             # This is equivalent to saying 'url' != 'canonical_url' so is
             # technically superfluous, but also faster to query on
-            updates['$set']['is_redirect'] = True
-        elif values:
+            _updates['$set']['is_redirect'] = True
+            new_resource = copy.deepcopy(resource)
+            new_resource['url'] = canonical_url
+
+            # Create an update for the new resource at the canonical URL
+            await self.update_resource(connection=connection,
+                                       collection=collection,
+                                       resource=new_resource, type=type,
+                                       status=status, updates=updates)
+        elif updates:
             update_method_name = f'_update_{type}_{collection}_hook'
             if hasattr(self, update_method_name):
                 update_method = getattr(self, update_method_name)
-                values = await update_method(connection, resource, values)
-            updates['$set'] = values
+                updates = await update_method(connection, resource, updates)
+            _updates['$set'].update(updates)
 
-        updates['$inc'] = {f'times_{type}': 1}
+        _updates['$inc'] = {f'times_{type}': 1}
 
         filt = {'url': resource['url']}
         try:
-            doc = self.db[collection].find_one_and_update(filt, updates)
+            doc = self.db[collection].find_one_and_update(filt, _updates)
         except Exception as exc:
             self.log.error(
                 f'could not make {type} update on {collection} '
@@ -184,6 +223,8 @@ class Controller(Agent, MongoMixin):
                 self.queues[queue_key].remove(doc['_id'])
             except KeyError:
                 pass
+            self.log.debug(
+                f'len(queues.{queue_key}) = {len(self.queues[queue_key])}')
 
         # Create a new resource for the canonical_url
         if is_redirect and doc is not None:
@@ -193,7 +234,7 @@ class Controller(Agent, MongoMixin):
             doc['is_redirect'] = False
             # Add any additional properties that were sent by the crawler
             # for this resource
-            doc.update(values)
+            doc.update(updates)
             # Insert/upsert the resource at the canonical_url
             res = self.db[collection].find_one_and_update(
                     {'url': doc['url']}, {'$set': doc},
@@ -205,8 +246,10 @@ class Controller(Agent, MongoMixin):
                     self.queues[queue_key].remove(res['_id'])
                 except KeyError:
                     pass
+                self.log.debug(
+                    f'len(queues.{queue_key}) = {len(self.queues[queue_key])}')
 
-    async def _update_scraped_articles_hook(self, connection, article, values):
+    async def _update_scraped_articles_hook(self, connection, article, updates):
         """
         When an article is scraped the results of the article scrape are
         returned, along with metadata about the article's site.
@@ -219,7 +262,7 @@ class Controller(Agent, MongoMixin):
         the image to be downloaded.
         """
 
-        site = values.pop('site', None)
+        site = updates.pop('site', None)
         if site is not None:
             icon_url = site.get('icon_url')
             if icon_url:
@@ -230,8 +273,8 @@ class Controller(Agent, MongoMixin):
             site_doc = self.db['sites'].find_one_and_update(
                     {'url': site['url']}, {'$set': site}, upsert=True,
                     return_document=pymongo.ReturnDocument.AFTER)
-            values['site'] = site_doc['_id']
-        return values
+            updates['site'] = site_doc['_id']
+        return updates
 
     async def _maybe_crawl_image(self, connection, image_url):
         """
@@ -249,7 +292,7 @@ class Controller(Agent, MongoMixin):
 
         return img_doc
 
-    async def start_resource_producer(self, connection, resource):
+    async def start_resource_queue(self, connection, resource, action='crawl'):
         """
         Queue feed and articles from the database to be crawled or
         re-crawled.
@@ -260,10 +303,11 @@ class Controller(Agent, MongoMixin):
         """
         # This channel is dedicated to queuing sources onto
         # sources exchange
+        # E.g. access_feeds_rate
         refresh_rate = getattr(self.config.controller,
-                               resource + '_refresh_rate')
+                               f'{action}_{resource}_rate')
         self.log.info(
-            f'starting {resource} producer; checking {resource} every '
+            f'starting {action} {resource} producer; checking {resource} every '
             f'{refresh_rate} seconds')
         producer = await self.create_producer(connection, resource)
 
@@ -271,7 +315,7 @@ class Controller(Agent, MongoMixin):
         # take sources that haven't been updated since the longest possible
         # refresh interval
         delta = timedelta(seconds=refresh_rate)
-        queue_method = getattr(self, 'queue_' + resource)
+        queue_method = getattr(self, f'queue_{action}_{resource}')
         while True:
             since = datetime.now() - delta
             await queue_method(producer, since=since)
@@ -320,8 +364,9 @@ class Controller(Agent, MongoMixin):
         await self.start_save_article_worker(connection)
         # Should run forever
         await asyncio.gather(
-            self.start_resource_producer(connection, 'feeds'),
-            self.start_resource_producer(connection, 'articles')
+            self.start_resource_queue(connection, 'feeds'),
+            self.start_resource_queue(connection, 'articles'),
+            self.start_resource_queue(connection, 'articles', 'scrape')
         )
 
 

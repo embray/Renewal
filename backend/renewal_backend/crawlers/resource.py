@@ -10,11 +10,10 @@ from email.utils import parsedate_to_datetime, format_datetime
 from functools import partial
 from http.client import OK, NOT_MODIFIED
 
-from aio_pika.patterns import NackMessage
 from aiohttp import ClientSession
 
 from ..agent import Agent
-from ..utils import dict_slice
+from ..utils import dict_slice, try_resource_update
 
 
 class ResourceCrawler(Agent):
@@ -47,35 +46,36 @@ class ResourceCrawler(Agent):
         # want the crawler to set it, since by the time it reaches MongoDB it
         # could be different from the time the crawler actually did its work.
         contents = None
-        try:
+
+        with try_resource_update(log=self.log) as status:
             resource, contents = await self.retrieve_resource(
                     resource, only_if_modified=True,
                     timeout=self.config.crawler.retrieve_timeout)
-        finally:
-            if contents is None:
-                # If contents was None then the resource was not updated since
-                # last accessed, or some other error occurred
-                values = {}
-            else:
-                values = dict_slice(resource, 'etag', 'last_modified', 'sha1',
-                                    'canonical_url', allow_missing=True)
-            await self._update_resource(resource, 'accessed', source_producer,
-                                        values=values)
 
-        # If contents is None, in this case this means the feed was unmodified
-        # based on stored etags/last-modified date
-        if contents is None:
+        updates = dict_slice(resource, 'etag', 'last_modified', 'sha1',
+                             'canonical_url', allow_missing=True)
+
+        if contents is not None:
+            # Either status was OK but the resource was not modified, or an
+            # error occurred
+            with try_resource_update(log=self.log) as status:
+                result = await self.crawl(resource, contents,
+                                          result_producer=result_producer)
+                if isinstance(result, dict):
+                    updates.update(result)
+        elif status['ok']:
+            # No contents were returned but there were no errors so the
+            # resource was accessed successfully but was unmodified
             self.log.info(f'ignoring unmodified resource at {resource["url"]}')
-            return
 
-        # Pass the resource to the crawler using its canonical URL
-        if 'canonical_url' in resource:
-            resource['url'] = resource['canonical_url']
-
-        values = await self.crawl(resource, contents,
-                                  result_producer=result_producer)
-        await self._update_resource(resource, 'crawled', source_producer,
-                                    values=values)
+        updates.update({
+            f'last_crawled': datetime.utcnow(),
+            f'status_crawled': status
+        })
+        update_meth = getattr(source_producer.proxy,
+                              f'update_{self.RESOURCE_TYPE}')
+        await update_meth(resource=dict_slice(resource, 'url'), type='crawled',
+                          status=status, updates=updates)
 
     async def start_crawl_resource_worker(self, connection):
         source_producer = await self.create_producer(connection,
@@ -137,12 +137,10 @@ class ResourceCrawler(Agent):
                 async with req as resp:
                     return await self._process_response(
                             resource, resp, only_if_modified)
-        except NackMessage:
-            raise
         except Exception as exc:
             # Most likely a connection failure of some sort
             self.log.error(f'error retrieving {url}: {exc}')
-            raise NackMessage()
+            raise
 
     async def _process_response(self, resource, resp, only_if_modified):
         """
@@ -161,8 +159,7 @@ class ResourceCrawler(Agent):
             return (resource, None)
 
         elif resp.status != OK:
-            # TODO: Just ignoring non-200 status codes for now
-            raise NackMessage()
+            resp.raise_for_status()
 
         try:
             for header, xform in [
@@ -201,16 +198,7 @@ class ResourceCrawler(Agent):
             self.log.warning(
                 f'error decoding response text from '
                 f'{url}; sending nack: {exc}')
-            raise NackMessage()
-
-    async def _update_resource(self, resource, type, source_producer,
-                               values=None):
-        if values is None:
-            values = {}
-        values.update({f'last_{type}': datetime.utcnow()})
-        update = getattr(source_producer.proxy, f'update_{self.RESOURCE_TYPE}')
-        await update(resource=dict_slice(resource, 'url'), type=type,
-                     values=values)
+            raise
 
     def _canonical_url(self, url):
         """

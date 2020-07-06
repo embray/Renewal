@@ -11,7 +11,7 @@ import newspaper
 import tldextract
 
 from .agent import Agent
-from .utils import patch_local, truncate_dict
+from .utils import patch_local, truncate_dict, try_resource_update
 
 
 # Extra meta tags to search for article publication date
@@ -51,9 +51,46 @@ class ArticleScraper(Agent):
     def get_exchanges(self):
         return ['articles']
 
-    async def scrape_article(self, *, article, producer=None):
-        article_scrape = newspaper.Article(article['url'])
-        article_scrape.set_html(article['contents'])
+    async def scrape_article(self, *, resource, producer=None):
+        """
+        Here ``resource`` refers to the article resource.
+
+        We use ``resource`` instead of ``article`` for consistency with other
+        resource update interfaces (such as ``update_resource``) which are more
+        generic.
+        """
+
+        if 'contents' not in resource:
+            self.log.warning(
+                f'given an article {resource} with no contents (either it '
+                f'has not been crawled yet, or its crawl failed')
+            return
+
+        updates = {}
+
+        with try_resource_update(log=self.log) as status:
+            updates = await self._scrape_article(resource=resource)
+
+        self.log.info(f'scraped {resource["url"]}: status: {status}; '
+                      f'updates: {truncate_dict(updates)}')
+
+        if producer is not None:
+            await producer.proxy.update_article(
+                    resource=resource, type='scraped',
+                    status=status, updates=updates)
+
+        return updates
+
+    async def _scrape_article(self, *, resource):
+        """
+        Internal implementation of `ArticleScraper.scrape_article`.
+
+        The outer method just handles some basic sanity check and error/status
+        handling.
+        """
+
+        article_scrape = newspaper.Article(resource['url'])
+        article_scrape.set_html(resource['contents'])
         article_scrape.parse()
         article_scrape.nlp()
         site_meta = self._get_site_meta(article_scrape)
@@ -71,21 +108,13 @@ class ArticleScraper(Agent):
         scrape = {k: v for k, v in scrape.items() if v is not None}
         site_meta = {k: v for k, v in site_meta.items() if v is not None}
 
-        values = {
+        updates = {
             'site': site_meta,
             'scrape': scrape,
             'last_scraped': datetime.utcnow()
         }
 
-        self.log.info(f'scraped {article["url"]}: {truncate_dict(values}')
-
-        if producer is not None:
-            await producer.proxy.update_article(
-                    resource={'url': article['url']},
-                    type='scraped',
-                    values=values)
-
-        return values
+        return updates
 
     async def start_scrape_article_worker(self, connection):
         producer = await self.create_producer(connection, 'articles')
@@ -109,7 +138,7 @@ class ArticleScraper(Agent):
         """
 
         source_url = article.source_url
-        url = urlparse.splittype(source_url)[1].strip('/')
+        proto, url = [p.strip('/') for p in urlparse.splittype(source_url)]
         name = article.meta_site_name
         if not name:
             for xpath in META_SITE_NAME_EX:
@@ -122,9 +151,13 @@ class ArticleScraper(Agent):
                 name = tldextract.extract(source_url).domain.capitalize()
 
         favicon = article.meta_favicon
-        if favicon and favicon[0] == '/':
-            # relative URL to site base
-            favicon = source_url + favicon
+        if favicon:
+            if favicon[:2] == '//':
+                # protocol-relative URL
+                favicon = f'{proto}:{favicon}'
+            elif favicon[0] == '/':
+                # relative URL to site base
+                favicon = source_url + favicon
 
         return {'url': url, 'name': name, 'icon_url': favicon}
 

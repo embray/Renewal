@@ -1,3 +1,4 @@
+import contextlib
 import importlib
 import json
 from typing import Optional, Any
@@ -250,3 +251,34 @@ def load_config():
             return obj
 
     return replace_dicts(config)
+
+
+@contextlib.contextmanager
+def try_resource_update(log=None):
+    """
+    Context manager used in crawlers/scrapers that need to provide a status
+    dict to an ``update_resource`` call.
+
+    The format of the status dict is given in `renewal_backend.schemas.STATUS`;
+    for a successful update it returns ``{'ok': True}``, but if an exception
+    occurs it returns ``{'ok': False, ...}`` along with information about the
+    exception.
+
+    Note that the ``status`` dict returned by the context manager's
+    ``__enter__`` is modified in-place if the context manager exits with an
+    error.
+
+    It can also optionally log error tracebacks to the given log.
+    """
+
+    status = {'ok': True}
+    try:
+        yield status
+    except Exception as exc:
+        status.update({
+            'ok': False,
+            'error_type': type(exc).__name__,
+            'error': str(exc)
+        })
+        if log is not None:
+            log.exception('an unexpected error occurred; traceback follows')

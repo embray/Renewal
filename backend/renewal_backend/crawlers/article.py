@@ -18,7 +18,7 @@ class ArticleCrawler(ResourceCrawler):
         if result_producer is not None:
             # Send the article to be scraped
             article['contents'] = contents
-            await result_producer.proxy.scrape_article(article=article)
+            await result_producer.proxy.scrape_article(resource=article)
 
         # An article 'crawled' resource update message will be sent, along with
         # the article contents; see ResourceCrawler.crawl_resource

@@ -76,9 +76,9 @@ broker = {
 
 # Controller configuration
 controller = {
-    # TODO: Update to something more sane like 5 minutes
-    'feeds_refresh_rate': 300,  # seconds
-    'articles_refresh_rate': 300
+    'crawl_feeds_rate': 300,  # seconds
+    'crawl_articles_rate': 300,
+    'scrape_articles_rate': 300
 }
 
 

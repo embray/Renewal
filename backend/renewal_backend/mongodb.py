@@ -31,7 +31,7 @@ class MongoMixin:
         for collection_name, options in self.config.mongodb.collections.items():
             if 'indices' in options:
                 for index in options['indices']:
-                    if isinstance(index, str):
+                    if isinstance(index, (str, list)):
                         keys = index
                         kwargs = {}
                     else:

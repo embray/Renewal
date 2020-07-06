@@ -1,5 +1,4 @@
 import feedparser
-from aio_pika.patterns import NackMessage
 
 from .resource import ResourceCrawler
 from ..utils import normalize_language
@@ -19,11 +18,10 @@ class FeedCrawler(ResourceCrawler):
             self.log.warning(
                 f'error parsing feed {feed["url"]}; sending '
                 f'nack: {exc}')
-            raise NackMessage()
+            raise
 
         if not parsed or not parsed.get('feed'):
-            # TODO: Again, also ignoring empty feeds for now
-            raise NackMessage()
+            raise ValueError('empty feed: {feed["url"]}')
 
         if result_producer is None:
             # Shouldn't happen

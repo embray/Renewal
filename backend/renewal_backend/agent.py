@@ -1,4 +1,5 @@
 import abc
+import argparse
 import asyncio
 import logging
 import time
@@ -43,14 +44,23 @@ class Agent(metaclass=abc.ABCMeta):
             loop.stop()
 
     @classmethod
-    def main(cls):
+    def main(cls, argv=None):
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--log-level',
+                            choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+                            type=str.upper, default='INFO',
+                            help='specify the minimum logging level')
+        args = parser.parse_args(argv)
+
         # TODO: Add logging settings to config
         logging.basicConfig(
-                level=logging.INFO,
+                level=getattr(logging, args.log_level),
                 style='{',
                 format='[{levelname}][{name}][{asctime}] {message}')
+        log = logging.getLogger(cls.__name__)
+        log.setLevel(getattr(logging, args.log_level))
 
-        agent = cls(load_config(), log=logging.getLogger(cls.__name__))
+        agent = cls(load_config(), log=log)
         agent.run()
 
     async def connect_broker(self):

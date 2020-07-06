@@ -9,6 +9,8 @@ config file.
 
 import os
 
+import pymongo
+
 from . import schemas
 
 # TODO: For now this is just a static configuration / defaults, but it will
@@ -29,7 +31,10 @@ mongodb = {
             'schema': schemas.FEED,
          },
         'articles': {
-            'indices': [('url', {'unique': True})],
+            'indices': [
+                ('url', {'unique': True}),
+                [('last_seen', pymongo.DESCENDING)]
+            ],
             'schema': schemas.ARTICLE
         },
         'images': {

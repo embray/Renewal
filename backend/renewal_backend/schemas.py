@@ -121,6 +121,11 @@ FEED = dict_merge(RESOURCE, {
 
 ARTICLE = dict_merge(RESOURCE, {
     'properties': {
+        'article_id': {
+            'description': "Monotonically incremented ID of scraped articles",
+            'bsonType': 'int',
+            'minimum': 0
+        },
         'times_seen': {
             'description':
                 "Number of times this article's URL has been seen by the "

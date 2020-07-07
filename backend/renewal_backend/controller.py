@@ -198,7 +198,8 @@ class Controller(Agent, MongoMixin):
             update_method_name = f'_update_{type}_{collection}_hook'
             if hasattr(self, update_method_name):
                 update_method = getattr(self, update_method_name)
-                updates = await update_method(connection, resource, updates)
+                updates = await update_method(connection, resource, status,
+                                              updates)
             _updates['$set'].update(updates)
 
         _updates['$inc'] = {f'times_{type}': 1}
@@ -249,7 +250,8 @@ class Controller(Agent, MongoMixin):
                 self.log.debug(
                     f'len(queues.{queue_key}) = {len(self.queues[queue_key])}')
 
-    async def _update_scraped_articles_hook(self, connection, article, updates):
+    async def _update_scraped_articles_hook(self, connection, article, status,
+                                            updates):
         """
         When an article is scraped the results of the article scrape are
         returned, along with metadata about the article's site.
@@ -261,6 +263,22 @@ class Controller(Agent, MongoMixin):
         image resource, save the image resource's ID with the site, and send
         the image to be downloaded.
         """
+
+        if not status.get('ok', False):
+            # If the status is not OK or otherwise invalid, don't perform
+            # any additional updates
+            return updates
+
+        # Set the article's article_id once it has been successfully scraped
+        # (only if it has been scraped for the first time)
+        doc = self.db['articles'].find_one({
+            'url': article['url'], 'last_scraped': {'$exists': True}
+        })
+        already_scraped = doc is not None
+        if not already_scraped:
+            # Normally an article should not be scraped more than once, but it
+            # could happen in case of some race conditions
+            updates['article_id'] = self._get_next_sequence_id('article_id')
 
         site = updates.pop('site', None)
         if site is not None:
@@ -274,7 +292,25 @@ class Controller(Agent, MongoMixin):
                     {'url': site['url']}, {'$set': site}, upsert=True,
                     return_document=pymongo.ReturnDocument.AFTER)
             updates['site'] = site_doc['_id']
+
         return updates
+
+    def _get_next_sequence_id(self, sequence):
+        """
+        Manage monotonically incrementing sequences.
+
+        Returns the next ID in the sequence, or zero if the sequence is created
+        for the first time.
+        """
+
+        seq = self.db['sequences'].find_one_and_update(
+                {'_id': sequence}, {'$inc': {'seq': 1}},
+                projection={'seq': True, '_id': False}, upsert=True)
+
+        if seq is None:
+            return 0
+        else:
+            return seq['seq']
 
     async def _maybe_crawl_image(self, connection, image_url):
         """

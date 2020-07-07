@@ -187,11 +187,9 @@ class ResourceCrawler(Agent):
             resource['sha1'] = sha1
 
             canonical_url = self._canonical_url(resp.url)
-            if canonical_url != url:
-                # This could happen if we followed a redirect, in which
-                # case we want to share the real URL as
-                # canonical_url
-                resource['canonical_url'] = canonical_url
+            # If we followed a redirect the canonical URL may be different from
+            # the resource's original URL
+            resource['canonical_url'] = canonical_url
 
             return (resource, contents)
         except Exception as exc:

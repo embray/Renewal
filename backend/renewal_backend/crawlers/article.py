@@ -1,3 +1,5 @@
+import copy
+
 from .resource import ResourceCrawler
 
 
@@ -13,10 +15,13 @@ class ArticleCrawler(ResourceCrawler):
         any further crawling for links.
         """
 
-        self.log.info(f'crawling article {article["url"]}')
+        url = article['url']
+        self.log.info(f'crawling article {url}')
 
         if result_producer is not None:
-            # Send the article to be scraped
+            # Send the article to be scraped (only for its canonical URL)
+            article = copy.copy(article)
+            article['url'] = article['canonical_url']
             article['contents'] = contents
             await result_producer.proxy.scrape_article(resource=article)
 

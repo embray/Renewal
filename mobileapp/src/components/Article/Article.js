@@ -89,7 +89,7 @@ class Article extends Component {
           </CardItem>
           <CardItem>
             <Image
-              source={{ uri: article.image }}
+              source={{ uri: article.image_url }}
               style={[ styles.articleImage, { height: height / 4.0 } ]}
             />
           </CardItem>

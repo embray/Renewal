@@ -28,6 +28,7 @@ class ArticlesList extends Component {
     this.state = {
       refreshing: false,
       showRefreshHint: false,
+      initialScroll: true,
       loading: true,
       loadingMore: false,
       // If infiniteScrolling is enabled then by default we are not
@@ -70,6 +71,7 @@ class ArticlesList extends Component {
       }, 50);
       this.setState({ loading: false });
     } else {
+      this.setState({ initialScroll: false });
       this._fetchArticles();
     }
   }
@@ -142,31 +144,46 @@ class ArticlesList extends Component {
     // bookmarks from the bookmarks view) it's possible to get in
     // a situation where no items are viewable (i.e. neither is
     // 50% on screen).  In this case just ignore the change
+    console.log(`viewable items changed; viewableItems: ${JSON.stringify(viewableItems)}; changed: ${JSON.stringify(changed)}`);
     if (viewableItems.length) {
       let current = viewableItems[0].index;
-      this.props.setCurrentArticle(current);
-      if (current == 0 && current != this.props.articleList.current) {
-        this.setState({ showRefreshHint: true });
+      if (this.state.initialScroll) {
+        // When the list first renders we try to scroll to the last viewed
+        // article; during this initial scroll the currently viewed item
+        // can jump around a bit triggering onViewableItemsChanged, and we
+        // don't want to trigger the setCurrentArticle action during this
+        // initial scroll.
+        if (current == this.props.articleList.current) {
+          this.setState({ initialScroll: false });
+        }
+      } else {
+        this.props.setCurrentArticle(current);
+        if (current == 0 && current != this.props.articleList.current) {
+          this.setState({ showRefreshHint: true });
+        }
       }
     }
   }
 
   _onScrollToIndexFailed(error) {
-    const flatList = this.flatList.current.getNode();
-    flatList.scrollToOffset({
-      offset: error.averageItemLength * error.index,
-      animated: false
-    });
-
-    setTimeout(() => {
-      if (this.props.articleList.list !== 0 && this.flatList !== null) {
-        this.flatList.current.getNode().scrollToIndex({
-          index: error.index,
-          viewPosition: 0.5,
-          animated: false
-        });
-      }
-    }, 100);
+    console.log(`scroll to index failed: ${JSON.stringify(error)}`);
+    // Retry up to 10 times, picked arbitrarily
+    if (this.scrollToIndexErrors < 10) {
+      setTimeout(() => {
+        if (this.props.articleList.list.length !== 0 && this.flatList !== null) {
+          this.flatList.current.getNode().scrollToIndex({
+            index: error.index,
+            viewPosition: 0.5,
+            animated: false
+          });
+        }
+      }, 50);
+      this.scrollToIndexErrors += 1;
+    } else {
+      this.scrollToIndexErrors = 0;
+      // Give up on initialScroll
+      this.setState({ initialScroll: false });
+    }
   }
 
   _renderListEmpty() {

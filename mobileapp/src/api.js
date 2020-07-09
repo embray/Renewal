@@ -7,6 +7,7 @@
 import axios from 'axios';
 import Constants from 'expo-constants';
 
+import { getIdToken } from './auth';
 import { sleep } from './utils';
 
 
@@ -45,11 +46,14 @@ export default class RenewalAPI {
       this.client = null;
     } else {
       const headers = { Accept: 'application/json' };
-      if (idToken !== null) {
-        // Without the ID token most requests will fail
-        headers['Authorization'] = `Bearer ${idToken}`;
-      }
       this.client = axios.create({ baseURL, headers });
+      // Get the Auth token and add it to the headers
+      this.client.interceptors.request.use((config) => {
+        return getIdToken().then((token) => {
+          config.headers['Authorization'] = `Bearer ${token}`;
+          return Promise.resolve(config);
+        });
+      });
     }
   }
 

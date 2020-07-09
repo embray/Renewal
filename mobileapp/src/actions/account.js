@@ -18,7 +18,6 @@ const SAVE = 'account/save';
 export const initialState = {
   // These attributes come from the firebase user account
   uid: null,
-  idToken: null,
   isAnonymous: true,
   displayName: "",
   photoURL: null,

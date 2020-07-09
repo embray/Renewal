@@ -18,6 +18,7 @@ const SAVE = 'account/save';
 export const initialState = {
   // These attributes come from the firebase user account
   uid: null,
+  idToken: null,
   isAnonymous: true,
   displayName: "",
   photoURL: null,
@@ -116,6 +117,8 @@ const account = createSlice({
     },
     [actions.signOut.fulfilled]: (state, action) => {
       state.isAuthenticating = false;
+      // Re-initialize the user to its initial state
+      Object.assign(state, initialState);
     },
     [actions.signOut.rejected]: (state, action) => {
       console.error(`sign-out failed: ${JSON.stringify(action.error)}`);

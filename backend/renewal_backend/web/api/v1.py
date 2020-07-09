@@ -1,6 +1,7 @@
 import pymongo
 from flask import Blueprint, g, request
 
+from ..auth import check_auth
 from ..utils import ObjectIdConverter
 
 v1 = Blueprint('api.v1', __name__)
@@ -16,6 +17,7 @@ def index():
 
 
 @v1.route('/recommendations')
+@check_auth
 def recommendations():
     limit = g.config.api.v1.recommendations.default_limit
     limit = int(request.args.get('limit', limit))
@@ -102,6 +104,7 @@ def recommendations():
 
 
 @v1.route('/images/icons/<ObjectId:icon_id>')
+@check_auth
 def images_icons(icon_id):
     # TODO: We should set the proper content-type metadata in the headers, but
     # unfortunately we don't store the MIME-types for downloaded images; we

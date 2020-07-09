@@ -98,5 +98,9 @@ web = {
                 'default_limit': 100
             }
         }
+    },
+    'auth': {
+        # This should be provided by an external config file
+        'firebase_project_id': None
     }
 }

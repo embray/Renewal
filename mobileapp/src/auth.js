@@ -25,7 +25,7 @@ YellowBox.ignoreWarnings(['Setting a timer for a long period of time']);
 const FIREBASE_ENABLED = initializeFirebase();
 
 
-function userToObj(user) {
+function userToObj(user, idToken = null) {
   const obj = {};
   const keys = [ 'uid', 'isAnonymous', 'displayName', 'photoURL', 'email' ];
   for (let providerData of user.providerData.reverse()) {
@@ -33,6 +33,7 @@ function userToObj(user) {
   }
 
   Object.assign(obj, objectNonNull(objectSlice(user, ...keys)));
+  obj.idToken = idToken;
   return obj;
 }
 
@@ -94,7 +95,12 @@ export function checkAuth(callback) {
   // user's current logged-in status.
   firebase.auth().onAuthStateChanged((user) => {
     if (user) {
-      callback(userToObj(user));
+      // Retrieve the JWT token that the user will use to authenticate
+      // with the backend, then call the callback only once that promise
+      // has been fulfilled
+      user.getIdToken().then((idToken) => {
+        callback(userToObj(user, idToken))
+      });
     } else {
       callback(null);
     }

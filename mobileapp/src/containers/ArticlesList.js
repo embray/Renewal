@@ -36,7 +36,7 @@ class ArticlesList extends Component {
       endOfData: !this.props.infiniteScroll
     }
 
-    this.api = new RenewalAPI();
+    this.api = new RenewalAPI(undefined, this.props.idToken);
 
     this.flatList = React.createRef();
 
@@ -268,11 +268,10 @@ class ArticlesList extends Component {
 }
 
 
-// Doesn't need any props from the global state (it takes the array of
-// article IDs in ownProps) but does need dispatch
 function mapStateToProps(state, ownProps) {
   return {
-    articleList: state.articles.articleLists[ownProps.listName]
+    articleList: state.articles.articleLists[ownProps.listName],
+    idToken: state.account.idToken
   };
 }
 

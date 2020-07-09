@@ -30,7 +30,7 @@ if (__DEV__) {
 
 
 export default class RenewalAPI {
-  constructor(baseURL=Constants.manifest.extra.renewalApi) {
+  constructor(baseURL = Constants.manifest.extra.renewalApi, idToken = null) {
     this.baseURL = baseURL
     if (!baseURL) {
       if (__DEV__) {
@@ -44,12 +44,12 @@ export default class RenewalAPI {
       }
       this.client = null;
     } else {
-      this.client = axios.create({
-        baseURL: baseURL,
-        headers: {
-          Accept: 'application/json'
-        }
-      });
+      const headers = { Accept: 'application/json' };
+      if (idToken !== null) {
+        // Without the ID token most requests will fail
+        headers['Authorization'] = `Bearer ${idToken}`;
+      }
+      this.client = axios.create({ baseURL, headers });
     }
   }
 

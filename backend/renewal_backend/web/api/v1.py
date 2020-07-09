@@ -1,5 +1,8 @@
+from http import HTTPStatus
+
+import bson
 import pymongo
-from flask import Blueprint, g, request
+from flask import Blueprint, g, request, abort
 
 from ..auth import check_auth
 from ..utils import ObjectIdConverter
@@ -14,6 +17,48 @@ v1.record_once(
 @v1.route('/')
 def index():
     return {'version': 1}
+
+
+@v1.route('/articles/interactions/<int:article_id>', methods=['GET', 'POST'])
+@check_auth
+def articles_interactions(article_id):
+    update = None
+    if request.method == 'POST':
+        update = request.json
+
+    filt = {'user_id': g.auth['user_id'], 'article_id': bson.Int64(article_id)}
+    proj = {'_id': False}
+
+    if update is None:
+        interactions = g.db.articles.interactions.find_one(filt, proj)
+    else:
+        try:
+            interactions = g.db.articles.interactions.find_one_and_update(
+                    filt, {'$set': update}, projection=proj, upsert=True,
+                    return_document=pymongo.ReturnDocument.AFTER)
+        except pymongo.errors.OperationFailure:
+            abort(HTTPStatus.UNPROCESSABLE_ENTITY)
+
+    if interactions is None:
+        abort(HTTPStatus.NOT_FOUND)
+
+    return interactions
+
+
+@v1.route('/images/icons/<ObjectId:icon_id>')
+@check_auth
+def images_icons(icon_id):
+    # TODO: We should set the proper content-type metadata in the headers, but
+    # unfortunately we don't store the MIME-types for downloaded images; we
+    # should see if we can fix that...
+    contents = g.db.images.find_one(
+            {'_id': icon_id},
+            projection={'contents': True})
+
+    if contents is None:
+        abort(404)
+
+    return contents['contents'], 200, {'content-type': 'image/png'}
 
 
 @v1.route('/recommendations')
@@ -101,19 +146,3 @@ def recommendations():
     # 'sources' (as in, the article sources); perhaps we should try to
     # make this nomenclature more consistent in favor of one or the other
     return {'articles': articles, 'sources': sites}
-
-
-@v1.route('/images/icons/<ObjectId:icon_id>')
-@check_auth
-def images_icons(icon_id):
-    # TODO: We should set the proper content-type metadata in the headers, but
-    # unfortunately we don't store the MIME-types for downloaded images; we
-    # should see if we can fix that...
-    contents = g.db.images.find_one(
-            {'_id': icon_id},
-            projection={'contents': True})
-
-    if contents is None:
-        abort(404)
-
-    return contents['contents'], 200, {'content-type': 'image/png'}

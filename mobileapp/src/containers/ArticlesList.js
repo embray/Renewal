@@ -10,7 +10,7 @@ import {
 import { connect } from 'react-redux';
 
 import { articleActions } from '../actions';
-import RenewalAPI from '../api';
+import renewalAPI from '../api';
 import { Article } from '../components/Article';
 import TickMessage from '../components/TickMessage';
 
@@ -35,8 +35,6 @@ class ArticlesList extends Component {
       // at the end of the data
       endOfData: !this.props.infiniteScroll
     }
-
-    this.api = new RenewalAPI(undefined, this.props.idToken);
 
     this.flatList = React.createRef();
 
@@ -89,7 +87,9 @@ class ArticlesList extends Component {
 
     // NOTE: The API has an articles fetch method corresponding with the
     // name of each article list
-    const fetch = this.api[listName].bind(this.api);
+    // TODO: It might make more sense if the API request were actually moved
+    // into the async action creator
+    const fetch = renewalAPI[listName].bind(renewalAPI);
     const response = await fetch(fetchParams);
 
     if (old) {
@@ -279,18 +279,18 @@ function mapDispatchToProps(dispatch, ownProps) {
   // Curry the ArticleList's listName into the action creators
   const { listName } = ownProps;
   return {
-    newArticles: (articles, articleInteractions, sources) => {
+    newArticles: (articles, sources) => {
       dispatch(articleActions.newArticles(
-        listName, articles, articleInteractions, sources
+        { listName, articles, sources }
       ))
     },
-    oldArticles: (articles, articleInteractions, sources) => {
+    oldArticles: (articles, sources) => {
       dispatch(articleActions.oldArticles(
-        listName, articles, articleInteractions, sources
+        { listName, articles, sources }
       ))
     },
     setCurrentArticle: (current) => {
-      dispatch(articleActions.setCurrentArticle(listName, current))
+      dispatch(articleActions.setCurrentArticle({ listName, current }))
     }
   }
 }

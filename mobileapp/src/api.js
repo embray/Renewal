@@ -30,8 +30,8 @@ if (__DEV__) {
 }
 
 
-export default class RenewalAPI {
-  constructor(baseURL = Constants.manifest.extra.renewalApi, idToken = null) {
+class RenewalAPI {
+  constructor(baseURL = Constants.manifest.extra.renewalApi) {
     this.baseURL = baseURL
     if (!baseURL) {
       if (__DEV__) {
@@ -57,6 +57,27 @@ export default class RenewalAPI {
     }
   }
 
+  get articles() {
+    return {
+      interact: (articleId, params) => {
+        // TODO: Rather than have this kind of boilerplate in every API call, I
+        // believe axios has an interface for overriding requests, and this
+        // would make more sense to implementing mocking during
+        // testing/development
+        if (this.client === null && __DEV__) {
+          return params;
+        }
+        const url = `/articles/interactions/${articleId}`;
+        return this.client.post(url, params).then((response) =>
+          response.data
+        ).catch((error) => {
+          console.log(`error in article interaction: ${JSON.stringify(error)}`);
+          return Promise.reject({ articleId, error: error.message });
+        });
+      }
+    };
+  }
+
   async recommendations(params) {
     console.log(`RenewalAPI.recommendations(${JSON.stringify(params)})`);
     if (this.client === null && __DEV__) {
@@ -66,7 +87,7 @@ export default class RenewalAPI {
       response.data
     ).catch((error) => {
       console.log(`error fetching recommendations: ${JSON.stringify(error)}`);
-      return { articles: [], sources: {} };
+      return Promise.reject({ articles: [], sources: {}, error: error.message });
     });
   }
 
@@ -126,3 +147,7 @@ export default class RenewalAPI {
     return { articles: [], sources: {} };
   }
 }
+
+
+const renewalAPI = new RenewalAPI();
+export default renewalAPI;

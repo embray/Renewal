@@ -123,7 +123,7 @@ ARTICLE = dict_merge(RESOURCE, {
     'properties': {
         'article_id': {
             'description': "Monotonically incremented ID of scraped articles",
-            'bsonType': 'int',
+            'bsonType': 'long',
             'minimum': 0
         },
         'times_seen': {
@@ -184,6 +184,22 @@ ARTICLE = dict_merge(RESOURCE, {
         }
     }
 })
+
+
+ARTICLE_INTERACTION = {
+    'description':
+        'user interactions with articles (ratings, bookmarks)',
+    'properties': {
+        'user_id': {'type': 'string'},
+        'article_id': {'bsonType': 'long'},
+        'rating': {
+            'type': 'number',
+            'enum': [-1, 0, 1]
+        },
+        'bookmarked': {'type': 'boolean'}
+    },
+    'required': ['user_id', 'article_id']
+}
 
 
 IMAGE = dict_merge(RESOURCE, {

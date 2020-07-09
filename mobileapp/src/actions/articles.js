@@ -1,5 +1,6 @@
-import { createAction, createReducer } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
+import renewalAPI from '../api';
 // TODO: Originally this data include the user's saved articles and rejected
 // articles in the same data structure; this excludes them for now because
 // the dummy data is not user-specific.  We might later include this
@@ -9,14 +10,18 @@ import { createAction, createReducer } from '@reduxjs/toolkit';
 
 
 /* Action constants */
-const NEW_ARTICLES = 'articles/new_articles';
-const OLD_ARTICLES = 'articles/old_articles';
-const SET_CURRENT_ARTICLE = 'articles/set_current_article';
-const SET_INTERACTION = 'articles/set_interaction';
+const SET_RATING = 'articles/set_rating';
 const TOGGLE_BOOKMARKED = 'articles/toggle_bookmarked';
 
 
 /* Initial state for articles */
+// Most details about articles come from the API, but we also
+// set a default rating/bookmarked here
+const articleInitialState = {
+  rating: 0,
+  bookmarked: false
+}
+
 const articleListInitialState = {
   list: [],
   current: 0
@@ -25,7 +30,6 @@ const articleListInitialState = {
 export const initialState = {
   sources: {},
   articles: {},
-  articleInteractions: {},
   articleLists: {
     recommendations: { ...articleListInitialState },
     bookmarks: { ...articleListInitialState },
@@ -33,43 +37,39 @@ export const initialState = {
 };
 
 
-const articleInteractionsInitialState = {
-  rating: 0,
-  bookmarked: false
-}
-
-
 /* Action creators for articles */
 const actions = {
-  newArticles: createAction(NEW_ARTICLES,
-    (listName, articles, sources) => {
-      return {
-        payload: { listName, articles, sources }
-      };
+  setRating: createAsyncThunk(SET_RATING, async (arg, { rejectWithValue }) => {
+    const { articleId, rating } = arg;
+    try {
+      const response = await renewalAPI.articles.interact(articleId, { rating });
+      return response;
+    } catch (err) {
+      let error = err.error;
+
+      // We return a previous rating state for the article in case
+      // of error so we can set it back (since we immediately change
+      // the state locally while the request is still pending so that
+      // the UI updates instantly
+      return rejectWithValue({ error });
     }
-  ),
+  }),
 
-  oldArticles: createAction(OLD_ARTICLES,
-    // Same as newArticles, but in the reducer we append to the end of the
-    // list rather than to the beginning
-    (listName, articles, sources) => {
-      return {
-        payload: { listName, articles, sources }
-      };
+  toggleBookmarked: createAsyncThunk(TOGGLE_BOOKMARKED, async (arg, { getState, rejectWithValue }) => {
+    const articleId = arg;
+    const articles = getState().articles.articles;
+    const article = articles[articleId];
+    try {
+      const response = await renewalAPI.articles.interact(articleId, {
+        bookmarked: !article.bookmarked
+      });
+      return response;
+    } catch (err) {
+      let error = err.error;
+      return rejectWithValue({ error });
     }
-  ),
+  }),
 
-  setCurrentArticle: createAction(SET_CURRENT_ARTICLE,
-    (listName, current) => ({
-      payload: { listName, current }
-    })
-  ),
-
-  setInteraction: createAction(SET_INTERACTION, (articleId, interaction) => ({
-    payload: { articleId, interaction }
-  })),
-
-  toggleBookmarked: createAction(TOGGLE_BOOKMARKED)
 };
 
 
@@ -90,7 +90,7 @@ function updateArticles(state, action, old = false) {
     list = state.articleLists[listName] = articleListInitialState;
   }
 
-  // Update articleInteractions, and sources
+  // Update sources
   Object.assign(state.sources, sources);
 
   const articlesSet = new Set(list.list);
@@ -99,11 +99,10 @@ function updateArticles(state, action, old = false) {
   // Now update the appropriate articles array and update the articles
   // object for each article passed to the action
   articles.forEach((article) => {
-    state.articles[article.article_id] = article;
-    if (state.articleInteractions[article.article_id] === undefined) {
-      state.articleInteractions[article.article_id] = articleInteractionsInitialState;
-    }
+    state.articles[article.article_id] = { ...articleInitialState };
+    Object.assign(state.articles[article.article_id], article);
     if (!articlesSet.has(article.article_id)) {
+      articlesSet.add(article.article_id);
       newArticles.push(article.article_id);
     }
   });
@@ -116,53 +115,97 @@ function updateArticles(state, action, old = false) {
 }
 
 
+// Common function for toggling an article's bookmarked state
+// used in both toggleBookmarked.pending and toggleBookrmarked.rejected
+// actions
+function toggleBookmarked(articleId, state) {
+  const article = state.articles[articleId];
+  const bookmarks = state.articleLists.bookmarks.list;
+  if (article.bookmarked) {
+    // Remove bookmark
+    bookmarks.splice(bookmarks.findIndex(i => ( i == articleId )), 1);
+  } else {
+    // Insert bookmark
+    bookmarks.splice(0, 0, articleId);
+  }
+  article.bookmarked = !article.bookmarked;
+}
+
+
 /* Reducers for article actions */
 // NOTE: Per the Redux Toolkit docs
 // <https://redux-toolkit.js.org/api/createReducer>, createReducer uses
 // immer <https://immerjs.github.io/immer/>, so although it appears we
 // are mutating the state rather than returning a new one, this is just
 // an illusion.
-export const reducer = createReducer(initialState, {
-  [actions.newArticles]: (state, action) => {
-    updateArticles(state, action);
-  },
+export const articles = createSlice({
+  name: 'articles',
+  initialState,
+  reducers: {
+    newArticles: (state, action) => {
+      updateArticles(state, action);
+    },
 
-  [actions.oldArticles]: (state, action) => {
-    updateArticles(state, action, true);
-  },
+    oldArticles: (state, action) => {
+      updateArticles(state, action, true);
+    },
 
-  [actions.setCurrentArticle]: (state, action) => {
-    const { listName, current } = action.payload;
-    state.articleLists[listName].current = current;
-  },
-
-  [actions.setInteraction]: (state, action) => {
-    const { articleId, interaction } = action.payload;
-    let articleInteractions = state.articleInteractions[articleId];
-    if (articleInteractions === undefined) {
-      state.articleInteractions = articleInteractionsInitialState;
+    setCurrentArticle: (state, action) => {
+      const { listName, current } = action.payload;
+      state.articleLists[listName].current = current;
     }
-    Object.assign(state.articleInteractions[articleId], interaction);
   },
+  extraReducers: {
+    [actions.setRating.pending]: (state, action) => {
+      const { articleId, rating } = action.meta.arg;
+      const article = state.articles[articleId];
+      // Store the previous rating so we can restore it in case the action fails
+      article.prevRating = article.rating;
+      article.rating = rating;
+    },
+    [actions.setRating.fulfilled]: (state, action) => {
+      const { articleId, rating } = action.meta.arg;
+      const article = state.articles[articleId];
+      console.log(`successfully set rating ${rating} on article ${articleId}`);
+      delete article.prevRating;
+    },
+    [actions.setRating.rejected]: (state, action) => {
+      const { articleId, rating } = action.meta.arg;
+      const article = state.articles[articleId];
+      if (action.payload) {
+        var error = JSON.stringify(action.payload.error);
+      } else {
+        var error = action.error.message;
+      }
+      console.log(`failed to set rating on article ${articleId}: ${error}`);
+      article.rating = article.prevRating;
+      delete article.prevRating;
+    },
 
-  [actions.toggleBookmarked]: (state, action) => {
-    const articleId = action.payload;
-    const bookmarks = state.articleLists.bookmarks.list;
-    let articleInteractions = state.articleInteractions[articleId];
-    if (articleInteractions === undefined) {
-      articleInteractions = articleInteractionsInitialState;
-      state.articleInteractions = articleInteractions;
-    }
-    if (articleInteractions.bookmarked) {
-      // Remove bookmark
-      bookmarks.splice(bookmarks.findIndex(i => ( i == articleId )), 1);
-    } else {
-      // Insert bookmark
-      bookmarks.splice(0, 0, articleId);
-    }
-    articleInteractions.bookmarked = !articleInteractions.bookmarked;
+    [actions.toggleBookmarked.pending]: (state, action) => {
+      const articleId = action.meta.arg;
+      toggleBookmarked(articleId, state);
+    },
+    [actions.toggleBookmarked.fulfilled]: (state, action) => {
+      const articleId = action.meta.arg;
+      console.log(`successfully toggled bookmarked on article ${articleId}`);
+    },
+    [actions.toggleBookmarked.rejected]: (state, action) => {
+      const articleId = action.meta.arg;
+      if (action.payload) {
+        var error = JSON.stringify(action.payload.error);
+      } else {
+        var error = action.error.message;
+      }
+      console.log(`failed to toggle bookmarked on article ${articleId}: ${error}`);
+
+      // Set it back to its previous value
+      toggleBookmarked(articleId, state);
+    },
   }
 });
 
 
+Object.assign(actions, articles.actions);
+export const reducer = articles.reducer;
 export default actions;

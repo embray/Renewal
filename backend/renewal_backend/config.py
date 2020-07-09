@@ -33,9 +33,22 @@ mongodb = {
         'articles': {
             'indices': [
                 ('url', {'unique': True}),
-                [('last_seen', pymongo.DESCENDING)]
+                [('last_seen', pymongo.DESCENDING)],
+                [('article_id', pymongo.DESCENDING)]
             ],
             'schema': schemas.ARTICLE
+        },
+        'articles.interactions': {
+            'indices': [
+                # I think a hashed index would be more useful here since
+                # we'd usually be looking these up by both user_id and
+                # article_id, but currently hashed multi-indices are
+                # not supported
+                ([('user_id', pymongo.DESCENDING),
+                  ('article_id', pymongo.DESCENDING)
+                 ], {'unique': True})
+            ],
+            'schema': schemas.ARTICLE_INTERACTION
         },
         'images': {
             'indices': [('url', {'unique': True})],

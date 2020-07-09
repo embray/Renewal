@@ -153,8 +153,7 @@ function mapStateToProps(state, props) {
   const article = articles.articles[articleId];
   return {
     article,
-    source: articles.sources[article.source],
-    interactions: articles.articleInteractions[articleId]
+    source: articles.sources[article.source]
   };
 }
 

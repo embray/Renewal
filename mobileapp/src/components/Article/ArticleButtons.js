@@ -26,11 +26,11 @@ const styles = StyleSheet.create({
 // Article card
 class ArticleButtons extends Component {
   _toggleRating(rating) {
-    const prevRating = this.props.rating;
+    const prevRating = this.props.article.rating;
     if (prevRating == rating) {
-      this.props.setInteraction({ rating: 0 });
+      this.props.setRating(0);
     } else {
-      this.props.setInteraction({ rating });
+      this.props.setRating(rating);
     }
   }
 
@@ -49,7 +49,7 @@ class ArticleButtons extends Component {
   }
 
   render() {
-    const { rating, bookmarked } = this.props;
+    const { article } = this.props;
 
     return (
       <Grid style={ this.props.style }>
@@ -57,21 +57,21 @@ class ArticleButtons extends Component {
           <Button style={ styles.button } transparent
                   onPress={ this._toggleRating.bind(this, 1) }
           >
-            <Icon name="thumbs-up" active={ rating == 1 } />
+            <Icon name="thumbs-up" active={ article.rating == 1 } />
           </Button>
         </Col>
         <Col>
           <Button style={ styles.button } transparent
             onPress={ this._toggleRating.bind(this, -1) }
           >
-            <Icon name="thumbs-down" active={ rating == -1 } />
+            <Icon name="thumbs-down" active={ article.rating == -1 } />
           </Button>
         </Col>
         <Col>
           <Button style={ styles.button } transparent
                   onPress={ this.props.toggleBookmarked }
           >
-            <Icon name="bookmark" active={ bookmarked } />
+            <Icon name="bookmark" active={ article.bookmarked } />
           </Button>
         </Col>
         <Col>
@@ -90,12 +90,7 @@ class ArticleButtons extends Component {
 function mapStateToProps(state, ownProps) {
   const { articleId } = ownProps;
   const article = state.articles.articles[articleId];
-  const interactions = state.articles.articleInteractions[articleId];
-  return {
-    article,
-    rating: interactions.rating,
-    bookmarked: interactions.bookmarked
-  }
+  return { article };
 }
 
 
@@ -103,8 +98,8 @@ function mapDispatchToProps(dispatch, ownProps) {
   const { articleId } = ownProps;
   // Curry the articleId into the relevant action creators
   return {
-    setInteraction: (interaction) => {
-      dispatch(articleActions.setInteraction(articleId, interaction))
+    setRating: (rating) => {
+      dispatch(articleActions.setRating({ articleId, rating }))
     },
     toggleBookmarked: () => {
       dispatch(articleActions.toggleBookmarked(articleId))

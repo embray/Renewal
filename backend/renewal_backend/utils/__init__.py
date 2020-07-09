@@ -1,8 +1,10 @@
+import argparse
 import contextlib
 import importlib
 import json
 from typing import Optional, Any
 
+import yaml
 from aio_pika.channel import Channel
 from aio_pika.exchange import Exchange
 from aio_pika.patterns import Master
@@ -223,17 +225,32 @@ def load_default_config():
     return dict_slice(vars(mod), *config_vars)
 
 
-def load_config():
+DEFAULT_CONFIG_FILE = 'renewal.yaml'
+
+
+def load_config(config_file=None):
     """
     Load the full app configuration including the default config and
     configuration provided by a config file.
+
+    The contents of the config file are merged recursively into the default
+    config.
 
     All dictionaries are in the configuration are recursively replaced with an
     `AttrDict` for convenience.
     """
 
-    # TODO: Does not actually load configuration from a file yet.
     config = load_default_config()
+
+    if config_file is not None:
+        if isinstance(config_file, str):
+            ctx = open(config_file)
+        else:
+            # Assumed to be a file-like object
+            ctx = config_file
+
+        with ctx as fobj:
+            config = dict_merge(config, yaml.safe_load(fobj))
 
     def replace_dicts(obj):
         if isinstance(obj, dict):
@@ -282,3 +299,25 @@ def try_resource_update(log=None):
         })
         if log is not None:
             log.exception('an unexpected error occurred; traceback follows')
+
+
+class DefaultFileType(argparse.FileType):
+    """
+    Like `argparse.FileType` but if provided a default value, and the default
+    file does not exist, just return `None` and do not raise an error.
+    """
+
+    def __init__(self, mode='r', bufsize=-1, encoding=None, errors=None,
+                 default=None):
+        super().__init__(mode=mode, bufsize=bufsize, encoding=encoding,
+                         errors=errors)
+        self._default = default
+
+    def __call__(self, string):
+        try:
+            return super().__call__(string)
+        except argparse.ArgumentTypeError:
+            if string != self._default:
+                raise
+
+            return None

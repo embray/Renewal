@@ -2,11 +2,15 @@ import abc
 import argparse
 import asyncio
 import logging
+import os.path as pth
 import time
 
 from aio_pika import connect_robust
 
-from .utils import Producer, load_config
+from .utils import Producer, load_config, DefaultFileType, DEFAULT_CONFIG_FILE
+
+
+DEFAULT_CONFIG_FILE = 'renewal.yaml'
 
 
 class Agent(metaclass=abc.ABCMeta):
@@ -46,6 +50,11 @@ class Agent(metaclass=abc.ABCMeta):
     @classmethod
     def main(cls, argv=None):
         parser = argparse.ArgumentParser()
+        parser.add_argument('--config', default=DEFAULT_CONFIG_FILE,
+                type=DefaultFileType(default=DEFAULT_CONFIG_FILE)
+                help='load additional configuration for the backend service; '
+                     'by default reads from "renewal.yaml" in the current '
+                     'directory')
         parser.add_argument('--log-level',
                             choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
                             type=str.upper, default='INFO',
@@ -60,7 +69,7 @@ class Agent(metaclass=abc.ABCMeta):
         log = logging.getLogger(cls.__name__)
         log.setLevel(getattr(logging, args.log_level))
 
-        agent = cls(load_config(), log=log)
+        agent = cls(load_config(config_file=args.config), log=log)
         agent.run()
 
     async def connect_broker(self):

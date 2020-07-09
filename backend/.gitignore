@@ -1,3 +1,6 @@
 # Python build-related files
 .cache
 pip-wheel-metadata
+
+# Ignore backend config file
+renewal.yaml

@@ -7,7 +7,7 @@ from flask import Flask, g
 from .api import v1
 from .utils import ObjectIdConverter, JSONEncoder
 from ..mongodb import MongoMixin
-from ..utils import load_config
+from ..utils import load_config, DEFAULT_CONFIG_FILE, DefaultFileType
 
 
 class App(MongoMixin):
@@ -32,6 +32,11 @@ class App(MongoMixin):
         parser.add_argument('--host', default='0.0.0.0')
         parser.add_argument('--port', type=int, default=8080)
         parser.add_argument('--debug', action='store_true')
+        parser.add_argument('--config', default=DEFAULT_CONFIG_FILE,
+                type=DefaultFileType(default=DEFAULT_CONFIG_FILE),
+                help='load additional configuration for the backend service; '
+                     'by default reads from "renewal.yaml" in the current '
+                     'directory')
         args = parser.parse_args(argv)
-        self = cls(load_config())
+        self = cls(load_config(config_file=args.config))
         self.app.run(host=args.host, port=args.port, debug=args.debug)

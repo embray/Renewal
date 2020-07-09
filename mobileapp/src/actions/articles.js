@@ -42,9 +42,9 @@ const articleInteractionsInitialState = {
 /* Action creators for articles */
 const actions = {
   newArticles: createAction(NEW_ARTICLES,
-    (listName, articles, articleInteractions, sources) => {
+    (listName, articles, sources) => {
       return {
-        payload: { listName, articles, articleInteractions, sources }
+        payload: { listName, articles, sources }
       };
     }
   ),
@@ -52,9 +52,9 @@ const actions = {
   oldArticles: createAction(OLD_ARTICLES,
     // Same as newArticles, but in the reducer we append to the end of the
     // list rather than to the beginning
-    (listName, articles, articleInteractions, sources) => {
+    (listName, articles, sources) => {
       return {
-        payload: { listName, articles, articleInteractions, sources }
+        payload: { listName, articles, sources }
       };
     }
   ),
@@ -84,14 +84,13 @@ function updateArticles(state, action, old = false) {
   // maintain a heap invariant
   // TODO: We may want to impose a limit (perhaps a user-configurable setting?)
   // of how many older articles to keep cached
-  const { listName, articles, articleInteractions, sources } = action.payload;
+  const { listName, articles, sources } = action.payload;
   let list = state.articleLists[listName];
   if (list === undefined) {
     list = state.articleLists[listName] = articleListInitialState;
   }
 
   // Update articleInteractions, and sources
-  Object.assign(state.articleInteractions, articleInteractions);
   Object.assign(state.sources, sources);
 
   const articlesSet = new Set(list.list);
@@ -100,19 +99,19 @@ function updateArticles(state, action, old = false) {
   // Now update the appropriate articles array and update the articles
   // object for each article passed to the action
   articles.forEach((article) => {
-    state.articles[article.url] = article;
-    if (state.articleInteractions[article.url] === undefined) {
-      state.articleInteractions[article.url] = articleInteractionsInitialState;
+    state.articles[article.article_id] = article;
+    if (state.articleInteractions[article.article_id] === undefined) {
+      state.articleInteractions[article.article_id] = articleInteractionsInitialState;
     }
-    if (!articlesSet.has(article.url)) {
-      newArticles.push(article.url);
+    if (!articlesSet.has(article.article_id)) {
+      newArticles.push(article.article_id);
     }
   });
 
   if (old) {
     list.list = list.list.concat(newArticles);
   } else {
-    list.list = newArticles.reverse().concat(list.list);
+    list.list = newArticles.concat(list.list);
   }
 }
 

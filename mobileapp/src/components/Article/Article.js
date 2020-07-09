@@ -20,6 +20,7 @@ import {
   Body,
   Card,
   CardItem,
+  Icon,
   Left,
   Right,
   Text,
@@ -41,10 +42,33 @@ class Article extends Component {
     this.props.navigation.navigate('ArticleView', article);
   }
 
+  _renderSourceIcon(source) {
+    // Some sources (particularly in the debug data, but we might also add this
+    // to the real API) include the icon data directly embedded; others have
+    // a URL for the icon.  In still other cases the scrapers fail to find an
+    // icon for the site so we just generate a placeholder.
+    let icon_uri = null;
+
+    if (source.icon) {
+      icon_uri = `data:image/png;base64,${source.icon}`;
+    } else if (source.icon_url) {
+      icon_uri = source.icon_url;
+    }
+
+    if (icon_uri !== null) {
+      return (<Thumbnail source={{ uri: icon_uri }} small />);
+    } else {
+      return (
+        <Icon type="MaterialCommunityIcons" name="newspaper"
+              style={{ fontSize: 36, color: 'black' }}
+        />
+      );
+    }
+  }
+
   render() {
     const { article, source, interactions, navigation } = this.props;
     const { height } = Dimensions.get('window');
-    const icon = `data:image/png;base64,${source.icon}`;
 
     if (article.date) {
       var dateRel = timeAgo.format(new Date(article.date), 'twitter');
@@ -75,7 +99,7 @@ class Article extends Component {
         <Touchable>
           <CardItem>
             <Left>
-              <Thumbnail source={{ uri: icon }} small />
+              { this._renderSourceIcon(source) }
               <Body>
                 <Text style={{ fontWeight: 'bold' }}>{ source.name }</Text>
               </Body>
@@ -87,15 +111,18 @@ class Article extends Component {
           <CardItem>
             <Text>{ article.title }</Text>
           </CardItem>
-          <CardItem>
-            <Image
-              source={{ uri: article.image_url }}
-              style={[ styles.articleImage, { height: height / 4.0 } ]}
-            />
-          </CardItem>
+          { article.image_url ? (
+            <CardItem>
+              { /* TODO: Load a placeholder for articles missing images */ }
+                <Image
+                  source={{ uri: article.image_url }}
+                  style={[ styles.articleImage, { height: height / 4.0 } ]}
+                />
+            </CardItem>
+          ) : null }
         </Touchable>
         <CardItem style={{ paddingTop: 0, paddingBottom: 0 }}>
-          <ArticleButtons articleId={ article.url } />
+          <ArticleButtons articleId={ article.article_id } />
         </CardItem>
       </Card>
     );

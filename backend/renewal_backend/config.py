@@ -89,3 +89,14 @@ crawler = {
         'query_exclude': ['utm_*']
     }
 }
+
+
+web = {
+    'api': {
+        'v1': {
+            'recommendations': {
+                'default_limit': 100
+            }
+        }
+    }
+}

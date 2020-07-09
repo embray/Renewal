@@ -46,7 +46,7 @@ class RecommendationsHeader extends Component {
 class RecommendationsContent extends Component {
   render() {
     return (
-      <ArticlesList { ...this.props } listName={ 'recommendations' } />
+      <ArticlesList { ...this.props } listName={ 'recommendations' } infiniteScroll />
     );
   }
 }

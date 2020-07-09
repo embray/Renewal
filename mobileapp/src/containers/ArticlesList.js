@@ -10,60 +10,9 @@ import {
 import { connect } from 'react-redux';
 
 import { articleActions } from '../actions';
+import RenewalAPI from '../api';
 import { Article } from '../components/Article';
 import TickMessage from '../components/TickMessage';
-import { sleep } from '../utils';
-
-
-// TODO: These will probably be moved again elsewhere once the backend API is
-// in-place; then the backend API would handle debug simulations.
-// Sort newest first
-const DEBUG_ARTICLES = require('../data/debug_articles.json');
-const DEBUG_SOURCES = require('../data/debug_sources.json');
-const DEBUG_DATA_SOURCE = {
-  articles: Object.fromEntries(DEBUG_ARTICLES.map((a) => [a.url, a])),
-  articleLists: {
-    recommendations: DEBUG_ARTICLES.sort((a, b) => {
-      if (a.date < b.date) {
-        return -1;
-      } else if (a.date > b.date) {
-        return 1;
-      } else {
-        return 0;
-      }
-    }).map((a) => a.url),
-    bookmarks : []
-  },
-  articleInteractions: [],
-  sources: DEBUG_SOURCES
-};
-
-// Fetch fake debug data
-async function _debugFetch(listName, latestArticleId, perPage) {
-  // TODO: Here we would actually fetch the data from the backend
-  let articles = DEBUG_DATA_SOURCE.articleLists[listName];
-
-  let start = (latestArticleId ?
-    articles.findIndex(id => id == latestArticleId) + 1 : 0);
-  let end = start + perPage;
-
-  articles = articles.slice(start, end);
-  articles = articles.map((id) => DEBUG_DATA_SOURCE.articles[id])
-
-  const interactions = {};
-  const sources = {}
-
-  // Article fetches include their associated sources and interactions
-  articles.forEach((article) => {
-    interactions[article.url] = DEBUG_DATA_SOURCE.articleInteractions[article.url];
-    sources[article.source] = DEBUG_DATA_SOURCE.sources[article.source];
-  });
-
-  // Simulate loading time;
-  await sleep(500);
-
-  return { articles, interactions, sources };
-}
 
 
 class ArticlesList extends Component {
@@ -86,18 +35,25 @@ class ArticlesList extends Component {
       endOfData: !this.props.infiniteScroll
     }
 
+    this.api = new RenewalAPI();
+
     this.flatList = React.createRef();
 
     // Mysteriously, this is need just for this event handler, otherwise
     // an error results every time the component's state changes; see
     // https://github.com/facebook/react-native/issues/17408
     this._onViewableItemsChanged = this._onViewableItemsChanged.bind(this);
+
+    // This count is increased very time onScrollToIndexFailed is triggered
+    // which can happen sometimes if the article list is long and it takes
+    // multiple attempts to scroll to last article.
+    // By keeping count we can set a threshold on retries so that it doesn't
+    // go into an infinite loop.
+    this.scrollToIndexErrors = 0;
   }
 
   async componentDidMount() {
-    if (this.props.articleList.list.length == 0) {
-      this._fetchArticles();
-    } else {
+    if (this.props.articleList.list.length > 0) {
       // If the list is empty this will try to scroll to a non-existent
       // item resulting in a warning.
       // Sometimes this can fail if the flatList reference has not been
@@ -112,39 +68,36 @@ class ArticlesList extends Component {
           clearInterval(this.scrollToInterval);
         }
       }, 50);
+      this.setState({ loading: false });
+    } else {
+      this._fetchArticles();
     }
   }
 
-  // TODO: Eventually this will use the API for the backend to fetch
-  // articles, and may include a built-in layer for article caching,
-  // as well as the fallback that loads demo data in debug mode.
-  // If old = true fetch old articles (for infinite scrolling) rather
-  // than newer articles (refreshing)
   async _fetchArticles(old = false) {
     const { listName, articleList, perPage } = this.props;
     const list = articleList.list;
+    const fetchParams = { limit: perPage };
+
     if (old) {
-      var latestArticleId = list[list.length - 1];
+      fetchParams.max_id = list[list.length - 1];
     } else {
-      var latestArticleId = list[0];
+      fetchParams.since_id = list[0];
     }
 
-
-    // TODO: Here we would actually fetch the data from the backend
-    // Depending on whether old or new we might have an argument
-    // specifying prior/since
-    const response = await _debugFetch(listName, latestArticleId, perPage);
+    // NOTE: The API has an articles fetch method corresponding with the
+    // name of each article list
+    const fetch = this.api[listName].bind(this.api);
+    const response = await fetch(fetchParams);
 
     if (old) {
       this.props.oldArticles(
         response.articles,
-        response.interactions,
         response.sources
       );
     } else {
       this.props.newArticles(
         response.articles,
-        response.interactions,
         response.sources
       );
     }
@@ -154,19 +107,15 @@ class ArticlesList extends Component {
       showRefreshHint: false,
       loading: false,
       loadingMore: false,
-      endOfData: (this.props.infiniteScroll ? true :
-                  (old && response.articles.length == 0))
+      endOfData: (this.props.infiniteScroll ?
+        (old && response.articles.length == 0) : true)
     }));
   }
 
-  _renderArticle(url, index, nativeEvent) {
-    // TODO: Need a proper way for loading sources alongside articles.
-    // Either they would be fetched simulateneously with articles or cached separately
-    // somehow.  If nothing else we need to cache source logos somewhere or else we'd
-    // have to load them over and over again.
+  _renderArticle(articleId, index, nativeEvent) {
     // TODO: Load article images asynchronously outside the main component rendering;
     // makes articles load slowly otherwise.
-    return (<Article articleId={ url } />);
+    return (<Article articleId={ articleId } />);
   }
 
   _onRefresh() {
@@ -251,6 +200,9 @@ class ArticlesList extends Component {
   }
 
   _renderFooter() {
+    if (this.state.loading) {
+      return null;
+    }
     const { height, width } = Dimensions.get('window');
     if (this.state.endOfData) {
       return (
@@ -271,14 +223,15 @@ class ArticlesList extends Component {
     // TODO: Need to figure out a more precise number for
     // onEndReachedThreshold, perhaps based on the size of the screen and the
     // article cards?
-    console.log(this.state.loading);
     return (
       <SafeAreaView>
         <Animated.FlatList
           { ...this.props }
           ref={ this.flatList }
           data={ this.props.articleList.list }
-          keyExtractor={ (item, index) => item }
+          // toString() since the items are article_ids (numbers) and
+          // the key is expected to be a string
+          keyExtractor={ (item, index) => item.toString() }
           renderItem={ ({item}) => this._renderArticle(item) }
           initialNumToRender={ this.props.perPage }
           refreshing={ this.state.refreshing }
@@ -301,16 +254,6 @@ class ArticlesList extends Component {
 // Doesn't need any props from the global state (it takes the array of
 // article IDs in ownProps) but does need dispatch
 function mapStateToProps(state, ownProps) {
-  if (__DEV__) {
-    // TODO: Debug only--remove when we fix the debug article fetching
-    // Fill the debug article interactions and bookmarks from the state.
-    const interactions = state.articles.articleInteractions;
-    const bookmarksList = state.articles.articleLists.bookmarks.list;
-
-    Object.assign(DEBUG_DATA_SOURCE.articleInteractions, interactions);
-    DEBUG_DATA_SOURCE.articleLists.bookmarks = [ ...bookmarksList ];
-  }
-
   return {
     articleList: state.articles.articleLists[ownProps.listName]
   };

@@ -51,7 +51,7 @@ class Agent(metaclass=abc.ABCMeta):
     def main(cls, argv=None):
         parser = argparse.ArgumentParser()
         parser.add_argument('--config', default=DEFAULT_CONFIG_FILE,
-                type=DefaultFileType(default=DEFAULT_CONFIG_FILE)
+                type=DefaultFileType(default=DEFAULT_CONFIG_FILE),
                 help='load additional configuration for the backend service; '
                      'by default reads from "renewal.yaml" in the current '
                      'directory')

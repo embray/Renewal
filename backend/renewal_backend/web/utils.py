@@ -1,5 +1,7 @@
 """Utilities specifically for the HTTP API."""
 
+from datetime import datetime
+
 from bson.errors import InvalidId
 from bson.objectid import ObjectId
 from flask import abort
@@ -24,5 +26,7 @@ class JSONEncoder(_JSONEncoder):
     def default(self, obj):
         if isinstance(obj, ObjectId):
             return str(obj)
+        elif isinstance(obj, datetime):
+            return obj.isoformat()
 
-        super().default(obj)
+        return super().default(obj)

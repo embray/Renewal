@@ -13,6 +13,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from functools import partial
 
+import bson
 import pymongo
 from aio_pika.patterns import NackMessage
 from bson import ObjectId
@@ -304,7 +305,7 @@ class Controller(Agent, MongoMixin):
         """
 
         seq = self.db['sequences'].find_one_and_update(
-                {'_id': sequence}, {'$inc': {'seq': 1}},
+                {'_id': sequence}, {'$inc': {'seq': bson.Int64(1)}},
                 projection={'seq': True, '_id': False}, upsert=True)
 
         if seq is None:

@@ -46,7 +46,6 @@ def articles_interactions(article_id):
 
 
 @v1.route('/images/icons/<ObjectId:icon_id>')
-@check_auth
 def images_icons(icon_id):
     # TODO: We should set the proper content-type metadata in the headers, but
     # unfortunately we don't store the MIME-types for downloaded images; we

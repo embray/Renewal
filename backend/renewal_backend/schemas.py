@@ -161,26 +161,20 @@ ARTICLE = dict_merge(RESOURCE, {
                 'document in the sites collection.',
             'bsonType': ['objectId', 'null']
         },
-        'scrape': {
-            'description': 'Article metadata returned by the scraper',
-            'type': 'object',
-            'properties': {
-                'publish_date': {'bsonType': 'date'},
-                'title': {'type': 'string'},
-                'authors': {
-                    'type': 'array',
-                    'items': {'type': 'string'}
-                },
-                'summary': {'type': 'string'},
-                'text': {'type': 'string'},
-                'image_url': {
-                    'type': 'string'  # note: should be a url
-                },
-                'keywords': {
-                    'type': 'array',
-                    'items': {'type': 'string'}
-                }
-            }
+        'publish_date': {'bsonType': 'date'},
+        'title': {'type': 'string'},
+        'authors': {
+            'type': 'array',
+            'items': {'type': 'string'}
+        },
+        'summary': {'type': 'string'},
+        'text': {'type': 'string'},
+        'image_url': {
+            'type': 'string'  # note: should be a url
+        },
+        'keywords': {
+            'type': 'array',
+            'items': {'type': 'string'}
         }
     }
 })

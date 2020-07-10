@@ -108,13 +108,12 @@ class ArticleScraper(Agent):
         scrape = {k: v for k, v in scrape.items() if v is not None}
         site_meta = {k: v for k, v in site_meta.items() if v is not None}
 
-        updates = {
+        scrape.update({
             'site': site_meta,
-            'scrape': scrape,
             'last_scraped': datetime.utcnow()
-        }
+        })
 
-        return updates
+        return scrape
 
     async def start_scrape_article_worker(self, connection):
         producer = await self.create_producer(connection, 'articles')

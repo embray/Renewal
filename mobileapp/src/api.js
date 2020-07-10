@@ -24,7 +24,6 @@ if (__DEV__) {
       recommendations: DEBUG_ARTICLES.map((a) => a.article_id).sort((x, y) => (y - x)),
       bookmarks : []
     },
-    articleInteractions: [],
     sources: DEBUG_SOURCES
   });
 }

@@ -124,7 +124,7 @@ export class ArticleView extends Component {
       * https://github.com/react-native-community/react-native-webview/issues/1095
       * As such we cannot capture window.onload events; need a
       * different workaround */
-    const { url } = this.props.route.params;
+    const { article_id, url } = this.props.route.params;
 
     return (
       <View style={ styles.container }>
@@ -141,7 +141,7 @@ export class ArticleView extends Component {
             onMessage={ e => this.onMessageFromWebView(e.nativeEvent.data) }
           />
         </Animated.ScrollView>
-        <ArticleButtons style={ styles.buttons } articleId={ url } />
+        <ArticleButtons style={ styles.buttons } articleId={ article_id } />
       </View>
     );
   }

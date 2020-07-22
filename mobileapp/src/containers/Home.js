@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { Icon, Text, View } from 'native-base';
+import { useSelector } from 'react-redux';
+import { Icon, Text, Thumbnail, View } from 'native-base';
 
 import I18n from 'ex-react-native-i18n';
 
@@ -44,9 +45,21 @@ function MiniOfflineSign() {
 
 
 function iconFactory(name) {
-  return ({size, focus, color}) => (
+  return ({ size, focus, color }) => (
     <Icon name={ name } style={{ color }} />
   );
+}
+
+
+// Renders the user's avatar if they are logged in to an auth provider which
+// provides one, otherwise falls back on rendering the default icon.
+function userIcon({ size, focus, color }) {
+  const photoURL = useSelector((state) => state.account.photoURL);
+  if (photoURL != null) {
+    const style = { height: size, width: size, borderRadius: size / 2 };
+    return (<Thumbnail style={ style } source={{ uri: photoURL }} />)
+  }
+  return iconFactory('md-person')({ size, focus, color });
 }
 
 
@@ -75,7 +88,7 @@ const SCREEN_OPTIONS = new Map([
   ['account', {
     component: Account,
     label: I18n.t('side_menu_account'),
-    icon: iconFactory('md-person')
+    icon: userIcon
   }]
 ]);
 
@@ -117,33 +130,6 @@ export default class Home extends Component {
   handleConnectivityChange = (isConnected) => {
     this.setState({ isConnected });
   };
-
-  fetchEvent =  async (something, someData)=>{
-    console.log(this.state.token)
-    await FetchFunction._event(this.state.token, something, someData)
-    /*
-    let userData = null;
-    console.log(this.props)
-    someData === null ?
-      userData = "[{Event : "+something+", timestamp :"+Date.now()+"}]"
-      :
-     userData="[{Event : "+something+", timestamp :"+Date.now()+","+someData+"}]";
-     const urlConst = 'https://api.renewal-research.com/user/events/'+this.state.token+'/'+userData;
-
-     console.log(urlConst)
-     fetch('https://api.renewal-research.com/user/events/'+this.state.token+'/'+userData, {
-      method: "POST",
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body:JSON.stringify({
-        something,
-        userData
-      })
-    })*/
-
-  }
 
   render() {
     if (this.state.isLoading) {

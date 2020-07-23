@@ -77,17 +77,19 @@ class _RootContainer extends Component {
     if (this.props.isAuthenticating || !this.state.isReady) {
       // See https://docs.expo.io/versions/latest/sdk/splash-screen/#example-without-any-flickering-between-splashscreen-and
       return (
-        <ImageBackground
-          style={ styles.splashScreen }
-          source={ require('./assets/splash.png') }
-          resizeMode="contain"
-          onLoadEnd={ () => SplashScreen.hide() }
-          fadeDuration={ 0 }
-        >
-          <View style={ styles.splashMessage }>
-            <TickMessage message={ splashMessage } />
-          </View>
-        </ImageBackground>
+        <Root>
+          <ImageBackground
+            style={ styles.splashScreen }
+            source={ require('./assets/splash.png') }
+            resizeMode="contain"
+            onLoadEnd={ () => SplashScreen.hide() }
+            fadeDuration={ 0 }
+          >
+            <View style={ styles.splashMessage }>
+              <TickMessage message={ splashMessage } />
+            </View>
+          </ImageBackground>
+        </Root>
       );
     }
 

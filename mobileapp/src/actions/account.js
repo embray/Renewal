@@ -1,3 +1,4 @@
+import { Toast } from 'native-base';
 import {
   createAsyncThunk,
   createSlice
@@ -38,7 +39,9 @@ export const initialState = {
     google: false,
     facebook: false,
     twitter: false
-  }
+  },
+
+  toastQueue: []
 };
 
 
@@ -79,7 +82,9 @@ const actions = {
   }),
   signIn: createAsyncThunk(SIGN_IN, auth.signIn),
   signOut: createAsyncThunk(SIGN_OUT, auth.signOut),
-  linkAccount: createAsyncThunk(LINK, auth.linkAccount),
+  linkAccount: createAsyncThunk(LINK, (arg) => (
+    auth.linkAccount(arg.provider, arg.credential)
+  )),
   save: createAsyncThunk(SAVE, auth.saveAccount)
 }
 
@@ -91,6 +96,15 @@ const account = createSlice({
   reducers: {
     update: (state, action) => {
       Object.assign(state, action.payload);
+    },
+    // This is a hack to display toasts related to authentication once the main
+    // root component has been mounted, as it's possible for authentication to
+    // complete before that happens.
+    popToasts: (state, action) => {
+      while (state.toastQueue.length) {
+        let toast = state.toastQueue.shift();
+        Toast.show(toast);
+      }
     }
   },
   extraReducers: {
@@ -103,11 +117,25 @@ const account = createSlice({
       // TODO: Is there any valid reason we should want to ask for the user's
       // phone number??
       console.log(`user signed in successfully: ${JSON.stringify(user)}`);
+      // Only display this if the user wasn't already previously signed in with
+      // a cached sign-in
+      if (state.uid == null) {
+        state.toastQueue.push({
+          text: 'Signed in successfully!', type: 'success'
+        });
+      }
       Object.assign(state, user);
       state.isAuthenticating = false;
     },
     [actions.signIn.rejected]: (state, action) => {
-      console.error(`sign-in failed: ${JSON.stringify(action.error)}`);
+      if (__DEV__) {
+        console.error(`sign-in failed: ${JSON.stringify(action.error)}`);
+      } else {
+        state.toastQueue.push({
+          text: `Signed in failed: ${action.error.message}`,
+          type: 'danger'
+        });
+      }
     },
 
     /* Sign-out actions */
@@ -141,11 +169,19 @@ const account = createSlice({
       }
       state.authProviders[provider] = true;
       state.isAuthenticating = false;
+      Toast.show({ text: 'Account successfully linked!', type: 'success' });
     },
     [actions.linkAccount.rejected]: (state, action) => {
-      console.error(
-        `link account failed: ${JSON.stringify(action.error.message)}`
-      );
+      if (__DEV__) {
+        console.error(
+          `link account failed: ${JSON.stringify(action.error.message)}`
+        );
+      } else {
+        Text.show({
+          text: `Failed to link account: ${action.error.message}`,
+          type: 'danger'
+        });
+      }
     },
 
     /* Save actions */

@@ -58,7 +58,12 @@ class _RootContainer extends Component {
   }
 
   componentDidMount() {
-    this._loadAsync()
+    this._loadAsync();
+
+    // Display any queued toasts related to authentication
+    // after a brief delay to ensure that the Root container
+    // has been rendered
+    setTimeout(() => this.props.popToasts(), 250);
   }
 
   render() {
@@ -101,7 +106,7 @@ class _RootContainer extends Component {
   }
 
   async _loadAsync() {
-    this.props.dispatch(accountActions.checkAuth());
+    this.props.checkAuth();
     this.setState({ splashMessage: 'Loading assets' });
     await Font.loadAsync({
         Roboto: Roboto,
@@ -122,8 +127,7 @@ function mapStateToProps(state) {
   return { isAuthenticating: state.account.isAuthenticating };
 }
 
-
-const RootContainer = connect(mapStateToProps)(_RootContainer);
+const RootContainer = connect(mapStateToProps, accountActions)(_RootContainer);
 
 
 export default class App extends Component {

@@ -24,6 +24,7 @@ import accountActions from '../../actions/account';
 import { getAvailableProviders } from '../../auth';
 import { mapToObject } from '../../utils';
 import Dialog from '../../components/Dialog';
+import EmailSignin from './EmailSignin';
 import SideHeader from './SideHeader';
 
 
@@ -47,7 +48,10 @@ export default class Account extends Component {
       >
         <AccountStack.Screen name="account"
           component={ AccountContent }
-      />
+        />
+        <AccountStack.Screen name="emailSignin" component={ EmailSignin }
+          options={{ headerShown: false }}
+        />
       </AccountStack.Navigator>
     );
   }
@@ -307,6 +311,7 @@ class _AccountContent extends Component {
             { authProviders.indexOf('email') >= 0 ? (
               <Button full light disabled={ linkedProviders.email }
                       style={ styles.linkButton }
+                      onPress={ () => this.props.navigation.navigate('emailSignin') }
               >
                 <Icon name="mail" />
                 <Text>
@@ -320,7 +325,7 @@ class _AccountContent extends Component {
                         styles.linkButton,
                         linkedProviders.google ? {} : styles.googleButton
                       ]}
-                      onPress={ () => this.props.linkAccount('google') }
+                      onPress={ () => this.props.linkAccount({ provider: 'google' }) }
               >
                 <Icon name="logo-google" />
                 <Text>

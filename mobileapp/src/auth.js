@@ -51,6 +51,15 @@ function getAuthConfig(provider) {
 }
 
 
+// For a given e-mail address, return whether the user is linked
+// using their e-mail + password
+export function hasEmailPasswordAccount(email) {
+  const providerId = firebase.auth.EmailAuthProvider.PROVIDER_ID;
+  return firebase.auth().fetchSignInMethodsForEmail(email).then(
+    (providers) => providers.indexOf(providerId) >= 0).catch((error) => false);
+}
+
+
 // TODO: Clean up handling of different auth providers; each one needs
 // to implement slightly different workflows for providing credentials, etc.
 export function getAvailableProviders() {
@@ -112,6 +121,12 @@ export function signIn({provider = 'anonymous', credential = null}) {
     case 'anonymous':
       signInPromise = firebase.auth().signInAnonymously();
       break;
+    case 'email':
+      // For e-mail the passed in credential is email + password
+      const { email, password } = credential;
+      credential = firebase.auth.EmailAuthProvider.credential(email, password);
+      signInPromise = firebase.auth().signInWithCredential(credential);
+      break;
     case 'google':
       signInPromise = firebase.auth().signInWithCredential(credential);
       break;
@@ -149,53 +164,65 @@ function deleteUser(user) {
 }
 
 
-export async function linkAccount(provider) {
+export function linkAccount(provider, credential = null) {
   if (!FIREBASE_ENABLED) {
     return;
   }
-  let linkPromise = null;
+  let credentialPromise = null;
   let existingAccount = false;
   console.log(`linking account with the ${provider} provider`);
   switch (provider) {
     case 'google':
       const clientId = getAuthConfig('google').clientId;
-      linkPromise = Google.logInAsync({ clientId }).then((result) => {
+      credentialPromise = Google.logInAsync({ clientId }).then((result) => {
         const { idToken } = result;
-        const cred = firebase.auth.GoogleAuthProvider.credential(idToken);
-        const currentUser = firebase.auth().currentUser;
-        return currentUser.linkWithCredential(cred).then((result) => result,
-          (error) => {
-            if (error.code == 'auth/credential-already-in-use') {
-              // Try to log in with the provided existing credential
-              // TODO: Before we do this, we should probably try to merge
-              // accounts, and following a successful merge delete the old
-              // anonymous account; see
-              // https://github.com/RenewalResearch/Renewal/issues/6
-              console.log(
-                'credential already in use; trying to sign in to exising ' +
-                'account');
-              existingAccount = true;
-              // Delete the old anonymous account, then sign in with the
-              // new credentials; this is a little dangerous because if the
-              // new sign-in fails the old account will still be lost forever
-              // so this really should only happen only after the accounts
-              // have been successfully merged
-              return deleteUser(currentUser).then(() => {
-                console.log('deleted old user successfully, now signing in ' +
-                            'with new credentials');
-                return firebase.auth().signInWithCredential(error.credential)
-              });
-            } else {
-              return Promise.reject(new Error(error));
-            }
-          });
-        });
+        return firebase.auth.GoogleAuthProvider.credential(idToken);
+      });
+      break;
+    case 'email':
+      const { email, password } = credential;
+      credential = firebase.auth.EmailAuthProvider.credential(email, password);
+      credentialPromise = Promise.resolve(credential);
       break;
     default:
-      console.error(`unsupported sign-in provider ${provider}`);
+      console.log(`unsupported sign-in provider ${provider}`);
+      return Promise.reject(new Error(`unsupported sign-in provider ${provider}`));
   }
 
-  return linkPromise.then(
+  return credentialPromise.then((cred) => {
+    const currentUser = firebase.auth().currentUser;
+    return currentUser.linkWithCredential(cred).then((result) => result,
+      (error) => {
+        if (error.code == 'auth/credential-already-in-use') {
+          // Try to log in with the provided existing credential
+          // TODO: Before we do this, we should probably try to merge
+          // accounts, and following a successful merge delete the old
+          // anonymous account; see
+          // https://github.com/RenewalResearch/Renewal/issues/6
+          console.log(
+            'credential already in use; trying to sign in to exising ' +
+            'account');
+          existingAccount = true;
+          // Delete the old anonymous account, then sign in with the
+          // new credentials; this is a little dangerous because if the
+          // new sign-in fails the old account will still be lost forever
+          // so this really should only happen only after the accounts
+          // have been successfully merged
+          return deleteUser(currentUser).then(() => {
+            console.log('deleted old user successfully, now signing in ' +
+                        'with new credentials');
+            return firebase.auth().signInWithCredential(error.credential)
+          });
+        } else if (error.code == 'auth/email-already-in-use') {
+          return Promise.reject(new Error(
+            'this e-mail address is already in used; perhaps you already ' +
+            'linked your account using a different authentication provider ' +
+            'that uses this e-mail address'));
+        } else {
+          return Promise.reject(new Error(error));
+        }
+      });
+  }, (error) => Promise.reject(new Error(error.message))).then(
     (cred) => {
       return { user: userToObj(cred.user), provider }
     },

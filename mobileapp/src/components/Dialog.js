@@ -1,6 +1,48 @@
 import { Icon, Item, Input } from 'native-base';
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import RNDialog from "react-native-dialog";
+
+
+export function ValidatingInput(props) {
+  const { value, validate, inputStyle, onChangeText } = props;
+  const [ valid, setValid ] = useState(validate ? validate(value) : true);
+
+  const inputProps = { ...props };
+  inputProps.style = inputStyle;
+
+  const itemProps = { style: props.style };
+  let inputIcon = null;
+
+  if (validate !== undefined) {
+    if (valid) {
+      itemProps['success'] = true;
+      inputIcon = (<Icon name="checkmark-circle" />);
+    } else {
+      itemProps['error'] = true;
+      inputIcon = (<Icon name="close-circle" />);
+    }
+  }
+
+  const _onChangeText = (value) => {
+    value = value.trim();
+    const valid = validate ? validate(value) : true;
+    if (onChangeText !== undefined) {
+      // Call the onChangeText callback passed by the parent
+      // returning null to indicate an invalid value
+      onChangeText(valid ? value : null);
+    }
+    setValid(valid);
+  }
+
+  return (
+    <Item { ...itemProps }>
+      <Input { ...inputProps } onChangeText={ _onChangeText }>
+        { value }
+      </Input>
+      { inputIcon }
+    </Item>
+  );
+}
 
 
 // Higher-order component which creates a modal dialog
@@ -28,47 +70,18 @@ export default function Dialog(title, description, inputter, validate) {
     constructor(props) {
       super(props);
       const value = this.props.value;
-      const valid = validate ? validate(value) : true;
-      this.state = { value, valid };
-    }
-
-    _validate(value) {
-      const { validate } = this.props;
-
-      return validate ? validate(value) : true;
-    }
-
-    _onChangeText(value) {
-      value = value.trim();
-      this.setState({
-        value,
-        valid: this._validate(value)
-      });
+      const validate = this.props.validate;
+      this.state = { value };
     }
 
     render() {
-      const inputStyle = {};
-      let inputIcon = null;
-      if (this.props.validate) {
-        if (this.state.valid) {
-          inputStyle['success'] = true;
-          inputIcon = (<Icon name="checkmark-circle" />);
-        } else {
-          inputStyle['error'] = true;
-          inputIcon = (<Icon name="close-circle" />);
-        }
-      }
-
       const inputterProps = {
-        onChangeText: this._onChangeText.bind(this)
+        onChangeText: (value) => this.setState({ value })
       };
 
       const defaultInputter = () => {
         return (
-          <Item { ...inputStyle }>
-            <Input { ...inputterProps }>{ this.state.value }</Input>
-            { inputIcon }
-          </Item>
+          <ValidatingInput validate={ validate } value={ this.state.value } />
         );
       }
 

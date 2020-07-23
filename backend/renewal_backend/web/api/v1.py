@@ -1,46 +1,90 @@
 from http import HTTPStatus
 
-import bson
 import pymongo
 from flask import Blueprint, g, request, abort
 
 from ..auth import check_auth
-from ..utils import ObjectIdConverter
+from ..utils import ObjectIdConverter, Int64Converter
 
 v1 = Blueprint('api.v1', __name__)
 
 # Ensure the blueprint knows about our URL converters
-v1.record_once(
-    lambda s: s.app.url_map.converters.setdefault('ObjectId', ObjectIdConverter)
-)
+def register_converters():
+    for converter in [ObjectIdConverter, Int64Converter]:
+        def register_converter(s, converter=converter):
+            s.app.url_map.converters.setdefault(converter.name, converter)
+        v1.record_once(register_converter)
+
+register_converters()
+
 
 @v1.route('/')
 def index():
     return {'version': 1}
 
 
-@v1.route('/articles/interactions/<int:article_id>', methods=['GET', 'POST'])
+@v1.route('/articles/interactions/<Int64:article_id>', methods=['GET', 'POST'])
 @check_auth
 def articles_interactions(article_id):
     update = None
     if request.method == 'POST':
         update = request.json
 
-    filt = {'user_id': g.auth['user_id'], 'article_id': bson.Int64(article_id)}
+    filt = {'user_id': g.auth['user_id'], 'article_id': article_id}
     proj = {'_id': False}
 
+    # TODO: It would be better if all various database updates were hidden
+    # behind an API abstraction rather than implemented directly in the web
+    # API.  However, it will be easier to know what interfaces that API needs
+    # once we've fully implemented the prototype.
     if update is None:
         interactions = g.db.articles.interactions.find_one(filt, proj)
+        if interactions is None:
+            abort(HTTPStatus.NOT_FOUND)
     else:
         try:
-            interactions = g.db.articles.interactions.find_one_and_update(
-                    filt, {'$set': update}, projection=proj, upsert=True,
-                    return_document=pymongo.ReturnDocument.AFTER)
+            # We return the user's previous interactions with this article
+            # (if any) so we can make a diff with the new interaction in order
+            # to update article metrics
+            prev_interactions = g.db.articles.interactions.find_one_and_update(
+                    filt, {'$set': update}, projection=proj, upsert=True)
+
+            if prev_interactions is None:
+                prev_interactions = filt.copy()
+
         except pymongo.errors.OperationFailure:
             abort(HTTPStatus.UNPROCESSABLE_ENTITY)
 
-    if interactions is None:
-        abort(HTTPStatus.NOT_FOUND)
+        # Deconstruct the interaction object into metrics updates for the
+        # article
+        metrics_inc = {}
+        if 'rating' in update:
+            rating = update['rating']
+            if 'rating' in prev_interactions:
+                # A previous rating was possibly unset
+                if prev_interactions['rating'] == -1:
+                    metrics_inc['metrics.dislikes'] = -1
+                elif prev_interactions['rating'] == 1:
+                    metrics_inc['metrics.likes'] = -1
+            if rating == -1:
+                metrics_inc['metrics.dislikes'] = 1
+            elif rating == 1:
+                metrics_inc['metrics.likes'] = 1
+
+        if 'bookmarked' in update:
+            metrics_inc['metrics.bookmarks'] = 1 if update['bookmarked'] else -1
+
+        if metrics_inc:
+            try:
+                g.db.articles.find_one_and_update({'article_id': article_id},
+                        {'$inc': metrics_inc})
+            except pymongo.errors.OperationFailure:
+                # This could happen if due to a bug or race condition of some
+                # kind, one of the metrics is decreased below zero
+                pass
+
+        interactions = prev_interactions.copy()
+        interactions.update(update)
 
     return interactions
 

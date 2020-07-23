@@ -175,6 +175,25 @@ ARTICLE = dict_merge(RESOURCE, {
         'keywords': {
             'type': 'array',
             'items': {'type': 'string'}
+        },
+        'metrics': {
+            'description':
+                'Total user interaction metrics for this article',
+            'type': 'object',
+            'properties': {
+                'likes': {
+                    'bsonType': 'int',
+                    'minimum': 0
+                },
+                'dislikes': {
+                    'bsonType': 'int',
+                    'minimum': 0
+                },
+                'bookmarks': {
+                    'bsonType': 'int',
+                    'minimum': 0
+                }
+            }
         }
     }
 })
@@ -191,6 +210,7 @@ ARTICLE_INTERACTION = {
             'enum': [-1, 0, 1]
         },
         'bookmarked': {'type': 'boolean'}
+        # TODO: Additional interactions (clicked, read, etc.)
     },
     'required': ['user_id', 'article_id']
 }

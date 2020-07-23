@@ -135,7 +135,7 @@ class _EmailSignin extends Component {
           disabled={ this.state.password == null }
           onPress={ () => this.signIn() }
         >
-          <Text>Sign Up</Text>
+          <Text>Sign In</Text>
         </Button>
       </>
     );

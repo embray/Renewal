@@ -114,6 +114,10 @@ const account = createSlice({
     },
     [actions.signIn.fulfilled]: (state, action) => {
       const user = action.payload;
+      let provider = null;
+      if (action.meta.arg !== undefined) {
+        provider = action.meta.arg.provider;
+      }
       // TODO: Is there any valid reason we should want to ask for the user's
       // phone number??
       console.log(`user signed in successfully: ${JSON.stringify(user)}`);
@@ -124,6 +128,15 @@ const account = createSlice({
           text: 'Signed in successfully!', type: 'success'
         });
       }
+      if (provider) {
+        // Normally this should only need to be done when first linking
+        // an account, but sometimes (due to a bug, e.g.) where the account
+        // is successfully linked, but the state doesn't get updated properly
+        // so we can do that here as well.  This normally shouldn't happen in
+        // production at all, but it's happened a few times during development.
+        state.authProviders[provider] = true;
+      }
+
       Object.assign(state, user);
       state.isAuthenticating = false;
     },

@@ -21,18 +21,24 @@ import { WebView } from 'react-native-webview';
 
 
 const injectedScript = function() {
-  function postMessage(height) {
+  function postHeight(height) {
+    // Not sure why, but sometimes we get resize events with null
+    // heights
+    if (typeof(height) !== 'number') {
+      return;
+    }
     window.ReactNativeWebView.postMessage(JSON.stringify({
-      type: 'AUTO_HEIGHT_WEB_VIEW',
+      appTag: 'AUTO_HEIGHT_WEB_VIEW',
+      type: 'SET_HEIGHT',
       payload: height
     }));
   }
 
   // Post the initial message with the current document height
-  postMessage(Math.max(document.documentElement.clientHeight,
-                       document.documentElement.scrollHeight,
-                       document.body.clientHeight,
-                       document.body.scrollHeight));
+  postHeight(Math.max(document.documentElement.clientHeight,
+                      document.documentElement.scrollHeight,
+                      document.body.clientHeight,
+                      document.body.scrollHeight));
 
   // Create a new ResizeObserver to watch changes in the document
   // height
@@ -45,7 +51,7 @@ const injectedScript = function() {
         heights.push(entry.contentRect.height);
       }
     });
-    postMessage(Math.max(...heights));
+    postHeight(Math.max(...heights));
   });
 
   resizeObserver.observe(document.documentElement);
@@ -81,8 +87,21 @@ export default class AutoHeightWebView extends Component {
     }
 
     if (message !== null) {
-      if (message.type == 'AUTO_HEIGHT_WEB_VIEW') {
-        this.setState({ webViewHeight: message.payload });
+      if (message.appTag == 'AUTO_HEIGHT_WEB_VIEW') {
+        switch (message.type) {
+          case 'SET_HEIGHT':
+            let height = message.payload;
+            if (height !== null) {
+              // TODO: This (height == null) appears to happen sometimes for
+              // some reason, which should be investigated.
+              this.setState({ webViewHeight: height });
+            }
+            break;
+          case 'LOG':
+            // useful for debugging purposes
+            console.log(message.payload);
+            break;
+        }
       }
     }
 

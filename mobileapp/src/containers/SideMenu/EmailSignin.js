@@ -65,7 +65,9 @@ class _EmailSignin extends Component {
   renderEmailStep() {
     return (
       <>
-        <Text>link your account with e-mail/password</Text>
+        <Text style={ style.instr }>
+          link your account with e-mail/password
+        </Text>
         <ValidatingInput style={ style.input }
           keyboardType="email-address"
           autoCompleteType="email"
@@ -88,7 +90,9 @@ class _EmailSignin extends Component {
   renderSignupStep() {
     return (
       <>
-        <Text>enter a password (8 characters minimum)</Text>
+        <Text style={ style.instr }>
+          enter a password (8 characters minimum)
+        </Text>
         <ValidatingInput style={ style.input }
           autoCompleteType="password"
           secureTextEntry
@@ -117,7 +121,9 @@ class _EmailSignin extends Component {
   renderSigninStep() {
     return (
       <>
-        <Text>sign in with the password associated with this e-mail</Text>
+        <Text style={ style.instr }>
+          sign in with the password associated with this e-mail
+        </Text>
         <ValidatingInput style={ style.input }
           autoCompleteType="password"
           secureTextEntry
@@ -179,6 +185,10 @@ const style = StyleSheet.create({
     color: 'black',
     fontFamily: 'Chomsky',
     fontSize: 60
+  },
+  instr: {
+    color: 'black',
+    textAlign: 'center'
   },
   input: {
     marginTop: 20,

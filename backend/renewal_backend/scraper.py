@@ -21,7 +21,12 @@ PUBLISH_DATE_TAGS_EX = [
 
 
 # Additional XPaths to search for the site name metadata
-META_SITE_NAME_EX = ['meta[name="application-name"]']
+META_SITE_NAME_EX = [
+    'meta[name="application-name"]',
+    'meta[name="al:android:app_name"]',
+    'meta[name="al:iphone:app_name"]',
+    'meta[name="al:ipad:app_name"]'
+]
 
 
 def _patch_newspaper():

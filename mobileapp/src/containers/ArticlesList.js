@@ -42,13 +42,6 @@ class ArticlesList extends Component {
     // an error results every time the component's state changes; see
     // https://github.com/facebook/react-native/issues/17408
     this._onViewableItemsChanged = this._onViewableItemsChanged.bind(this);
-
-    // This count is increased very time onScrollToIndexFailed is triggered
-    // which can happen sometimes if the article list is long and it takes
-    // multiple attempts to scroll to last article.
-    // By keeping count we can set a threshold on retries so that it doesn't
-    // go into an infinite loop.
-    this.scrollToIndexErrors = 0;
   }
 
   async componentDidMount() {
@@ -62,11 +55,11 @@ class ArticlesList extends Component {
           this.flatList.current.getNode().scrollToIndex({
             index: this.props.articleList.current || 0,
             viewPosition: 0.5,
-            animated: false
+            animated: true
           });
           clearInterval(this.scrollToInterval);
         }
-      }, 50);
+      }, 1000);
       this.setState({ loading: false });
     } else {
       this.setState({ initialScroll: false });
@@ -167,22 +160,22 @@ class ArticlesList extends Component {
 
   _onScrollToIndexFailed(error) {
     console.log(`scroll to index failed: ${JSON.stringify(error)}`);
-    // Retry up to 10 times, picked arbitrarily
-    if (this.scrollToIndexErrors < 10) {
+    if (error.averageItemLength == 0) {
+      // Hasn't finished dynamic layout; try the scrollToIndex again
       setTimeout(() => {
-        if (this.props.articleList.list.length !== 0 && this.flatList !== null) {
+        if (this.flatList.current) {
           this.flatList.current.getNode().scrollToIndex({
             index: error.index,
             viewPosition: 0.5,
-            animated: false
+            animated: true
           });
         }
-      }, 50);
-      this.scrollToIndexErrors += 1;
+      }, 250);
     } else {
-      this.scrollToIndexErrors = 0;
-      // Give up on initialScroll
-      this.setState({ initialScroll: false });
+      this.flatList.current.getNode().scrollToOffset({
+        offset: error.averageItemLength * error.index,
+        animated: true
+      });
     }
   }
 
@@ -240,6 +233,8 @@ class ArticlesList extends Component {
     // TODO: Need to figure out a more precise number for
     // onEndReachedThreshold, perhaps based on the size of the screen and the
     // article cards?
+    const numToRender = Math.max(this.props.perPage,
+                                 this.props.articleList.current + 1);
     return (
       <SafeAreaView>
         <Animated.FlatList
@@ -250,7 +245,7 @@ class ArticlesList extends Component {
           // the key is expected to be a string
           keyExtractor={ (item, index) => item.toString() }
           renderItem={ ({item}) => this._renderArticle(item) }
-          initialNumToRender={ this.props.perPage }
+          initialNumToRender={ numToRender }
           refreshing={ this.state.refreshing }
           onRefresh={ this._onRefresh.bind(this) }
           onEndReached={ this._onEndReached.bind(this) }

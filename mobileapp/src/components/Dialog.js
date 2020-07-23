@@ -9,6 +9,7 @@ export function ValidatingInput(props) {
 
   const inputProps = { ...props };
   inputProps.style = inputStyle;
+  delete inputProps.value;  // This should only set the initial value
 
   const itemProps = { style: props.style };
   let inputIcon = null;
@@ -81,7 +82,9 @@ export default function Dialog(title, description, inputter, validate) {
 
       const defaultInputter = () => {
         return (
-          <ValidatingInput validate={ validate } value={ this.state.value } />
+          <ValidatingInput { ...inputterProps }
+            validate={ validate } value={ this.state.value }
+          />
         );
       }
 
@@ -107,7 +110,7 @@ export default function Dialog(title, description, inputter, validate) {
           <RNDialog.Button label="Cancel" onPress={ () => this.props.onChange() } />
           <RNDialog.Button label="OK"
             onPress={ () => this.props.onChange(this.state.value) }
-            disabled={ !this.state.valid }
+            disabled={ this.state.value === null || this.state.value === undefined }
           />
         </RNDialog.Container>
       );

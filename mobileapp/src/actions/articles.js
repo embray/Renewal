@@ -60,8 +60,12 @@ const actions = {
     const articles = getState().articles.articles;
     const article = articles[articleId];
     try {
+      // Recall: By this point the toggleBookmarked.pending action has already
+      // been dispatched, so article.bookmarked is in the state we want to
+      // send to the API
+      console.log('bookmarked ' + article.bookmarked.toString());
       const response = await renewalAPI.articles.interact(articleId, {
-        bookmarked: !article.bookmarked
+        bookmarked: article.bookmarked
       });
       return response;
     } catch (err) {

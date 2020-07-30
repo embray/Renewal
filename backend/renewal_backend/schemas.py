@@ -222,6 +222,12 @@ IMAGE = dict_merge(RESOURCE, {
             'description':
                 "Binary blob containing the image data.",
             'bsonType': 'binData'
+        },
+        'content_type': {
+            'description':
+                "The image MIME type",
+            'type': 'string',
+            'pattern': '^image/[a-z0-9.+]+'
         }
     }
 })

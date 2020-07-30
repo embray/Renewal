@@ -9,7 +9,8 @@ class ArticleCrawler(ResourceCrawler):
     SOURCE_KEY = 'crawl_article'
     RESULT_EXCHANGE = 'articles'
 
-    async def crawl(self, article, contents, result_producer=None):
+    async def crawl(self, article, contents, headers=None,
+                    result_producer=None):
         """
         Currently just returns the contents of the article and does not do
         any further crawling for links.

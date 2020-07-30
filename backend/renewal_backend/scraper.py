@@ -74,7 +74,7 @@ class ArticleScraper(Agent):
         updates = {}
 
         with try_resource_update(log=self.log) as status:
-            updates = await self._scrape_article(resource=resource)
+            updates = self._scrape_article(resource=resource)
 
         self.log.info(f'scraped {resource["url"]}: status: {status}; '
                       f'updates: {truncate_dict(updates)}')
@@ -86,7 +86,7 @@ class ArticleScraper(Agent):
 
         return updates
 
-    async def _scrape_article(self, *, resource):
+    def _scrape_article(self, *, resource):
         """
         Internal implementation of `ArticleScraper.scrape_article`.
 

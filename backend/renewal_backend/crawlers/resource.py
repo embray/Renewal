@@ -31,7 +31,8 @@ class ResourceCrawler(Agent):
         return exchanges
 
     @abc.abstractmethod
-    async def crawl(self, resource, contents, result_producer=None):
+    async def crawl(self, resource, contents, headers=None,
+                    result_producer=None):
         """
         Subclasses should implement this method to crawl the resource given its
         raw contents, and optionally produce results on the given
@@ -48,7 +49,7 @@ class ResourceCrawler(Agent):
         contents = None
 
         with try_resource_update(log=self.log) as status:
-            resource, contents = await self.retrieve_resource(
+            resource, contents, headers = await self.retrieve_resource(
                     resource, only_if_modified=True,
                     timeout=self.config.crawler.retrieve_timeout)
 
@@ -59,7 +60,7 @@ class ResourceCrawler(Agent):
             # Either status was OK but the resource was not modified, or an
             # error occurred
             with try_resource_update(log=self.log) as status:
-                result = await self.crawl(resource, contents,
+                result = await self.crawl(resource, contents, headers=headers,
                                           result_producer=result_producer)
                 if isinstance(result, dict):
                     updates.update(result)
@@ -131,6 +132,11 @@ class ResourceCrawler(Agent):
             if last_modified:
                 headers['If-Modified-Since'] = format_datetime(last_modified)
 
+        # Special case: Sometimes (especially with images) we will get 'data:'
+        # URLs, so implement special handling for those.
+        if url.startswith('data:'):
+            return self._process_data_resource(resource)
+
         try:
             async with ClientSession() as session:
                 req = session.get(url, headers=headers, timeout=timeout)
@@ -154,9 +160,10 @@ class ResourceCrawler(Agent):
         url = resource['url']
         etag = resource.get('etag')
         last_modified = resource.get('last_modified')
+        headers = resp.headers
 
         if only_if_modified and resp.status == NOT_MODIFIED:
-            return (resource, None)
+            return (resource, None, headers)
 
         elif resp.status != OK:
             resp.raise_for_status()
@@ -165,7 +172,7 @@ class ResourceCrawler(Agent):
             for header, xform in [
                     ('ETag', None),
                     ('Last-Modified', parsedate_to_datetime)]:
-                if header in resp.headers:
+                if header in headers:
                     key = header.lower().replace('-', '_')
                     value = resp.headers[header]
                     value = (value if xform is None else xform(value))
@@ -182,7 +189,7 @@ class ResourceCrawler(Agent):
                 # HTTP-based methods failed us, but we can still
                 # fall back on hash of the full text of the
                 # resource
-                return (resource, None)
+                return (resource, None, headers)
 
             resource['sha1'] = sha1
 
@@ -191,12 +198,34 @@ class ResourceCrawler(Agent):
             # the resource's original URL
             resource['canonical_url'] = canonical_url
 
-            return (resource, contents)
+            return (resource, contents, headers)
         except Exception as exc:
             self.log.warning(
                 f'error decoding response text from '
                 f'{url}; sending nack: {exc}')
             raise
+
+    def _process_data_resource(self, resource):
+        """
+        Generate a 'response' from a ``data:`` URL.
+
+        This involves parsing the URL to retrieve the raw contents and
+        content-type.  Right now this is primarily intended to handle
+        base64-encoded images.  It doesn't care about other data types.
+        """
+
+        data = resource['url'][len('data:'):]
+        content_type, data = data.split(',', 1)
+        try:
+            content_type, param = content_type.split(';', 1)
+            assert param == 'base64'
+        except (ValueError, AssertionError):
+            raise ValueError("a 'base64' content-type parameter was expected")
+
+        contents = base64.b64decode(data.encode('ascii'))
+        headers = {'Content-Type': content_type}
+        resource['sha1'] = hashlib.sha1(contents).hexdigest()
+        return resource, contents, headers
 
     def _canonical_url(self, url):
         """

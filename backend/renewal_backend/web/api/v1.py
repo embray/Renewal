@@ -94,14 +94,14 @@ def images_icons(icon_id):
     # TODO: We should set the proper content-type metadata in the headers, but
     # unfortunately we don't store the MIME-types for downloaded images; we
     # should see if we can fix that...
-    contents = g.db.images.find_one(
-            {'_id': icon_id},
-            projection={'contents': True})
+    icon = g.db.images.find_one(
+            {'_id': icon_id, 'contents': {'$exists': True}},
+            projection={'contents': True, 'content_type': True})
 
-    if contents is None:
+    if icon is None:
         abort(404)
 
-    return contents['contents'], 200, {'content-type': 'image/png'}
+    return icon['contents'], 200, {'content-type': icon['content_type']}
 
 
 @v1.route('/recommendations')

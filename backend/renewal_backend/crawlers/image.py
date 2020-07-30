@@ -14,7 +14,7 @@ class ImageCrawler(ResourceCrawler):
     SOURCE_KEY = 'crawl_image'
     CONTENT_TYPE = 'binary'
 
-    async def crawl(self, image, contents, result_producer=None):
+    async def crawl(self, image, contents, headers=None, result_producer=None):
         """
         Currently just returns the contents of the article and does not do
         any further crawling for links.
@@ -23,7 +23,7 @@ class ImageCrawler(ResourceCrawler):
         self.log.info(f'crawling image {image["url"]}')
         # An image 'crawled' resource update message will be sent, along with
         # the article contents; see ResourceCrawler.crawl_resource
-        return {'contents': contents}
+        return {'contents': contents, 'content_type': headers['Content-Type']}
 
 
 if __name__ == '__main__':

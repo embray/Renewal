@@ -10,7 +10,7 @@ class FeedCrawler(ResourceCrawler):
     SOURCE_KEY = 'crawl_feed'
     RESULT_EXCHANGE = 'articles'
 
-    async def crawl(self, feed, contents, result_producer=None):
+    async def crawl(self, feed, contents, headers=None, result_producer=None):
         self.log.info(f'crawling {feed["type"]} feed {feed["url"]}')
         try:
             parsed = feedparser.parse(contents)

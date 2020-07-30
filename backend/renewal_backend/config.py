@@ -112,8 +112,10 @@ web = {
             }
         }
     },
-    'auth': {
-        # This should be provided by an external config file
-        'firebase_project_id': None
+    'firebase': {
+        # These should be provided by an external config file
+        'project_id': None,
+        'service_account_key_file': None,
+        'app_options': None
     }
 }

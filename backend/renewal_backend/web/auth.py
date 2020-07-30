@@ -39,7 +39,7 @@ def check_auth(func):
 
         if id_token is not None:
             claims = google.oauth2.id_token.verify_firebase_token(
-                id_token, REQUEST, g.config.auth.firebase_project_id)
+                id_token, REQUEST, g.config.firebase.project_id)
 
         if not claims:
             abort(HTTPStatus.UNAUTHORIZED)

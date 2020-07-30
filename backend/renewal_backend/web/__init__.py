@@ -13,8 +13,9 @@ from ..utils import load_config, DEFAULT_CONFIG_FILE, DefaultFileType
 class App(MongoMixin):
     app = Flask(__name__)
 
-    def __init__(self, config):
+    def __init__(self, config, debug=False):
         self.config = config
+        self.debug = debug
         self.app.register_blueprint(v1, url_prefix='/api/v1')
         self.app.before_request(self.before_request)
         self.app.url_map.converters['ObjectId'] = ObjectIdConverter
@@ -24,6 +25,7 @@ class App(MongoMixin):
     def before_request(self):
         # Make the Monogo DB available to the request globals
         g.db = self.db
+        g.debug = self.debug
         g.config = self.config.web
 
     @classmethod
@@ -38,5 +40,5 @@ class App(MongoMixin):
                      'by default reads from "renewal.yaml" in the current '
                      'directory')
         args = parser.parse_args(argv)
-        self = cls(load_config(config_file=args.config))
+        self = cls(load_config(config_file=args.config), debug=args.debug)
         self.app.run(host=args.host, port=args.port, debug=args.debug)

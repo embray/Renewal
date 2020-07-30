@@ -105,10 +105,14 @@ def images_icons(icon_id):
 
 
 @v1.route('/recommendations')
-@check_auth
+@check_auth('user')
 def recommendations():
     limit = g.config.api.v1.recommendations.default_limit
     limit = int(request.args.get('limit', limit))
+
+    if limit < 1:
+        # TODO: Or return an error code?
+        limit = 1
 
     match = [{'article_id': {'$exists': True}}]
 

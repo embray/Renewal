@@ -192,6 +192,10 @@ ARTICLE = dict_merge(RESOURCE, {
                 'bookmarks': {
                     'bsonType': 'int',
                     'minimum': 0
+                },
+                'clicks': {
+                    'bsonType': 'int',
+                    'minimum': 0
                 }
             }
         }
@@ -209,7 +213,8 @@ ARTICLE_INTERACTION = {
             'type': 'number',
             'enum': [-1, 0, 1]
         },
-        'bookmarked': {'type': 'boolean'}
+        'bookmarked': {'type': 'boolean'},
+        'clicked': {'type': 'boolean'}
         # TODO: Additional interactions (clicked, read, etc.)
     },
     'required': ['user_id', 'article_id']

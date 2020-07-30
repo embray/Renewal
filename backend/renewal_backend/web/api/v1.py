@@ -71,8 +71,13 @@ def articles_interactions(article_id):
             elif rating == 1:
                 metrics_inc['metrics.likes'] = 1
 
-        if 'bookmarked' in update:
-            metrics_inc['metrics.bookmarks'] = 1 if update['bookmarked'] else -1
+        for bool_metric in [('bookmarked', 'bookmarks'),
+                            ('clicked', 'clicks')]:
+            # Update counts of clicks, bookmarks, etc.
+            action, metric = bool_metric
+            if action in update:
+                metric = 'metrics.' + metric
+                metrics_inc[metric] = 1 if update[action] else -1
 
         if metrics_inc:
             try:
@@ -94,9 +99,14 @@ def images_icons(icon_id):
     # TODO: We should set the proper content-type metadata in the headers, but
     # unfortunately we don't store the MIME-types for downloaded images; we
     # should see if we can fix that...
-    icon = g.db.images.find_one(
-            {'_id': icon_id, 'contents': {'$exists': True}},
-            projection={'contents': True, 'content_type': True})
+    filt = {
+        '_id': icon_id,
+        'contents': {'$exists': True},
+        'content_type': {'$exists': True}
+    }
+    proj = {'contents': True, 'content_type': True}
+
+    icon = g.db.images.find_one(filt, projection=proj)
 
     if icon is None:
         abort(404)

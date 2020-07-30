@@ -27,6 +27,7 @@ import {
   Thumbnail
 } from 'native-base';
 
+import { articleActions } from '../../actions';
 import ArticleButtons from './ArticleButtons';
 
 
@@ -38,7 +39,7 @@ const timeAgo = new TimeAgo();
 
 class Article extends Component {
   _onPressArticle(article) {
-    // this.fetchEvent("pressOnItem", "itemClickedTitle : "+item.title+" itemClickedUrl : "+item.url);
+    this.props.articleClicked();
     this.props.navigation.navigate('ArticleView', article);
   }
 
@@ -158,7 +159,22 @@ function mapStateToProps(state, props) {
 }
 
 
-export default connect(mapStateToProps)(withNavigation(Article));
+function mapDispatchToProps(dispatch, ownProps) {
+  const { articleId } = ownProps;
+  // Curry the articleId into the relevant action creators
+  return {
+    articleClicked: () => {
+      const interaction = { clicked: true };
+      dispatch(articleActions.articleInteraction({ articleId, interaction }));
+    }
+  };
+}
+
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(withNavigation(Article));
 
 
 const styles = StyleSheet.create({

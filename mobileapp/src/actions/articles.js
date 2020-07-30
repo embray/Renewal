@@ -12,6 +12,7 @@ import renewalAPI from '../api';
 /* Action constants */
 const SET_RATING = 'articles/set_rating';
 const TOGGLE_BOOKMARKED = 'articles/toggle_bookmarked';
+const ARTICLE_INTERACTION = 'articles/article_interaction';
 
 
 /* Initial state for articles */
@@ -41,40 +42,39 @@ export const initialState = {
 const actions = {
   setRating: createAsyncThunk(SET_RATING, async (arg, { rejectWithValue }) => {
     const { articleId, rating } = arg;
-    try {
-      const response = await renewalAPI.articles.interact(articleId, { rating });
-      return response;
-    } catch (err) {
-      let error = err.error;
-
-      // We return a previous rating state for the article in case
-      // of error so we can set it back (since we immediately change
-      // the state locally while the request is still pending so that
-      // the UI updates instantly
-      return rejectWithValue({ error });
-    }
+    return await articleInteraction(articleId, { rating }, rejectWithValue);
   }),
 
   toggleBookmarked: createAsyncThunk(TOGGLE_BOOKMARKED, async (arg, { getState, rejectWithValue }) => {
     const articleId = arg;
     const articles = getState().articles.articles;
     const article = articles[articleId];
-    try {
-      // Recall: By this point the toggleBookmarked.pending action has already
-      // been dispatched, so article.bookmarked is in the state we want to
-      // send to the API
-      console.log('bookmarked ' + article.bookmarked.toString());
-      const response = await renewalAPI.articles.interact(articleId, {
-        bookmarked: article.bookmarked
-      });
-      return response;
-    } catch (err) {
-      let error = err.error;
-      return rejectWithValue({ error });
-    }
+    return await articleInteraction(articleId,
+      { bookmarked: article.bookmarked }, rejectWithValue);
   }),
 
+  // Generic article interaction (e.g. clicked / read, but not rating/bookmark)
+  // which does not affect the app state, but which should still be sent as an
+  // event to the backend.  We might later decide other article interactions
+  // should still be stored in the state to prevent repeats of the same event,
+  // but I'm not sure.
+  articleInteraction: createAsyncThunk(ARTICLE_INTERACTION, async (arg, { rejectWithValue }) => {
+    const { articleId, interaction } = arg;
+    return await articleInteraction(articleId, interaction, rejectWithValue);
+  })
 };
+
+
+async function articleInteraction(articleId, interaction, rejectWithValue) {
+  console.log(`article interaction: ${JSON.stringify(interaction)}`);
+  try {
+    const response = await renewalAPI.articles.interact(articleId, interaction);
+    return response;
+  } catch (err) {
+    let error = err.error;
+    return rejectWithValue({ error });
+  }
+}
 
 
 // Reducer for NEW_ARTICLES and OLD_ARTICLES; the only difference

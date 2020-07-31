@@ -34,6 +34,7 @@ class Controller(Agent, MongoMixin):
         # These are removed when the action is resolved (e.g. an article that
         # was queued to be crawled has been crawled).
         self.queues = defaultdict(set)
+        self.producers = {}
 
     def get_exchanges(self):
         return ['feeds', 'articles', 'images']
@@ -134,7 +135,7 @@ class Controller(Agent, MongoMixin):
             self.log.debug(f'len(queues.{queue_key}) = {queue_size}')
             await method(resource=article)
 
-    async def save_article(self, *, article, article_producer=None):
+    async def save_article(self, *, article):
         self.log.info(f'inserting article into the articles collection: '
                       f'{article}')
         # TODO: Do we want to check if the URL already exists?  And if so do
@@ -156,10 +157,9 @@ class Controller(Agent, MongoMixin):
         else:
             self.log.info('inserted new article')
             # Send new article to the crawlers
-            if article_producer is not None:
-                await article_producer.proxy.crawl_article(resource=article)
+            self.producers['articles'].proxy.crawl_article(resource=article)
 
-    async def update_resource(self, *, connection, collection, resource, type,
+    async def update_resource(self, *, collection, resource, type,
                               status={'ok': True}, updates={}):
         """
         Update the given resource, which should be specified by its URL.
@@ -191,16 +191,14 @@ class Controller(Agent, MongoMixin):
             new_resource['url'] = canonical_url
 
             # Create an update for the new resource at the canonical URL
-            await self.update_resource(connection=connection,
-                                       collection=collection,
+            await self.update_resource(collection=collection,
                                        resource=new_resource, type=type,
                                        status=status, updates=updates)
         elif updates:
             update_method_name = f'_update_{type}_{collection}_hook'
             if hasattr(self, update_method_name):
                 update_method = getattr(self, update_method_name)
-                updates = await update_method(connection, resource, status,
-                                              updates)
+                updates = await update_method(resource, status, updates)
             _updates['$set'].update(updates)
 
         _updates['$inc'] = {f'times_{type}': 1}
@@ -251,8 +249,7 @@ class Controller(Agent, MongoMixin):
                 self.log.debug(
                     f'len(queues.{queue_key}) = {len(self.queues[queue_key])}')
 
-    async def _update_scraped_articles_hook(self, connection, article, status,
-                                            updates):
+    async def _update_scraped_articles_hook(self, article, status, updates):
         """
         When an article is scraped the results of the article scrape are
         returned, along with metadata about the article's site.
@@ -285,7 +282,7 @@ class Controller(Agent, MongoMixin):
         if site is not None:
             icon_url = site.get('icon_url')
             if icon_url:
-                icon_doc = await self._maybe_crawl_image(connection, icon_url)
+                icon_doc = await self._maybe_crawl_image(icon_url)
                 if icon_doc:
                     site['icon_resource_id'] = icon_doc['_id']
 
@@ -313,7 +310,7 @@ class Controller(Agent, MongoMixin):
         else:
             return seq['seq']
 
-    async def _maybe_crawl_image(self, connection, image_url):
+    async def _maybe_crawl_image(self, image_url):
         """
         Create a resource document for the given image URL, and if the image
         has not already been saved, send it to be downloaded.
@@ -324,12 +321,11 @@ class Controller(Agent, MongoMixin):
                 upsert=True, return_document=pymongo.ReturnDocument.AFTER)
         if img_doc and not img_doc.get('contents'):
             # Send the icon to be downloaded
-            producer = await self.create_producer(connection, 'images')
-            await producer.proxy.crawl_image(resource=img_doc)
+            await self.producers['images'].proxy.crawl_image(resource=img_doc)
 
         return img_doc
 
-    async def start_resource_queue(self, connection, resource, action='crawl'):
+    async def start_resource_queue(self, resource, action='crawl'):
         """
         Queue feed and articles from the database to be crawled or
         re-crawled.
@@ -346,7 +342,8 @@ class Controller(Agent, MongoMixin):
         self.log.info(
             f'starting {action} {resource} producer; checking {resource} every '
             f'{refresh_rate} seconds')
-        producer = await self.create_producer(connection, resource)
+
+        producer = self.producers[resource]
 
         # When starting up, we could be resuming from a restart, so still only
         # take sources that haven't been updated since the longest possible
@@ -358,12 +355,12 @@ class Controller(Agent, MongoMixin):
             await queue_method(producer, since=since)
             await asyncio.sleep(refresh_rate)
 
-    async def start_save_article_worker(self, connection):
-        producer = await self.create_producer(connection, 'articles')
-        worker = partial(self.save_article, article_producer=producer)
-        await producer.create_worker('save_article', worker, auto_delete=True)
+    async def start_save_article_worker(self):
+        producer = self.producers['articles']
+        await producer.create_worker('save_article', self.save_article,
+                auto_delete=True)
 
-    async def start_update_resource_worker(self, connection, resource_type):
+    async def start_update_resource_worker(self, resource_type):
         """
         Handles messages on a queue bound to the "feeds" exchange with
         routing key "update_resource".
@@ -383,9 +380,8 @@ class Controller(Agent, MongoMixin):
         # The DB collection and associated exchange names are always the
         # resource type in plural; e.g. feed -> feeds
         collection = exchange = resource_type + 's'
-        producer = await self.create_producer(connection, exchange)
-        worker = partial(self.update_resource, connection=connection,
-                         collection=collection)
+        producer = self.producers[exchange]
+        worker = partial(self.update_resource, collection=collection)
         # TODO: I think it might be confusing to have a single
         # "update_resource" method used for all types of resources (feeds and
         # articles).  Currently there is no need for separate methods to
@@ -394,16 +390,25 @@ class Controller(Agent, MongoMixin):
         await producer.create_worker(
                 f'update_{resource_type}', worker, auto_delete=True)
 
-    async def start_loop(self, connection):
-        for resource_type in ['feed', 'article', 'image']:
-            await self.start_update_resource_worker(connection, resource_type)
+    async def start_producers(self, connection):
+        """Start up message producers for each exchange."""
 
-        await self.start_save_article_worker(connection)
+        for exchange_name in self.get_exchanges():
+            self.producers[exchange_name] = await self.create_producer(
+                    connection, exchange_name)
+
+    async def start_loop(self, connection):
+        await self.start_producers(connection)
+
+        for resource_type in ['feed', 'article', 'image']:
+            await self.start_update_resource_worker(resource_type)
+
+        await self.start_save_article_worker()
         # Should run forever
         await asyncio.gather(
-            self.start_resource_queue(connection, 'feeds'),
-            self.start_resource_queue(connection, 'articles'),
-            self.start_resource_queue(connection, 'articles', 'scrape')
+            self.start_resource_queue('feeds'),
+            self.start_resource_queue('articles'),
+            self.start_resource_queue('articles', 'scrape')
         )
 
 

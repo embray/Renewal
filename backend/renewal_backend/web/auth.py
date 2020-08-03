@@ -20,7 +20,7 @@ REQUEST = google.auth.transport.requests.Request(session=CACHED_SESSION)
 ROLES = frozenset(['user', 'admin', 'recsys'])
 
 
-def check_auth(role_or_func):
+def check_auth(role_or_func, request_obj=None):
     """
     Decorate request handlers to check that the request is authenticated with
     a Firebase JWT token (currently the only authentication method supported).
@@ -40,12 +40,13 @@ def check_auth(role_or_func):
         else:
             roles = frozenset(role_or_func)
 
-        return functools.partial(_check_auth, roles=roles)
+        return functools.partial(_check_auth, roles=roles,
+                request_obj=request_obj)
     else:
         return _check_auth(role_or_func)
 
 
-def _check_auth(func, roles=ROLES):
+def _check_auth(func, roles=ROLES, request_obj=None):
     """
     Internal implementation of the `check_auth` decorator.
 
@@ -53,15 +54,20 @@ def _check_auth(func, roles=ROLES):
     ``@check_auth`` or with a role argument like ``@check_auth(role)``.
     """
 
+    if request_obj is None:
+        # Use the 'request' global, though this may be overridden with
+        # something else (e.g. websocket)
+        request_obj = request
+
     @functools.wraps(func)
     def auth_wrapper(*args, **kwargs):
-        if g.debug and 'X-Renewal-Debug-User-Id' in request.headers:
-            return _debug_check_auth(func, args, kwargs, roles)
+        if g.debug and 'X-Renewal-Debug-User-Id' in request_obj.headers:
+            return _debug_check_auth(func, args, kwargs, roles, request_obj)
 
         claims = None
         id_token = None
         role = None
-        bearer = request.headers.get('Authorization', None)
+        bearer = request_obj.headers.get('Authorization', None)
         if bearer is not None and bearer.startswith('Bearer '):
             id_token = bearer.split(' ')[1]
 
@@ -83,9 +89,9 @@ def _check_auth(func, roles=ROLES):
     return auth_wrapper
 
 
-def _debug_check_auth(func, args, kwargs, roles):
-    user_id = request.headers['X-Renewal-Debug-User-Id']
-    role = request.headers.get('X-Renewal-Debug-Role')
+def _debug_check_auth(func, args, kwargs, roles, request_obj):
+    user_id = request_obj.headers['X-Renewal-Debug-User-Id']
+    role = request_obj.headers.get('X-Renewal-Debug-Role')
 
     if role is not None and role not in roles:
         # Check role, for debugging authorization, otherwise allow all

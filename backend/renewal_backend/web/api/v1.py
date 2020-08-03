@@ -2,7 +2,7 @@ import asyncio
 from http import HTTPStatus
 
 import pymongo
-from quart import Blueprint, g, request, abort, jsonify
+from quart import Blueprint, g, request, websocket, abort, json, jsonify
 
 from ..auth import check_auth
 from ..utils import ObjectIdConverter, Int64Converter
@@ -92,6 +92,19 @@ async def articles_interactions(article_id):
 
         interactions = prev_interactions.copy()
         interactions.update(interaction)
+
+        # Schedule a task to send an ARTICLE_INTERACTION event to the event
+        # stream.  We could just put this event directly on g.event_queue but
+        # we send it over the RabbitMQ fanout exchange for the event_stream
+        # instead so that any and all queues connected to that exchange can
+        # receive the event (e.g. if we have multiple web server instances
+        # handling websocket connections for different clients).
+        # TODO: Interaction events don't have a timestamp attached, but they
+        # should.
+        interaction['user_id'] = user_id
+        interaction['article_id'] = article_id
+        asyncio.ensure_future(g.event_stream_producer.proxy.send_event(
+            event={'type': 'ARTICLE_INTERACTIONS', 'payload': interaction}))
 
     return jsonify(interactions)
 
@@ -205,3 +218,24 @@ def recommendations():
     # 'sources' (as in, the article sources); perhaps we should try to
     # make this nomenclature more consistent in favor of one or the other
     return jsonify({'articles': articles, 'sources': sites})
+
+
+class EventStreamHandler:
+    """
+    This class handles all websocket connections.
+
+    It's a singleton in that this class is never instantiated; it just exists
+    to group all websocket-related functionality together.
+    """
+
+    @classmethod
+    async def event_stream(cls):
+        while True:
+            event = await g.event_stream_queue.get()
+            await websocket.send(json.dumps(event))
+
+
+@v1.websocket('/event_stream')
+@check_auth(['recsystem', 'admin'], request_obj=websocket)
+def event_stream():
+    return EventStreamHandler.event_stream()

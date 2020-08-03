@@ -82,6 +82,14 @@ broker = {
         'images': {
             'name': 'images',
             'type': 'direct'
+        },
+        # This is the stream of all events that is read by recsystems
+        # (though in fact this is not read directly by recsystems but
+        # rather web API instances which send them over a websocket
+        # to each of their connected recsystems
+        'event_stream': {
+            'name': 'event_stream',
+            'type': 'fanout'
         }
     }
 }

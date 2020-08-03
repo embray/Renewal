@@ -37,7 +37,7 @@ class Controller(Agent, MongoMixin):
         self.producers = {}
 
     def get_exchanges(self):
-        return ['feeds', 'articles', 'images']
+        return ['feeds', 'articles', 'images', 'event_stream']
 
     async def queue_crawl_feeds(self, producer, since=None):
         # TODO: MonogoDB queries are blocking for now; we could try replacing
@@ -195,17 +195,18 @@ class Controller(Agent, MongoMixin):
                                        resource=new_resource, type=type,
                                        status=status, updates=updates)
         elif updates:
-            update_method_name = f'_update_{type}_{collection}_hook'
-            if hasattr(self, update_method_name):
-                update_method = getattr(self, update_method_name)
-                updates = await update_method(resource, status, updates)
+            hook_method_name = f'_pre_{type}_{collection}_hook'
+            if hasattr(self, hook_method_name):
+                hook_method = getattr(self, hook_method_name)
+                updates = await hook_method(resource, status, updates)
             _updates['$set'].update(updates)
 
         _updates['$inc'] = {f'times_{type}': 1}
 
         filt = {'url': resource['url']}
         try:
-            doc = self.db[collection].find_one_and_update(filt, _updates)
+            doc = self.db[collection].find_one_and_update(filt, _updates,
+                    return_document=pymongo.ReturnDocument.AFTER)
         except Exception as exc:
             self.log.error(
                 f'could not make {type} update on {collection} '
@@ -248,8 +249,14 @@ class Controller(Agent, MongoMixin):
                     pass
                 self.log.debug(
                     f'len(queues.{queue_key}) = {len(self.queues[queue_key])}')
+        else:
+            # Run post-update hook for the resource type
+            hook_method_name = f'_post_{type}_{collection}_hook'
+            if hasattr(self, hook_method_name):
+                hook_method = getattr(self, hook_method_name)
+                await hook_method(doc, status)
 
-    async def _update_scraped_articles_hook(self, article, status, updates):
+    async def _pre_scraped_articles_hook(self, article, status, updates):
         """
         When an article is scraped the results of the article scrape are
         returned, along with metadata about the article's site.
@@ -279,6 +286,7 @@ class Controller(Agent, MongoMixin):
             updates['article_id'] = self._get_next_sequence_id('article_id')
 
         site = updates.pop('site', None)
+        site_doc = {}
         if site is not None:
             icon_url = site.get('icon_url')
             if icon_url:
@@ -292,6 +300,25 @@ class Controller(Agent, MongoMixin):
             updates['site'] = site_doc['_id']
 
         return updates
+
+    async def _post_scraped_articles_hook(self, article, status):
+        if not status.get('ok', False) or not article:
+            return
+
+        # Prepare a NEW_ARTICLE event for the event stream and send it
+        if 'site' in article:
+            source = self.db.sites.find_one({'_id': article['site']}) or {}
+        else:
+            source = {}
+
+        # Don't send the article contents
+        article = article.copy()
+        del article['contents']
+
+        payload = {'article': article, 'source': source}
+        event = {'type': 'NEW_ARTICLE', 'payload': payload}
+        producer = self.producers['event_stream']
+        asyncio.ensure_future(producer.proxy.send_event(event=event))
 
     def _get_next_sequence_id(self, sequence):
         """

@@ -13,64 +13,24 @@ from .utils import Producer, load_config, DefaultFileType, DEFAULT_CONFIG_FILE
 DEFAULT_CONFIG_FILE = 'renewal.yaml'
 
 
-class Agent(metaclass=abc.ABCMeta):
-    def __init__(self, config, log=None):
+class AgentMixin:
+    """
+    Provides some of the base methods of the `Agent` class  for setting up
+    connections to RabbitMQ exchanges.
+
+    This can be used to add `Agent`-like functionality in other classes that
+    implement different event loop handling (see `renewal_backend.web.App` for
+    example).
+    """
+
+    def __init__(self, config):
         self.config = config
         self.exchanges = None
-        if log is None:
-            log = logging.getLogger()
-        self.log = log
         super().__init__()
-
-    @abc.abstractmethod
-    async def start_loop(self, connection):
-        """
-        Defines the coroutine that will be run in the agent's event loop.
-        """
 
     def get_exchanges(self):
         """Returns a list of exchange names used by this agent."""
         return []
-
-    def run(self):
-        """Creates a connection to the AMQP broker and runs the event loop."""
-
-        loop = asyncio.get_event_loop()
-        connection = loop.run_until_complete(self.connect_broker())
-        try:
-                loop.run_until_complete(self.start_loop(connection))
-                loop.run_forever()
-        except KeyboardInterrupt:
-            return
-        finally:
-            loop.run_until_complete(connection.close())
-            loop.run_until_complete(loop.shutdown_asyncgens())
-            loop.stop()
-
-    @classmethod
-    def main(cls, argv=None):
-        parser = argparse.ArgumentParser()
-        parser.add_argument('--config', default=DEFAULT_CONFIG_FILE,
-                type=DefaultFileType(default=DEFAULT_CONFIG_FILE),
-                help='load additional configuration for the backend service; '
-                     'by default reads from "renewal.yaml" in the current '
-                     'directory')
-        parser.add_argument('--log-level',
-                            choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
-                            type=str.upper, default='INFO',
-                            help='specify the minimum logging level')
-        args = parser.parse_args(argv)
-
-        # TODO: Add logging settings to config
-        logging.basicConfig(
-                level=getattr(logging, args.log_level),
-                style='{',
-                format='[{levelname}][{name}][{asctime}] {message}')
-        log = logging.getLogger(cls.__name__)
-        log.setLevel(getattr(logging, args.log_level))
-
-        agent = cls(load_config(config_file=args.config), log=log)
-        agent.run()
 
     async def connect_broker(self):
         # The timeout argument to connect_robust doesn't really do what I want,
@@ -117,3 +77,57 @@ class Agent(metaclass=abc.ABCMeta):
         channel = await connection.channel()
         await self.ensure_exchanges(channel)
         return Producer(channel, self.exchanges[exchange_name])
+
+
+class Agent(AgentMixin, metaclass=abc.ABCMeta):
+    def __init__(self, config, log=None):
+        super().__init__(config)
+        if log is None:
+            log = logging.getLogger()
+        self.log = log
+
+    @abc.abstractmethod
+    async def start_loop(self, connection):
+        """
+        Defines the coroutine that will be run in the agent's event loop.
+        """
+
+    def run(self):
+        """Creates a connection to the AMQP broker and runs the event loop."""
+
+        loop = asyncio.get_event_loop()
+        connection = loop.run_until_complete(self.connect_broker())
+        try:
+                loop.run_until_complete(self.start_loop(connection))
+                loop.run_forever()
+        except KeyboardInterrupt:
+            return
+        finally:
+            loop.run_until_complete(connection.close())
+            loop.run_until_complete(loop.shutdown_asyncgens())
+            loop.stop()
+
+    @classmethod
+    def main(cls, argv=None):
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--config', default=DEFAULT_CONFIG_FILE,
+                type=DefaultFileType(default=DEFAULT_CONFIG_FILE),
+                help='load additional configuration for the backend service; '
+                     'by default reads from "renewal.yaml" in the current '
+                     'directory')
+        parser.add_argument('--log-level',
+                            choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+                            type=str.upper, default='INFO',
+                            help='specify the minimum logging level')
+        args = parser.parse_args(argv)
+
+        # TODO: Add logging settings to config
+        logging.basicConfig(
+                level=getattr(logging, args.log_level),
+                style='{',
+                format='[{levelname}][{name}][{asctime}] {message}')
+        log = logging.getLogger(cls.__name__)
+        log.setLevel(getattr(logging, args.log_level))
+
+        agent = cls(load_config(config_file=args.config), log=log)
+        agent.run()

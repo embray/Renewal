@@ -1,7 +1,8 @@
+import asyncio
 from http import HTTPStatus
 
 import pymongo
-from flask import Blueprint, g, request, abort
+from quart import Blueprint, g, request, abort, jsonify
 
 from ..auth import check_auth
 from ..utils import ObjectIdConverter, Int64Converter
@@ -20,24 +21,25 @@ register_converters()
 
 @v1.route('/')
 def index():
-    return {'version': 1}
+    return jsonify({'version': 1})
 
 
 @v1.route('/articles/interactions/<Int64:article_id>', methods=['GET', 'POST'])
 @check_auth
-def articles_interactions(article_id):
-    update = None
+async def articles_interactions(article_id):
+    interaction = None
     if request.method == 'POST':
-        update = request.json
+        interaction = await request.get_json()
 
-    filt = {'user_id': g.auth['user_id'], 'article_id': article_id}
+    user_id = g.auth['user_id']
+    filt = {'user_id': user_id, 'article_id': article_id}
     proj = {'_id': False}
 
     # TODO: It would be better if all various database updates were hidden
     # behind an API abstraction rather than implemented directly in the web
     # API.  However, it will be easier to know what interfaces that API needs
     # once we've fully implemented the prototype.
-    if update is None:
+    if interaction is None:
         interactions = g.db.articles.interactions.find_one(filt, proj)
         if interactions is None:
             abort(HTTPStatus.NOT_FOUND)
@@ -47,7 +49,7 @@ def articles_interactions(article_id):
             # (if any) so we can make a diff with the new interaction in order
             # to update article metrics
             prev_interactions = g.db.articles.interactions.find_one_and_update(
-                    filt, {'$set': update}, projection=proj, upsert=True)
+                    filt, {'$set': interaction}, projection=proj, upsert=True)
 
             if prev_interactions is None:
                 prev_interactions = filt.copy()
@@ -58,8 +60,8 @@ def articles_interactions(article_id):
         # Deconstruct the interaction object into metrics updates for the
         # article
         metrics_inc = {}
-        if 'rating' in update:
-            rating = update['rating']
+        if 'rating' in interaction:
+            rating = interaction['rating']
             if 'rating' in prev_interactions:
                 # A previous rating was possibly unset
                 if prev_interactions['rating'] == -1:
@@ -75,9 +77,9 @@ def articles_interactions(article_id):
                             ('clicked', 'clicks')]:
             # Update counts of clicks, bookmarks, etc.
             action, metric = bool_metric
-            if action in update:
+            if action in interaction:
                 metric = 'metrics.' + metric
-                metrics_inc[metric] = 1 if update[action] else -1
+                metrics_inc[metric] = 1 if interaction[action] else -1
 
         if metrics_inc:
             try:
@@ -89,9 +91,9 @@ def articles_interactions(article_id):
                 pass
 
         interactions = prev_interactions.copy()
-        interactions.update(update)
+        interactions.update(interaction)
 
-    return interactions
+    return jsonify(interactions)
 
 
 @v1.route('/images/icons/<ObjectId:icon_id>')
@@ -202,4 +204,4 @@ def recommendations():
     # TODO: The app currently expects the sites to be in a dict called
     # 'sources' (as in, the article sources); perhaps we should try to
     # make this nomenclature more consistent in favor of one or the other
-    return {'articles': articles, 'sources': sites}
+    return jsonify({'articles': articles, 'sources': sites})

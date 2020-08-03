@@ -5,9 +5,9 @@ from datetime import datetime
 import bson
 from bson.errors import InvalidId
 from bson.objectid import ObjectId
-from flask import abort
-from flask.json import JSONEncoder as _JSONEncoder
-from werkzeug.routing import BaseConverter
+from quart import abort
+from quart.json import JSONEncoder as _JSONEncoder
+from quart.routing import BaseConverter
 
 
 class ObjectIdConverter(BaseConverter):

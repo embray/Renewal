@@ -2,7 +2,7 @@
 
 import argparse
 
-from flask import Flask, g
+from quart import Quart, g
 
 from .api import v1
 from .utils import ObjectIdConverter, JSONEncoder
@@ -11,7 +11,7 @@ from ..utils import load_config, DEFAULT_CONFIG_FILE, DefaultFileType
 
 
 class App(MongoMixin):
-    app = Flask(__name__)
+    app = Quart(__name__)
 
     def __init__(self, config, debug=False):
         self.config = config
@@ -41,4 +41,5 @@ class App(MongoMixin):
                      'directory')
         args = parser.parse_args(argv)
         self = cls(load_config(config_file=args.config), debug=args.debug)
-        self.app.run(host=args.host, port=args.port, debug=args.debug)
+        self.app.run(host=args.host, port=args.port, debug=args.debug,
+                use_reloader=args.debug)

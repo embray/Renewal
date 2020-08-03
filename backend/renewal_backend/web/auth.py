@@ -8,7 +8,7 @@ import cachecontrol
 import google.auth.transport.requests
 import google.oauth2.id_token
 import requests
-from flask import g, abort, request
+from quart import g, abort, request
 
 
 # See the example at

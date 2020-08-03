@@ -116,7 +116,10 @@ web = {
     'api': {
         'v1': {
             'recommendations': {
-                'default_limit': 100
+                'default_limit': 30
+            },
+            'articles': {
+                'default_limit': 1000
             }
         }
     },

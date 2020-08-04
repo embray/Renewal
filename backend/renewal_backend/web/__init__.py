@@ -2,7 +2,9 @@
 
 import argparse
 import asyncio
+import json
 
+import firebase_admin
 from quart import Quart, g
 
 from .api import v1
@@ -18,6 +20,16 @@ class App(AgentMixin, MongoMixin):
     def __init__(self, config, debug=False):
         super().__init__(config)
         self.debug = debug
+
+        # Initialize firebase admin with the credentials from the config file
+        with open(config.web.firebase.service_account_key_file) as fobj:
+            self.firebase_service_account = json.load(fobj)
+
+        cred = firebase_admin.credentials.Certificate(
+                self.firebase_service_account)
+        firebase_admin.initialize_app(cred, config.web.firebase.app_options)
+
+        # Set up Quart app
         self.app.register_blueprint(v1, url_prefix='/api/v1')
         self.app.before_first_request(self.before_first_request)
         self.app.before_request(self.before_request)
@@ -45,6 +57,10 @@ class App(AgentMixin, MongoMixin):
         g.debug = self.debug
         g.config = self.config.web
         g.event_stream_producer = self.event_stream_producer
+
+        # This is required by check_auth for authenticating custom tokens
+        g.client_x509_cert_url = \
+                self.firebase_service_account['client_x509_cert_url']
 
     def before_websocket(self):
         self.before_request()

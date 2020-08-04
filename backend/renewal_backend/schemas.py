@@ -257,3 +257,54 @@ SITE = {
         }
     }
 }
+
+
+# Registry of recommendation systems
+RECSYSTEM = {
+    'properties': {
+        'name': {
+            'description': 'optional human-readable name for the recsystem',
+            'type': 'string'
+        },
+        # A baseline recsystem is owned by "the system" in a sense and is not
+        # required to have any owners (though it may); non-baseline systems
+        # must have at least one owner (the UIDs of one or more users who
+        # administer the recsystem)
+        'token_id': {
+            'description':
+                "a unique ID associated with the recsystem's current "
+                "authentication token; the token_id in the token must "
+                "match this ID to validate the recsystem; a recsystem's "
+                "existing authentication token is revoked by changing the "
+                "token_id and generating a new token with a new token_id",
+            'type': 'string',
+            'minLength': 40,
+            'maxLength': 40
+        }
+    },
+    'oneOf': [{
+        'properties': {
+            'is_baseline': {
+                'type': 'boolean',
+                'enum': [True]
+            },
+            'owners': {
+                'type': 'array',
+                'items': {'type': 'string'},
+                'minItems': 0
+            }
+        },
+    }, {
+        'properties': {
+            'is_baseline': {
+                'type': 'boolean',
+                'enum': [False]
+            },
+            'owners': {
+                'type': 'array',
+                'items': {'type': 'string'},
+                'minItems': 1
+            }
+        }
+    }]
+}

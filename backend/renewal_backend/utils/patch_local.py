@@ -21,7 +21,7 @@ def patch_local_const(local_name, patch_func):
 
     Example
     -------
-    >>> from patch_local import patch_local_const
+    >>> from renewal_backend.utils.patch_local import patch_local_const
     >>> @patch_local_const('A', lambda a: a + [5])
     ... def foo():
     ...     A = [1, 2, 3, 4]
@@ -37,6 +37,7 @@ def patch_local_const(local_name, patch_func):
         func = functools.wraps(func)(plc.patch(func))
         # Also make a note about the patches
         func.__patched_local__ = (local_name, patch_func)
+        return func
 
     return wrapper
 

@@ -305,28 +305,6 @@ def try_resource_update(log=None):
             log.exception('an unexpected error occurred; traceback follows')
 
 
-class DefaultFileType(argparse.FileType):
-    """
-    Like `argparse.FileType` but if provided a default value, and the default
-    file does not exist, just return `None` and do not raise an error.
-    """
-
-    def __init__(self, mode='r', bufsize=-1, encoding=None, errors=None,
-                 default=None):
-        super().__init__(mode=mode, bufsize=bufsize, encoding=encoding,
-                         errors=errors)
-        self._default = default
-
-    def __call__(self, string):
-        try:
-            return super().__call__(string)
-        except argparse.ArgumentTypeError:
-            if string != self._default:
-                raise
-
-            return None
-
-
 FIREBASE_AUDIENCE = ('https://identitytoolkit.googleapis.com/google.'
                      'identity.identitytoolkit.v1.IdentityToolkit')
 

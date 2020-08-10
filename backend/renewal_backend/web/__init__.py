@@ -1,9 +1,9 @@
 """Implements the HTTP API used by the app and by recommendation systems."""
 
-import argparse
 import asyncio
 import json
 
+import click
 import firebase_admin
 from quart import Quart, g
 
@@ -11,7 +11,8 @@ from .api import v1
 from .utils import ObjectIdConverter, JSONEncoder
 from ..mongodb import MongoMixin
 from ..agent import AgentMixin
-from ..utils import load_config, DEFAULT_CONFIG_FILE, DefaultFileType
+from ..utils import load_config, DEFAULT_CONFIG_FILE
+from ..utils.click import classgroup, with_context, DefaultFile
 
 
 class App(AgentMixin, MongoMixin):
@@ -75,18 +76,15 @@ class App(AgentMixin, MongoMixin):
         # events
         await self.event_stream_queue.put(event)
 
-    @classmethod
-    def main(cls, argv=None):
-        parser = argparse.ArgumentParser()
-        parser.add_argument('--host', default='0.0.0.0')
-        parser.add_argument('--port', type=int, default=8080)
-        parser.add_argument('--debug', action='store_true')
-        parser.add_argument('--config', default=DEFAULT_CONFIG_FILE,
-                type=DefaultFileType(default=DEFAULT_CONFIG_FILE),
-                help='load additional configuration for the backend service; '
-                     'by default reads from "renewal.yaml" in the current '
-                     'directory')
-        args = parser.parse_args(argv)
-        self = cls(load_config(config_file=args.config), debug=args.debug)
-        self.app.run(host=args.host, port=args.port, debug=args.debug,
-                use_reloader=args.debug)
+    @classgroup(no_args_is_help=False, invoke_without_command=True)
+    @click.option('--config', default=DEFAULT_CONFIG_FILE, type=DefaultFile(),
+            help='load additional configuration for the backend service; '
+                 'by default reads from "renewal.yaml" in the current '
+                 'directory')
+    @click.option('--host', default='0.0.0.0')
+    @click.option('--port', type=int, default=8080)
+    @click.option('--debug', is_flag=True)
+    @with_context
+    def main(cls, ctx, config, host, port, debug):
+        self = ctx.obj = cls(load_config(config_file=config), debug=debug)
+        self.app.run(host=host, port=port, debug=debug, use_reloader=debug)

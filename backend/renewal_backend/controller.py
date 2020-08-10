@@ -324,6 +324,7 @@ class Controller(Agent, MongoMixin):
                 icon_doc = await self._maybe_crawl_image(icon_url)
                 if icon_doc:
                     site['icon_resource_id'] = icon_doc['_id']
+                    site['icon_url'] = icon_doc['url']
 
             site_doc = self.db['sites'].find_one_and_update(
                     {'url': site['url']}, {'$set': site}, upsert=True,
@@ -377,6 +378,13 @@ class Controller(Agent, MongoMixin):
         img_doc = self.db['images'].find_one_and_update(
                 {'url': image_url}, {'$set': {'url': image_url}},
                 upsert=True, return_document=pymongo.ReturnDocument.AFTER)
+
+        if img_doc and img_doc.get('is_redirect', False):
+            # The site original icon URL was a redirect; find the doc for the
+            # image's canonical URL and return it instead
+            img_doc = self.db['images'].find_one(
+                    {'url': img_doc['canonical_url']})
+
         if img_doc and not img_doc.get('contents'):
             # Send the icon to be downloaded
             await self.producers['images'].proxy.crawl_image(resource=img_doc)

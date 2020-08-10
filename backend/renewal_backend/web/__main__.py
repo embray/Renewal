@@ -1,5 +1,5 @@
 import sys
 
-from . import App
+from . import RenewalAPI
 
-sys.exit(App.main())
+sys.exit(RenewalAPI.main())

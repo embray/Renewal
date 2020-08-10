@@ -15,7 +15,7 @@ from ..utils import load_config, DEFAULT_CONFIG_FILE
 from ..utils.click import classgroup, with_context, DefaultFile
 
 
-class App(AgentMixin, MongoMixin):
+class RenewalAPI(AgentMixin, MongoMixin):
     app = Quart(__name__)
 
     def __init__(self, config, debug=False):

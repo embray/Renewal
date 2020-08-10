@@ -23,9 +23,9 @@ PUBLISH_DATE_TAGS_EX = [
 # Additional XPaths to search for the site name metadata
 META_SITE_NAME_EX = [
     'meta[name="application-name"]',
-    'meta[name="al:android:app_name"]',
-    'meta[name="al:iphone:app_name"]',
-    'meta[name="al:ipad:app_name"]'
+    'meta[property="al:android:app_name"]',
+    'meta[property="al:iphone:app_name"]',
+    'meta[property="al:ipad:app_name"]'
 ]
 
 

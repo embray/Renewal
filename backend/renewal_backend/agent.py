@@ -6,8 +6,9 @@ import time
 
 import click
 from aio_pika import connect_robust
+from aio_pika.patterns import RPC
 
-from .utils import Producer, load_config, DEFAULT_CONFIG_FILE
+from .utils import Producer, ExchangeChannel, load_config, DEFAULT_CONFIG_FILE
 from .utils.click import classgroup, with_context, DefaultFile
 
 
@@ -79,8 +80,19 @@ class AgentMixin:
         await self.ensure_exchanges(channel)
         return Producer(channel, self.exchanges[exchange_name])
 
+    async def create_rpc(self, connection, exchange_name=None):
+        channel = await connection.channel()
+        if exchange_name:
+            await self.ensure_exchanges(channel)
+            # The adapter needed to use a non-default exchange with RPC
+            channel = ExchangeChannel(channel, self.exchanges[exchange_name])
+
+        return await RPC.create(channel)
+
 
 class Agent(AgentMixin, metaclass=abc.ABCMeta):
+    run_forever = True
+
     def __init__(self, config, log=None):
         super().__init__(config)
         if log is None:
@@ -99,14 +111,16 @@ class Agent(AgentMixin, metaclass=abc.ABCMeta):
         loop = asyncio.get_event_loop()
         connection = loop.run_until_complete(self.connect_broker())
         try:
-                loop.run_until_complete(self.start_loop(connection))
+            loop.run_until_complete(self.start_loop(connection))
+            if self.run_forever:
                 loop.run_forever()
         except KeyboardInterrupt:
             return
         finally:
-            loop.run_until_complete(connection.close())
-            loop.run_until_complete(loop.shutdown_asyncgens())
-            loop.stop()
+            if self.run_forever:
+                loop.run_until_complete(connection.close())
+                loop.run_until_complete(loop.shutdown_asyncgens())
+                loop.stop()
 
     @classgroup(no_args_is_help=False, invoke_without_command=True)
     @click.option('--config', default=DEFAULT_CONFIG_FILE, type=DefaultFile(),

@@ -15,6 +15,34 @@ from aio_pika.queue import Queue
 from google.auth import jwt
 
 
+class ExchangeChannel:
+    """
+    This adapts `aio_pika.Channel` to an interface whose ``.default_exchange``
+    is actually an exchange we specify, rather than the default exchange on the
+    message broker.
+
+    It also binds queues to that exchange.
+
+    This adapter is needed to make `aio_pika.patterns.RPC` work with a
+    different exchange from the default exchange.
+    """
+
+    def __init__(self, channel, exchange):
+        self.channel = channel
+        self.default_exchange = exchange
+
+    def __getattr__(self, attr):
+        # Proxy all other attribute lookups to the wrapped channel
+        return getattr(self.channel, attr)
+
+    async def declare_queue(self, *args, **kwargs):
+        # Call declare_queue on the underlying channel then bind it to the
+        # exchange
+        queue = await self.channel.declare_queue(*args, **kwargs)
+        await queue.bind(self.default_exchange)
+        return queue
+
+
 class Producer(Master):
     """
     Based on the `aio_pika.patterns.Master` class, but with a nicer name.
@@ -309,7 +337,8 @@ FIREBASE_AUDIENCE = ('https://identitytoolkit.googleapis.com/google.'
                      'identity.identitytoolkit.v1.IdentityToolkit')
 
 
-def create_custom_token(user_id, role, token_id=None, exp=None):
+def create_custom_token(user_id, role, token_id=None, exp=None,
+                        return_payload=False):
     """
     Generate a custom JWT token signed with the Google service account's
     private key.
@@ -353,4 +382,9 @@ def create_custom_token(user_id, role, token_id=None, exp=None):
         'renewal_token_id': token_id or secrets.token_hex(20)
     }
 
-    return jwt.encode(app.credential.signer, payload).decode('ascii')
+    token = jwt.encode(app.credential.signer, payload).decode('ascii')
+
+    if return_payload:
+        return (token, payload)
+    else:
+        return token

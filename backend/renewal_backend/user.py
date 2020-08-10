@@ -57,18 +57,15 @@ class User(metaclass=_UserMeta):
         return f'{self.__class__.__name__}({", ".join(attrs)})'
 
     @classmethod
-    def get(cls, uid=None, email=None):
+    def get(cls, uid_or_email):
         """Get a user by UID or e-mail."""
 
-        if uid and email:
-            raise TypeError('only uid or email should be specified, not both')
-
-        if uid is not None:
-            record = auth.get_user(uid)
-        elif email is not None:
-            record = auth.get_user_by_email(email)
+        # Hack: UIDs will never contain the '@' symbol so if it does this is an
+        # e-mail
+        if '@' in uid_or_email:
+            record = auth.get_user_by_email(uid_or_email)
         else:
-            raise TypeError('either uid or email must be specified')
+            record = auth.get_user(uid_or_email)
 
         user = cls(record.uid)
         user._init_from_user_record(record)

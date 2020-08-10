@@ -9,18 +9,40 @@ the last refresh interval.
 import asyncio
 import copy
 import logging
+import secrets
+import types
 from collections import defaultdict
 from datetime import datetime, timedelta
-from functools import partial
+from functools import partial, wraps
 
 import bson
+import firebase_admin
 import pymongo
 from aio_pika.patterns import NackMessage
-from bson import ObjectId
+from bson.objectid import InvalidId, ObjectId
 
 from .agent import Agent
 from .mongodb import MongoMixin
-from .utils import dict_slice, truncate_dict
+from .user import User
+from .utils import create_custom_token, dict_slice, truncate_dict
+
+
+def rpc(func):
+    """
+    Decorator for marking `Controller` methods as RPC callable and logging
+    their calls.
+    """
+
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        argstr = ', '.join(repr(a) for a in args)
+        kwargstr = ', '.join(f'{k}={v!r}' for k, v in kwargs.items())
+        paramstr = ', '.join(filter(None, [argstr, kwargstr]))
+        self.log.info(f'RPC method called: {func.__name__}({paramstr})')
+        return func(self, *args, **kwargs)
+
+    wrapper.is_rpc = True
+    return wrapper
 
 
 class Controller(Agent, MongoMixin):
@@ -36,8 +58,17 @@ class Controller(Agent, MongoMixin):
         self.queues = defaultdict(set)
         self.producers = {}
 
+        # Initialize firebase
+        try:
+            firebase_admin.get_app()
+        except ValueError:
+            # Initialize firebase admin with the credentials from the config file
+            cred = firebase_admin.credentials.Certificate(
+                    config.web.firebase.service_account_key_file)
+            firebase_admin.initialize_app(cred, config.web.firebase.app_options)
+
     def get_exchanges(self):
-        return ['feeds', 'articles', 'images', 'event_stream']
+        return ['feeds', 'articles', 'images', 'event_stream', 'controller_rpc']
 
     async def queue_crawl_feeds(self, producer, since=None):
         # TODO: MonogoDB queries are blocking for now; we could try replacing
@@ -424,7 +455,103 @@ class Controller(Agent, MongoMixin):
             self.producers[exchange_name] = await self.create_producer(
                     connection, exchange_name)
 
+    @rpc
+    async def recsystem_register(self, *, name, is_baseline=False,
+                                 owners=None):
+        """
+        Register a new recsystem in the backend.
+
+        Returns a tuple of the new recsystem's ID and its auth token.
+        """
+
+        exists = self.db.recsystems.find_one({'name': name})
+        if exists:
+            raise ValueError(
+                f'a recsystem named "{name}" already exists; recsystem names '
+                f'must be unique')
+
+        token_id = secrets.token_hex(20)
+
+        if not is_baseline and not owners:
+            raise ValueError(
+                'user-provided recsystems must have at least one registered '
+                'owner')
+
+        owner_uids = []
+
+        for owner in owners:
+            try:
+                user = User.get(owner)
+            except Exception:
+                raise ValueError(
+                    f'UID or e-mail {owner} not found; each owner must be a '
+                    f'user registered in the system')
+
+            owner_uids.append(user.uid)
+
+        res = self.db.recsystems.insert_one({
+            'name': name,
+            'is_baseline': is_baseline,
+            'owners': owner_uids,
+            'token_id': token_id
+        })
+
+        recsystem_id = str(res.inserted_id)
+
+        try:
+            token = create_custom_token(recsystem_id, 'recsystem',
+                                        token_id=token_id)
+        except Exception as exc:
+            # Rollback the inserted recsystem
+            self.db.recsystems.delete_one({'_id': ObjectId(recsystem_id)})
+            raise
+
+        return (recsystem_id, token)
+
+    @rpc
+    async def recsystem_refresh_token(self, *, id_or_name):
+        """
+        Generate a new auth token for the specified recsystem.
+
+        In the remote chance that an ID is given that is also the name of a
+        difference recsystem, the ID takes precedence.
+        """
+
+        filt = {'name': id_or_name}
+        try:
+            _id = ObjectId(id_or_name)
+        except InvalidId:
+            pass
+        else:
+            filt = {'$or': [{'_id': _id}, filt]}
+
+        recsystem = self.db.recsystems.find_one(filt)
+        if not recsystem:
+            raise ValueError(
+                f'unknown recsystem ID or name {id_or_name}')
+
+        token_id = secrets.token_hex(20)
+        token = create_custom_token(str(recsystem['_id']), 'recsystem',
+                                    token_id=token_id)
+        self.db.recsystems.update_one({'_id': recsystem['_id']},
+                                      {'$set': {'token_id': token_id}})
+        return token
+
+    async def register_rpcs(self, connection):
+        rpc = await self.create_rpc(connection, 'controller_rpc')
+
+        async def register(method):
+            name = method.__name__.split('.')[-1]
+            await rpc.register(name, method, auto_delete=True)
+
+        for name, value in vars(type(self)).items():
+            if (isinstance(value, types.FunctionType) and
+                    getattr(value, 'is_rpc', False)):
+                method = getattr(self, name)
+                await register(method)
+
     async def start_loop(self, connection):
+        await self.register_rpcs(connection)
         await self.start_producers(connection)
 
         for resource_type in ['feed', 'article', 'image']:

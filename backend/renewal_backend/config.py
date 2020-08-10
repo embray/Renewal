@@ -57,6 +57,10 @@ mongodb = {
         'sites': {
             'indices': [('url', {'unique': True})],
             'schema': schemas.SITE
+        },
+        'recsystems': {
+            'indices': [('name', {'unique': True})],
+            'schema': schemas.RECSYSTEM
         }
     }
 }
@@ -90,6 +94,12 @@ broker = {
         'event_stream': {
             'name': 'event_stream',
             'type': 'fanout'
+        },
+        # Send RPC commands to the controller; used in particular for the
+        # CLI and possibly as well for the HTTP API
+        'controller_rpc': {
+            'name': 'controller_rpc',
+            'type': 'direct'
         }
     }
 }

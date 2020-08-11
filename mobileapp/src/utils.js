@@ -49,11 +49,9 @@ export function loggerStateTransformer(state) {
     if (articles.articles) {
       for (let article of Object.values(articles.articles)) {
         article['summary'] = '...';
-      }
-    }
-    if (articles.sources) {
-      for (let source of Object.values(articles.sources)) {
-        source['icon'] = '...';
+        if (article.site && article.site.icon) {
+          article.site.icon = '...';
+        }
       }
     }
   }

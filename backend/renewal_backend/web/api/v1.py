@@ -101,24 +101,10 @@ def articles():
         {'$limit': limit}
     ])
 
-    articles = []
-    sites = {}
-
-    for article in cursor:
-        site = article.pop('site', None)
-        # TODO: Actually we probably shouldn't allow any articles without an
-        # associated site: This shouldn't happen.
-        if site:
-            if site['url'] not in sites:
-                sites[site['url']] = site
-            article['source'] = site['url']
-
-        articles.append(article)
-
     # TODO: The app currently expects the sites to be in a dict called
     # 'sources' (as in, the article sources); perhaps we should try to
     # make this nomenclature more consistent in favor of one or the other
-    return jsonify({'articles': articles, 'sources': sites})
+    return jsonify(list(cursor))
 
 
 @v1.route('/articles/interactions/<Int64:article_id>', methods=['GET', 'POST'])
@@ -297,24 +283,7 @@ def recommendations():
         {'$limit': limit}
     ])
 
-    articles = []
-    sites = {}
-
-    for article in cursor:
-        site = article.pop('site', None)
-        # TODO: Actually we probably shouldn't allow any articles without an
-        # associated site: This shouldn't happen.
-        if site:
-            if site['url'] not in sites:
-                sites[site['url']] = site
-            article['source'] = site['url']
-
-        articles.append(article)
-
-    # TODO: The app currently expects the sites to be in a dict called
-    # 'sources' (as in, the article sources); perhaps we should try to
-    # make this nomenclature more consistent in favor of one or the other
-    return jsonify({'articles': articles, 'sources': sites})
+    return jsonify(list(cursor))
 
 
 class EventStreamHandler:

@@ -29,7 +29,6 @@ const articleListInitialState = {
 }
 
 export const initialState = {
-  sources: {},
   articles: {},
   articleLists: {
     recommendations: { ...articleListInitialState },
@@ -88,14 +87,11 @@ function updateArticles(state, action, old = false) {
   // maintain a heap invariant
   // TODO: We may want to impose a limit (perhaps a user-configurable setting?)
   // of how many older articles to keep cached
-  const { listName, articles, sources } = action.payload;
+  const { listName, articles } = action.payload;
   let list = state.articleLists[listName];
   if (list === undefined) {
     list = state.articleLists[listName] = articleListInitialState;
   }
-
-  // Update sources
-  Object.assign(state.sources, sources);
 
   const articlesSet = new Set(list.list);
   const newArticles = [];

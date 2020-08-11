@@ -85,16 +85,13 @@ class ArticlesList extends Component {
     const fetch = renewalAPI[listName].bind(renewalAPI);
     const response = await fetch(fetchParams);
 
-    if (old) {
-      this.props.oldArticles(
-        response.articles,
-        response.sources
-      );
-    } else {
-      this.props.newArticles(
-        response.articles,
-        response.sources
-      );
+    if (!response.error) {
+      // TODO: Do something on error?  Fail quietly?
+      if (old) {
+        this.props.oldArticles(response);
+      } else {
+        this.props.newArticles(response);
+      }
     }
 
     this.setState((prevState) => ({
@@ -103,7 +100,7 @@ class ArticlesList extends Component {
       loading: false,
       loadingMore: false,
       endOfData: (this.props.infiniteScroll ?
-        (old && response.articles.length == 0) : true)
+        (old && (response.error || response.length == 0)) : true)
     }));
   }
 
@@ -274,14 +271,14 @@ function mapDispatchToProps(dispatch, ownProps) {
   // Curry the ArticleList's listName into the action creators
   const { listName } = ownProps;
   return {
-    newArticles: (articles, sources) => {
+    newArticles: (articles) => {
       dispatch(articleActions.newArticles(
-        { listName, articles, sources }
+        { listName, articles }
       ))
     },
-    oldArticles: (articles, sources) => {
+    oldArticles: (articles) => {
       dispatch(articleActions.oldArticles(
-        { listName, articles, sources }
+        { listName, articles }
       ))
     },
     setCurrentArticle: (current) => {

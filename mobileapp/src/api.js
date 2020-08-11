@@ -12,19 +12,21 @@ import { sleep } from './utils';
 
 
 const DEBUG_ARTICLES = [];
-const DEBUG_SOURCES = {};
 const DEBUG_DATA_SOURCE = {};
 
 if (__DEV__) {
   DEBUG_ARTICLES.push(...require('./data/debug_articles.json'));
-  Object.assign(DEBUG_SOURCES, require('./data/debug_sources.json'));
+  const sources = require('./data/debug_sources.json');
+  // Map source data to each articles' site property (which is more in keeping with
+  // the current format output by the API)
+  DEBUG_ARTICLES.forEach((a) => a.site = sources[a.source]);
+
   Object.assign(DEBUG_DATA_SOURCE, {
     articles: Object.fromEntries(DEBUG_ARTICLES.map((a) => [a.article_id, a])),
     articleLists: {
       recommendations: DEBUG_ARTICLES.map((a) => a.article_id).sort((x, y) => (y - x)),
       bookmarks : []
-    },
-    sources: DEBUG_SOURCES
+    }
   });
 }
 
@@ -86,7 +88,7 @@ class RenewalAPI {
       response.data
     ).catch((error) => {
       console.log(`error fetching recommendations: ${JSON.stringify(error)}`);
-      return Promise.reject({ articles: [], sources: {}, error: error.message });
+      return Promise.reject({ error: error.message });
     });
   }
 
@@ -127,23 +129,16 @@ class RenewalAPI {
     articles = articles.slice(start, end);
     articles = articles.map((id) => DEBUG_DATA_SOURCE.articles[id])
 
-    const sources = {}
-
-    // Article fetches include their associated sources and interactions
-    articles.forEach((article) => {
-      sources[article.source] = DEBUG_DATA_SOURCE.sources[article.source];
-    });
-
     // Simulate loading time;
     await sleep(500);
 
-    return { articles, sources };
+    return articles;
   }
 
   async _dummyBookmarks(params) {
     // no-op, any articles that would be bookmarked during development
     // testing would already by loaded by _dummyRecommendations
-    return { articles: [], sources: {} };
+    return [];
   }
 }
 

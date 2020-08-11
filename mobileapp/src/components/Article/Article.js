@@ -43,17 +43,17 @@ class Article extends Component {
     this.props.navigation.navigate('ArticleView', article);
   }
 
-  _renderSourceIcon(source) {
+  _renderSiteIcon(site) {
     // Some sources (particularly in the debug data, but we might also add this
     // to the real API) include the icon data directly embedded; others have
     // a URL for the icon.  In still other cases the scrapers fail to find an
     // icon for the site so we just generate a placeholder.
     let icon_uri = null;
 
-    if (source.icon) {
-      icon_uri = `data:image/png;base64,${source.icon}`;
-    } else if (source.icon_url) {
-      icon_uri = source.icon_url;
+    if (site.icon) {
+      icon_uri = `data:image/png;base64,${site.icon}`;
+    } else if (site.icon_url) {
+      icon_uri = site.icon_url;
     }
 
     if (icon_uri !== null) {
@@ -68,7 +68,7 @@ class Article extends Component {
   }
 
   render() {
-    const { article, source, interactions, navigation } = this.props;
+    const { article, interactions, navigation } = this.props;
     const { height } = Dimensions.get('window');
 
     if (article.date) {
@@ -100,9 +100,9 @@ class Article extends Component {
         <Touchable>
           <CardItem>
             <Left>
-              { this._renderSourceIcon(source) }
+              { this._renderSiteIcon(article.site) }
               <Body>
-                <Text style={{ fontWeight: 'bold' }}>{ source.name }</Text>
+                <Text style={{ fontWeight: 'bold' }}>{ article.site.name }</Text>
               </Body>
             </Left>
             <Right>
@@ -152,10 +152,7 @@ function mapStateToProps(state, props) {
   const { articleId } = props;
   const { articles } = state;
   const article = articles.articles[articleId];
-  return {
-    article,
-    source: articles.sources[article.source]
-  };
+  return { article };
 }
 
 

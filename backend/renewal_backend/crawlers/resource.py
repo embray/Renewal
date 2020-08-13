@@ -2,6 +2,7 @@
 
 
 import abc
+import base64
 import fnmatch
 import hashlib
 from datetime import datetime

@@ -2,8 +2,9 @@ import asyncio
 from http import HTTPStatus
 
 import pymongo
-from quart import Blueprint, g, request, websocket, abort, json, jsonify
+from quart import Blueprint, g, request, websocket, abort, jsonify
 
+from .event import EventStreamHandler
 from ..auth import check_auth
 from ..utils import ObjectIdConverter, Int64Converter
 
@@ -285,23 +286,20 @@ def recommendations():
 
     return jsonify(list(cursor))
 
+event_stream_handler = None
 
-class EventStreamHandler:
-    """
-    This class handles all websocket connections.
-
-    It's a singleton in that this class is never instantiated; it just exists
-    to group all websocket-related functionality together.
-    """
-
-    @classmethod
-    async def event_stream(cls):
-        while True:
-            event = await g.event_stream_queue.get()
-            await websocket.send(json.dumps(event))
+class EventStreamHandlerAPIv1(EventStreamHandler):
+    async def handle_new_article_event(self, event_type, payload, rpc_client):
+        """NEW_ARTICLE events are sent without expecting a response."""
+        await rpc_client.notify('new_article', article=payload)
 
 
 @v1.websocket('/event_stream')
 @check_auth(['recsystem', 'admin'], request_obj=websocket)
 def event_stream():
-    return EventStreamHandler.event_stream()
+    global event_stream_handler
+    if event_stream_handler is None:
+        event_stream_handler = EventStreamHandlerAPIv1.install(
+                g.event_stream_queue)
+
+    return event_stream_handler.connect_client()

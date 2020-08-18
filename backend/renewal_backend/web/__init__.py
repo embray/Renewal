@@ -54,6 +54,7 @@ class RenewalAPI(AgentMixin, MongoMixin):
 
     def before_request(self):
         # Make the Monogo DB available to the request globals
+        g.log = self.app.logger
         g.db = self.db
         g.debug = self.debug
         g.config = self.config.web
@@ -87,4 +88,8 @@ class RenewalAPI(AgentMixin, MongoMixin):
     @with_context
     def main(cls, ctx, config, host, port, debug):
         self = ctx.obj = cls(load_config(config_file=config), debug=debug)
+        # A bug in older versions of Quart requires manually setting the
+        # debug attribute
+        if debug:
+            self.app.debug = debug
         self.app.run(host=host, port=port, debug=debug, use_reloader=debug)

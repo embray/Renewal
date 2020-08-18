@@ -339,18 +339,19 @@ class Controller(Agent, MongoMixin):
 
         # Prepare a NEW_ARTICLE event for the event stream and send it
         if 'site' in article:
-            source = self.db.sites.find_one({'_id': article['site']}) or {}
+            site = self.db.sites.find_one({'_id': article['site']}) or {}
         else:
-            source = {}
+            site = {}
 
         # Don't send the article contents
         article = article.copy()
+        del article['_id']
         del article['contents']
+        article['site'] = site
 
-        payload = {'article': article, 'source': source}
-        event = {'type': 'NEW_ARTICLE', 'payload': payload}
+        event = {'type': 'NEW_ARTICLE', 'payload': article}
         producer = self.producers['event_stream']
-        asyncio.ensure_future(producer.proxy.send_event(event=event))
+        await producer.proxy.send_event(event=event)
 
     def _get_next_sequence_id(self, sequence):
         """

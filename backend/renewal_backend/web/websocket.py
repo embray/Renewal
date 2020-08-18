@@ -34,28 +34,25 @@ class QuartWebSocketsMultiClient(WebSocketsClient):
         self.receiving.cancel()
 
     async def receive_responses(self):
-        async def receiver():
-            while True:
-                response_text = await self.socket.receive()
-                try:
-                    # Not a proper JSON-RPC response so we just ignore it since
-                    # during this mode all messages received from the socket
-                    # should be RPC responses
-                    response = json.loads(response_text)
-                    # Identify responses to batch requests by the first ID in
-                    # the batch
-                    if response and isinstance(response, list):
-                        response_id = response[0]['id']
-                    else:
-                        response_id = response['id']
-                except (json.JSONDecodeError, KeyError):
-                    if self.fallback_handler is not None:
-                        await self.fallback_handler(response_text)
-                    continue
+        while True:
+            response_text = await self.socket.receive()
+            try:
+                # Not a proper JSON-RPC response so we just ignore it since
+                # during this mode all messages received from the socket
+                # should be RPC responses
+                response = json.loads(response_text)
+                # Identify responses to batch requests by the first ID in
+                # the batch
+                if response and isinstance(response, list):
+                    response_id = response[0]['id']
+                else:
+                    response_id = response['id']
+            except (json.JSONDecodeError, KeyError):
+                if self.fallback_handler is not None:
+                    await self.fallback_handler(response_text)
+                continue
 
-                await self.pending_responses[response_id].put(response_text)
-
-        return await receiver()
+            await self.pending_responses[response_id].put(response_text)
 
     async def send(self, request, **kwargs):
         if self.receiving is None:
@@ -80,7 +77,15 @@ class QuartWebSocketsMultiClient(WebSocketsClient):
             # result() it will raise any exception that occurred.
             done, pending = await asyncio.wait([queue.get(), self.receiving],
                     return_when=asyncio.FIRST_COMPLETED)
-            response = done.pop().result()
+
+            for task in done:
+                # Raises an exception if task is self.receiving since it
+                # otherwise should never return
+                result = task.result()
+                if task is not self.receiving:
+                    # Response from the queue
+                    response = result
+
             del self.pending_responses[request_id]
             return Response(response)
         else:

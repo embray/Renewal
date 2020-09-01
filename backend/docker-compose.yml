@@ -80,5 +80,21 @@ services:
             - ".:/usr/src/app"
         command: renewal_backend.scraper
 
+    web:
+        build: .
+        environment:
+            RABBITMQ_HOST: rabbitmq
+            RABBITMQ_PORT: 5672
+            MONGODB_HOST: mongo
+            MONGODB_PORT: 27017
+        depends_on:
+            - rabbitmq
+            - mongo
+        volumes:
+            - ".:/usr/src/app"
+        ports:
+            - "8080:8080"
+        command: renewal_backend.web
+
 volumes:
     mongo:

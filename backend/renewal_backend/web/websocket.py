@@ -21,13 +21,14 @@ class QuartWebSocketsMultiClient(WebSocketsClient):
         super().__init__(socket, *args, **kwargs)
         self.pending_responses = {}
         self.fallback_handler = fallback_handler
+        self.send_message = copy_current_websocket_context(self.send_message)
         self.receiving = None
 
     def __enter__(self):
         # copy_current_websocket_context is needed for Quart < 0.7; see
         # https://gitlab.com/pgjones/quart/-/issues/177
-        wrapped = copy_current_websocket_context(self.receive_responses)
-        self.receiving = asyncio.ensure_future(wrapped())
+        self.receiving = asyncio.ensure_future(copy_current_websocket_context(
+            self.receive_responses)())
         return self
 
     def __exit__(self, *args):

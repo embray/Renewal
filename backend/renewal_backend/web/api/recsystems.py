@@ -2,14 +2,15 @@ import asyncio
 import json
 
 from quart import g, websocket
+from quart import copy_current_websocket_context
 
 from ..utils import JSONEncoder
 from ..websocket import QuartWebSocketsMultiClient as RPCClient
 
 
-class EventStreamHandler:
+class RecsystemsManager:
     """
-    This class handles all websocket connections.
+    This class handles all websocket connections to recsystems.
 
     Individual API versions implement a subclass of this to handle different
     event protocols.
@@ -17,8 +18,10 @@ class EventStreamHandler:
 
     def __init__(self, event_stream_queue):
         self.event_stream_queue = event_stream_queue
-        self.connected_recsystems = {}
-        """Maps recsystem IDs to their individual message queues."""
+        self.recsystem_event_queues = {}
+        """Maps recsystem IDs to their individual event stream queues."""
+        self.recsystem_rpc_clients = {}
+        """Maps recsystem IDs to their JSON-RPC+websocket clients."""
 
     @classmethod
     def install(cls, event_stream_queue, loop=None):
@@ -41,7 +44,7 @@ class EventStreamHandler:
         g.log.info(
             f'received websocket connection from recsystem {recsystem_id}')
 
-        if recsystem_id in self.connected_recsystems:
+        if recsystem_id in self.recsystem_event_queues:
             g.log.warning(
                 f'duplicate connection from recsystem {recsystem_id}; '
                 f'disconnecting')
@@ -53,9 +56,10 @@ class EventStreamHandler:
             await websocket.accept()
 
         queue = asyncio.Queue()
-        self.connected_recsystems[recsystem_id] = queue
         rpc_client = RPCClient(
                 websocket, fallback_handler=self.bad_message_fallback)
+        self.recsystem_event_queues[recsystem_id] = queue
+        self.recsystem_rpc_clients[recsystem_id] = rpc_client
         with rpc_client:
             try:
                 # Send a greeting ping just to ensure the connection is
@@ -71,7 +75,8 @@ class EventStreamHandler:
                     event = await queue.get()
                     await self.handle_event(event, rpc_client)
             finally:
-                del self.connected_recsystems[recsystem_id]
+                del self.recsystem_event_queues[recsystem_id]
+                del self.recsystem_rpc_clients[recsystem_id]
 
     async def bad_message_fallback(self, message):
         """
@@ -118,7 +123,7 @@ class EventStreamHandler:
             event_type, payload, targets = self.decode_event(event)
             if targets is None:
                 # Broadcast the event to all connected systems
-                for queue in self.connected_recsystems.values():
+                for queue in self.recsystem_event_queues.values():
                     await queue.put(event)
             else:
                 for recsystem_id in targets:
@@ -128,9 +133,19 @@ class EventStreamHandler:
                     # TODO: Perhaps we would like the controller to know about
                     # what recsystems are connected; this may be important for
                     # making user assignments.
-                    queue = self.connected_recsystems.get(resystem_id)
+                    queue = self.recsystem_event_queues.get(resystem_id)
                     if queue:
                         await queue.put(event)
+
+    async def rpc(self, recsystem_id, method, *args, **kwargs):
+        """Make an RPC call to the given recsystem and return the result."""
+
+        try:
+            rpc_client = self.recsystem_rpc_clients[recsystem_id]
+        except KeyError:
+            raise ValueError(f'recsystem {recsystem_id} is not connected')
+
+        return await rpc_client.request(method, *args, **kwargs)
 
     @staticmethod
     def decode_event(event):

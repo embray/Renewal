@@ -4,7 +4,7 @@ from http import HTTPStatus
 import pymongo
 from quart import Blueprint, g, request, websocket, abort, jsonify
 
-from .event import EventStreamHandler
+from .recsystems import RecsystemsManager
 from ..auth import check_auth
 from ..utils import ObjectIdConverter, Int64Converter
 
@@ -215,7 +215,7 @@ def images_icons(icon_id):
 
 @v1.route('/recommendations')
 @check_auth('user')
-def recommendations():
+async def recommendations():
     limit = g.config.api.v1.recommendations.default_limit
     limit = int(request.args.get('limit', limit))
 
@@ -286,9 +286,9 @@ def recommendations():
 
     return jsonify(list(cursor))
 
-event_stream_handler = None
+recsystems_manager = None
 
-class EventStreamHandlerAPIv1(EventStreamHandler):
+class RecsystemsManagerAPIv1(RecsystemsManager):
     async def handle_new_article_event(self, event_type, payload, rpc_client):
         """NEW_ARTICLE events are sent without expecting a response."""
         await rpc_client.notify('new_article', article=payload)
@@ -297,9 +297,9 @@ class EventStreamHandlerAPIv1(EventStreamHandler):
 @v1.websocket('/event_stream')
 @check_auth(['recsystem', 'admin'], request_obj=websocket)
 def event_stream():
-    global event_stream_handler
-    if event_stream_handler is None:
-        event_stream_handler = EventStreamHandlerAPIv1.install(
+    global recsystems_manager
+    if recsystems_manager is None:
+        recsystems_manager = RecsystemsManagerAPIv1.install(
                 g.event_stream_queue)
 
-    return event_stream_handler.connect_client()
+    return recsystems_manager.connect_client()

@@ -4,3 +4,10 @@ pip-wheel-metadata
 
 # Ignore backend config file
 renewal.yaml
+
+# Ignore the default filenames for Firebase Admin SDK service account keys.
+# These are always in the form
+# <project-name>-firebase-adminsdk-<service-account-id>.json
+# Of course, this will not help if the file was saved under a different
+# filename.
+*-firebase-adminsdk-*.json

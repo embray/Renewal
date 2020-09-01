@@ -12,7 +12,7 @@ const middleware = getDefaultMiddleware({
   serializableCheck: {
     // redux-persist uses some special actions that are non-serializable,
     // so we want to ignore those in the serializable check
-    ignoredActions: ['persist/PERSIST']
+    ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE', 'persist/PURGE']
   }
 });
 

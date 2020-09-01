@@ -8,11 +8,12 @@ import { Asset } from 'expo-asset';
 import Constants from 'expo-constants';
 import * as Font from 'expo-font';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
-import { Root, Text } from 'native-base';
+import { Root } from 'native-base';
 import Roboto from 'native-base/Fonts/Roboto.ttf'
 import RobotoMedium from 'native-base/Fonts/Roboto_medium.ttf'
 import React, { Component } from 'react';
-import { ImageBackground, View, StyleSheet } from 'react-native';
+import { Button, ImageBackground, View, StyleSheet } from 'react-native';
+import { purgeStoredState } from 'redux-persist';
 import { Provider, connect } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react'
 import { NavigationContainer } from '@react-navigation/native';
@@ -25,6 +26,7 @@ import TickMessage from './src/components/TickMessage';
 import Home from './src/containers/Home';
 import createArticleViewScreen from './src/containers/ArticleView';
 import persistedStore, { store } from './src/storage';
+import { sleep } from './src/utils';
 
 
 if (__DEV__) {
@@ -88,6 +90,11 @@ class _RootContainer extends Component {
             <View style={ styles.splashMessage }>
               <TickMessage message={ splashMessage } />
             </View>
+            { __DEV__ ? (
+              <Button onPress={ () => persistedStore.purge() }
+                      title="Clear Persisted State"
+              />
+            ) : null }
           </ImageBackground>
         </Root>
       );
@@ -118,6 +125,13 @@ class _RootContainer extends Component {
         ...Ionicons.font,
         ...MaterialCommunityIcons.font
     });
+
+    if (__DEV__) {
+      // Give an extra 3 seconds to purge the persisted state and restart
+      // with a fresh state
+      await sleep(3000);
+    }
+
     this.setState({
       isReady: true,
       splashMessage: ''

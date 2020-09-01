@@ -1,8 +1,9 @@
 import asyncio
+import random
 from http import HTTPStatus
 
 import pymongo
-from quart import Blueprint, g, request, websocket, abort, jsonify
+from quart import Blueprint, g, request, websocket, abort, jsonify, json
 
 from .recsystems import RecsystemsManager
 from ..auth import check_auth
@@ -223,68 +224,29 @@ async def recommendations():
         # TODO: Or return an error code?
         limit = 1
 
-    match = [{'article_id': {'$exists': True}}]
-
-    since_id = int(request.args.get('since_id', -1))
-    if since_id >= 0:
-        match.append({'article_id': {'$gt': since_id}})
+    since_id = request.args.get('since_id')
+    since_id = int(since_id) if since_id and int(since_id) >= 0 else None
 
     # TODO: Raise a request error if max_id < since_id which doesn't make sense
-    max_id = int(request.args.get('max_id', -1))
-    if max_id >= 0:
-        match.append({'article_id': {'$lt': max_id}})
+    max_id = request.args.get('max_id')
+    max_id = int(max_id) if max_id and int(max_id) >= 0 else None
 
-    if len(match) == 1:
-        match = match[0]
-    else:
-        match = {'$and': match}
+    # Request the recsystems
+    # TODO: User assignment is not implemented yet so just selecting a
+    # recsystem at random
+    if (recsystems_manager is None or
+            not recsystems_manager.recsystem_rpc_clients):
+        return (json.dumps({'error': 'no recsystems are available'}),
+                HTTPStatus.SERVICE_UNAVAILABLE)
 
-    # TODO: This is where we would make a request to the recommendation system
-    # to return article IDs, and then we would return an aggregation based on
-    # only those article IDs.  However, absent a real recommendation system
-    # right now we just use a "dummy" response drawn from the entire articles
-    # collection.  This might also be useful in some cases for a cold start
-    icon_base_url = request.base_url.rsplit('/', 1)[0] + '/images/icons/'
+    recsystem_id = random.choice(
+            list(recsystems_manager.recsystem_rpc_clients))
+    response = await recsystems_manager.rpc(recsystem_id,
+            'recommend', user_id=g.auth['user_id'],
+            limit=limit, since_id=since_id, max_id=max_id)
 
-    cursor = g.db.articles.aggregate([
-        # Select all articles with an article_id (i.e. articles that have been
-        # scraped)
-        {'$match': match},
-        # Replace the 'site' property with the contents of the 'sites' document
-        # with the corresponding _id
-        {'$lookup': {
-            'from': 'sites',
-            'localField': 'site',
-            'foreignField': '_id',
-            'as': 'site'
-        }},
-        # Replace the single-element array returned by the previous operation
-        # with an object
-        {'$unwind': '$site'},
-        # Rebuild the document with just the properties that need to be
-        # returned to the app
-        {'$project': {
-            '_id': False,
-            'article_id': True,
-            'url': True,
-            'title': True,
-            'summary': True,
-            'date': '$publish_date',
-            'image_url': True,
-            'site.url': True,
-            'site.name': True,
-            'site.icon_url': {
-                '$concat': [
-                    icon_base_url,
-                    {'$toString': '$site.icon_resource_id'}
-                ]
-            }
-        }},
-        {'$sort': {'article_id': pymongo.DESCENDING}},
-        {'$limit': limit}
-    ])
+    return jsonify(response.data.result)
 
-    return jsonify(list(cursor))
 
 recsystems_manager = None
 

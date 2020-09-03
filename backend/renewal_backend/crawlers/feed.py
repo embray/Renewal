@@ -21,7 +21,7 @@ class FeedCrawler(ResourceCrawler):
             raise
 
         if not parsed or not parsed.get('feed'):
-            raise ValueError('empty feed: {feed["url"]}')
+            raise ValueError(f'empty feed: {feed["url"]}')
 
         if result_producer is None:
             # Shouldn't happen

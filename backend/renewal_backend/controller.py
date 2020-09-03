@@ -83,23 +83,23 @@ class Controller(Agent, MongoMixin):
                         {'is_redirect': {'$exists': False}}
                     ]},
                     {'$or': [
-                        {'last_crawled': {'$exists': False}},
-                        {'last_crawled': {'$lte': since}}
+                        {'crawl_status.when': {'$exists': False}},
+                        {'crawl_status.when': {'$lte': since}}
                     ]}
                 ]
             }
 
         feeds = self.db['feeds'].find(filt)
         for feed in feeds:
-            if feed['_id'] in self.queues['crawled_feeds']:
+            if feed['_id'] in self.queues['crawl_feeds']:
                 continue
             else:
-                self.queues['crawled_feeds'].add(feed['_id'])
+                self.queues['crawl_feeds'].add(feed['_id'])
 
             self.log.info(f'producing {feed["type"]} feed at {feed["url"]}')
             self.log.debug(
-                f'len(queues.crawled_feeds) = '
-                f'{len(self.queues["crawled_feeds"])}')
+                f'len(queues.crawl_feeds) = '
+                f'{len(self.queues["crawl_feeds"])}')
             await producer.proxy.crawl_feed(resource=feed)
 
     async def queue_crawl_articles(self, producer, since=None):
@@ -114,8 +114,8 @@ class Controller(Agent, MongoMixin):
         """
 
         # Queue any articles that haven't already been crawled
-        await self._queue_article_updates(producer, 'crawl_article',
-                'crawled_articles', {'last_crawled': {'$exists': False}})
+        filt = {'crawl_status.when': {'$exists': False}}
+        await self._queue_article_updates(producer, 'crawl_article', filt)
 
     async def queue_scrape_articles(self, producer, since=None):
         """
@@ -129,14 +129,12 @@ class Controller(Agent, MongoMixin):
         """
 
         await self._queue_article_updates(producer, 'scrape_article',
-                'scraped_articles',
                 {'$and': [
                     {'contents': {'$exists': True}},
-                    {'last_scraped': {'$exists': False}}
+                    {'scrape_status.when': {'$exists': False}}
                 ]})
 
-    async def _queue_article_updates(self, producer, method_name, queue_key,
-                                     filt):
+    async def _queue_article_updates(self, producer, method_name, filt):
         filt = {
             '$and': [
                 {'$or': [
@@ -155,15 +153,19 @@ class Controller(Agent, MongoMixin):
         articles = self.db['articles'].find(filt, sort=sort)
         method = getattr(producer.proxy, method_name)
 
+        # This is the queue for articles pending the specified method
+        # (crawl_article, scrape_article, etc.)
+        queue = self.queues[method_name]
+
         for article in articles:
-            if article['_id'] in self.queues[queue_key]:
+            if article['_id'] in queue:
                 continue
             else:
-                self.queues[queue_key].add(article['_id'])
+                queue.add(article['_id'])
 
-            self.log.info(f'adding article to {queue_key}: {article["url"]}')
-            queue_size = len(self.queues[queue_key])
-            self.log.debug(f'len(queues.{queue_key}) = {queue_size}')
+            self.log.info(f'adding article to {method_name}: {article["url"]}')
+            queue_size = len(queue)
+            self.log.debug(f'len(queues.{method_name}) = {queue_size}')
             await method(resource=article)
 
     async def save_article(self, *, article):
@@ -190,31 +192,28 @@ class Controller(Agent, MongoMixin):
             # Send new article to the crawlers
             self.producers['articles'].proxy.crawl_article(resource=article)
 
-    async def update_resource(self, *, collection, resource, type,
-                              status={'ok': True}, updates={}):
+    async def update_resource(self, *, collection, resource, type, status,
+                              updates={}):
         """
         Update the given resource, which should be specified by its URL.
 
         The collection which the resource is found must be specified (e.g.
         'feeds' or 'articles').
 
-        The update ``type`` is currently either ``'crawled'`` or ``'scraped'``.
+        The update ``type`` is currently either ``'crawl'`` or ``'scrape'``.
         """
 
         self.log.info(f'updating {collection} resource {resource["url"]}; '
                       f'status: {status}, updates: {truncate_dict(updates)}')
-        _updates = {'$set': {f'status_{type}': status}}
+        _updates = {'$set': {f'{type}_status': status}}
         is_redirect = False
         canonical_url = updates.get('canonical_url')
         if canonical_url and canonical_url != resource['url']:
             is_redirect = True
-            # In the case of receiving the canonical URL of a resource,
-            # we just update the old resource with the canonical_url
-            # and the last accessed/crawled time; then we will create
-            # or update the resource for the canonical URL
-            partial_update = dict_slice(updates, 'canonical_url',
-                                        f'last_{type}', allow_missing=True)
-            _updates['$set'].update(partial_update)
+            # In the case of receiving the canonical URL of a resource, we just
+            # update the old resource with the canonical_url, then we will
+            # create or update the resource for the canonical URL
+            _updates['$set']['canonical_url'] = canonical_url
             # This is equivalent to saying 'url' != 'canonical_url' so is
             # technically superfluous, but also faster to query on
             _updates['$set']['is_redirect'] = True
@@ -232,7 +231,11 @@ class Controller(Agent, MongoMixin):
                 updates = await hook_method(resource, status, updates)
             _updates['$set'].update(updates)
 
-        _updates['$inc'] = {f'times_{type}': 1}
+        # Update the stats; e.g. set crawl_stats.last_success and increment
+        # crawl_stats.success_count for a successful crawl
+        result = 'success' if status['ok'] else 'error'
+        _updates['$set'][f'{type}_stats.last_{result}'] = status['when']
+        _updates['$inc'] = {f'{type}_stats.{result}_count': 1}
 
         filt = {'url': resource['url']}
         try:
@@ -287,7 +290,7 @@ class Controller(Agent, MongoMixin):
                 hook_method = getattr(self, hook_method_name)
                 await hook_method(doc, status)
 
-    async def _pre_scraped_articles_hook(self, article, status, updates):
+    async def _pre_scrape_articles_hook(self, article, status, updates):
         """
         When an article is scraped the results of the article scrape are
         returned, along with metadata about the article's site.
@@ -307,9 +310,8 @@ class Controller(Agent, MongoMixin):
 
         # Set the article's article_id once it has been successfully scraped
         # (only if it has been scraped for the first time)
-        doc = self.db['articles'].find_one({
-            'url': article['url'], 'last_scraped': {'$exists': True}
-        })
+        doc = self.db['articles'].find_one(
+                {'url': article['url'], 'article_id': {'$exists': True}})
         already_scraped = doc is not None
         if not already_scraped:
             # Normally an article should not be scraped more than once, but it
@@ -333,7 +335,7 @@ class Controller(Agent, MongoMixin):
 
         return updates
 
-    async def _post_scraped_articles_hook(self, article, status):
+    async def _post_scrape_articles_hook(self, article, status):
         if not status.get('ok', False) or not article:
             return
 
@@ -431,10 +433,6 @@ class Controller(Agent, MongoMixin):
         """
         Handles messages on a queue bound to the "feeds" exchange with
         routing key "update_resource".
-
-        Currently this is used by source crawler agents to signify when they
-        have successfully crawled a source by setting the last_crawled field
-        on the source.
 
         If ``collection is None`` then the collection has the same name as
         the exchange.

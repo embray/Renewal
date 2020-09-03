@@ -5,7 +5,6 @@ import abc
 import base64
 import fnmatch
 import hashlib
-from datetime import datetime
 # For parsing/formatting HTTP-date format
 from email.utils import parsedate_to_datetime, format_datetime
 from functools import partial
@@ -42,8 +41,7 @@ class ResourceCrawler(Agent):
 
     async def crawl_resource(self, *, resource, source_producer,
                              result_producer=None):
-        # Following a successful crawl, update the source's last_crawled
-        # timestamp, along with a few other stats
+        # Following a successful crawl, update the source's crawl_stats
         # NOTE: Previously we let MongoDB set the timestamp, but actually we
         # want the crawler to set it, since by the time it reaches MongoDB it
         # could be different from the time the crawler actually did its work.
@@ -54,8 +52,8 @@ class ResourceCrawler(Agent):
                     resource, only_if_modified=True,
                     timeout=self.config.crawler.retrieve_timeout)
 
-        updates = dict_slice(resource, 'etag', 'last_modified', 'sha1',
-                             'canonical_url', allow_missing=True)
+        updates = dict_slice(resource, 'canonical_url', 'cache_control',
+                             allow_missing=True)
 
         if contents is not None:
             # Either status was OK but the resource was not modified, or an
@@ -70,13 +68,9 @@ class ResourceCrawler(Agent):
             # resource was accessed successfully but was unmodified
             self.log.info(f'ignoring unmodified resource at {resource["url"]}')
 
-        updates.update({
-            f'last_crawled': datetime.utcnow(),
-            f'status_crawled': status
-        })
         update_meth = getattr(source_producer.proxy,
                               f'update_{self.RESOURCE_TYPE}')
-        await update_meth(resource=dict_slice(resource, 'url'), type='crawled',
+        await update_meth(resource=dict_slice(resource, 'url'), type='crawl',
                           status=status, updates=updates)
 
     async def start_crawl_resource_worker(self, connection):
@@ -121,8 +115,9 @@ class ResourceCrawler(Agent):
         """
 
         url = resource['url']
-        etag = resource.get('etag')
-        last_modified = resource.get('last_modified')
+        cache_control = resource.get('cache_control', {})
+        etag = cache_control.get('etag')
+        last_modified = cache_control.get('last_modified')
 
         headers = {}
 
@@ -159,8 +154,9 @@ class ResourceCrawler(Agent):
         """
 
         url = resource['url']
-        etag = resource.get('etag')
-        last_modified = resource.get('last_modified')
+        cache_control = resource.setdefault('cache_control', {})
+        etag = cache_control.get('etag')
+        last_modified = cache_control.get('last_modified')
         headers = resp.headers
 
         if only_if_modified and resp.status == NOT_MODIFIED:
@@ -177,7 +173,7 @@ class ResourceCrawler(Agent):
                     key = header.lower().replace('-', '_')
                     value = resp.headers[header]
                     value = (value if xform is None else xform(value))
-                    resource[key] = value
+                    cache_control[key] = value
 
             if self.CONTENT_TYPE == 'text':
                 contents = await resp.text()
@@ -186,13 +182,13 @@ class ResourceCrawler(Agent):
                 contents = await resp.read()
                 sha1 = hashlib.sha1(contents).hexdigest()
 
-            if only_if_modified and resource.get('sha1') == sha1:
+            if only_if_modified and cache_control.get('sha1') == sha1:
                 # HTTP-based methods failed us, but we can still
                 # fall back on hash of the full text of the
                 # resource
                 return (resource, None, headers)
 
-            resource['sha1'] = sha1
+            cache_control['sha1'] = sha1
 
             canonical_url = self._canonical_url(resp.url)
             # If we followed a redirect the canonical URL may be different from
@@ -225,7 +221,8 @@ class ResourceCrawler(Agent):
 
         contents = base64.b64decode(data.encode('ascii'))
         headers = {'Content-Type': content_type}
-        resource['sha1'] = hashlib.sha1(contents).hexdigest()
+        cache_control = resource.setdefault('cache_control', {})
+        cache_control['sha1'] = hashlib.sha1(contents).hexdigest()
         return resource, contents, headers
 
     def _canonical_url(self, url):

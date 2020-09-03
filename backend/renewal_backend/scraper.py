@@ -3,7 +3,7 @@
 # TODO: Perhaps we could implement additional scrapers as well, this is just
 # one example.  However, all scrapers should return a scraped_article event.
 
-from datetime import datetime, timezone
+from datetime import timezone
 from functools import partial
 from urllib import parse as urlparse
 
@@ -81,7 +81,7 @@ class ArticleScraper(Agent):
 
         if producer is not None:
             await producer.proxy.update_article(
-                    resource=resource, type='scraped',
+                    resource=resource, type='scrape',
                     status=status, updates=updates)
 
         return updates
@@ -113,10 +113,7 @@ class ArticleScraper(Agent):
         scrape = {k: v for k, v in scrape.items() if v is not None}
         site_meta = {k: v for k, v in site_meta.items() if v is not None}
 
-        scrape.update({
-            'site': site_meta,
-            'last_scraped': datetime.utcnow()
-        })
+        scrape.update({'site': site_meta})
 
         return scrape
 

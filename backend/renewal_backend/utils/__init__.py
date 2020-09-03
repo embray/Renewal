@@ -4,6 +4,7 @@ import importlib
 import json
 import secrets
 import time
+from datetime import datetime
 from typing import Optional, Any
 
 import firebase_admin
@@ -331,6 +332,8 @@ def try_resource_update(log=None):
         })
         if log is not None:
             log.exception('an unexpected error occurred; traceback follows')
+
+    status['when'] = datetime.utcnow()
 
 
 FIREBASE_AUDIENCE = ('https://identitytoolkit.googleapis.com/google.'

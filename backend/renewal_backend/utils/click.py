@@ -261,7 +261,7 @@ class _ClassGroup(click.Group):
         return clsgrp
 
     def command(self, *args, **kwargs):
-        super_decorator = super().command(*args, *kwargs)
+        super_decorator = super().command(*args, **kwargs)
 
         def decorator(callback):
             if 'self' in inspect.signature(callback).parameters:

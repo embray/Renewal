@@ -8,6 +8,9 @@ the last refresh interval.
 
 import asyncio
 import copy
+import csv
+import io
+import json
 import logging
 import secrets
 import types
@@ -17,6 +20,7 @@ from functools import partial, wraps
 
 import bson
 import firebase_admin
+import prettytable
 import pymongo
 from aio_pika.patterns import NackMessage
 from bson.objectid import InvalidId, ObjectId
@@ -461,6 +465,60 @@ class Controller(Agent, MongoMixin):
         for exchange_name in self.get_exchanges():
             self.producers[exchange_name] = await self.create_producer(
                     connection, exchange_name)
+
+    @rpc
+    async def feeds_list(self, *, format='table', header=True):
+        """List all feeds registered in the backend."""
+
+        # TODO: Enable a detailed output mode showing statistics for each feed
+        columns = ['url', 'type', 'lang']
+        proj = {'_id': False}
+        for column in columns:
+            proj[column] = True
+
+        feeds = self.db.feeds.find({}, proj)
+
+        if format == 'json':
+            return json.dumps(list(feeds), indent=2)
+        elif format == 'csv':
+            out = io.StringIO()
+            writer = csv.writer(out)
+            if header:
+                writer.writerow(columns)
+            for feed in feeds:
+                writer.writerow([feed[c] for c in columns])
+            return out.getvalue().rstrip()
+        elif format == 'table':
+            table = prettytable.PrettyTable(
+                    field_names=columns, header=header)
+            table.align['url'] = 'l'
+            for feed in feeds:
+                table.add_row([feed[c] for c in columns])
+            return table.get_string()
+        else:
+            raise ValueError(
+                    "format must be one of 'table', 'json', 'csv'")
+
+    @rpc
+    async def feeds_load(self, *, feeds):
+        """
+        Register feeds from a list of dicts.
+
+        Returns a list of warning/error messages for feeds that cannot be
+        loaded.
+        """
+        messages = []
+        for feed in feeds:
+            try:
+                self.db.feeds.insert_one(feed)
+            except pymongo.errors.DuplicateKeyError:
+                messages.append(
+                    f'WARNING: feed {feed["url"]} is already registered; '
+                    f'ignoring')
+            except Exception as exc:
+                messages.append(
+                    f'ERROR: could not load feed {feed}: {exc}')
+        return messages
 
     @rpc
     async def recsystem_register(self, *, name, is_baseline=False,

@@ -3,6 +3,8 @@ Implements the command-line interface for running commands on the backend.
 """
 
 import asyncio
+import json
+import sys
 
 import click
 
@@ -24,6 +26,32 @@ class RenewalCLI(Agent):
 
 
 main = RenewalCLI.main
+
+
+class feeds:
+    @main.group()
+    def feeds(self):
+        pass
+
+    @feeds.command(help='list registered feeds')
+    @click.option('--format', type=click.Choice(['table', 'json', 'csv']),
+                  default='table',
+                  help='format in which to list the registered feeds')
+    @click.option('--no-header', is_flag=True,
+                  help='for table and csv formats, omit the header')
+    def list(self, format, no_header):
+        print(self.rpc.feeds_list(format=format, header=not no_header))
+
+    @feeds.command(help='register list of feeds from a JSON document')
+    @click.argument('filename', type=click.File())
+    def load(self, filename):
+        feeds = json.load(filename)
+
+        # Currently all messages are errors, might change that to allow
+        # non-error status messages as well
+        messages = self.rpc.feeds_load(feeds=feeds)
+        for message in messages:
+            print(message, file=sys.stderr)
 
 
 # Group individual sub-commands into their own namespaces

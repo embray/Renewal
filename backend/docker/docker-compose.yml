@@ -16,7 +16,9 @@ services:
 
     # backend microservices
     controller:
-        build: .
+        build:
+            context: ..
+            dockerfile: docker/Dockerfile
         environment:
             RABBITMQ_HOST: rabbitmq
             RABBITMQ_PORT: 5672
@@ -30,11 +32,13 @@ services:
             - crawler.images
             - scraper
         volumes:
-            - ".:/usr/src/app"
+            - "..:/usr/src/app"
         command: renewal_backend.controller
 
     crawler.feeds:
-        build: .
+        build:
+            context: ..
+            dockerfile: docker/Dockerfile
         environment:
             RABBITMQ_HOST: rabbitmq
             RABBITMQ_PORT: 5672
@@ -42,11 +46,13 @@ services:
             - rabbitmq
             - crawler.articles
         volumes:
-            - ".:/usr/src/app"
+            - "..:/usr/src/app"
         command: renewal_backend.crawlers.feed
 
     crawler.articles:
-        build: .
+        build:
+            context: ..
+            dockerfile: docker/Dockerfile
         environment:
             RABBITMQ_HOST: rabbitmq
             RABBITMQ_PORT: 5672
@@ -55,33 +61,39 @@ services:
             - crawler.images
             - scraper
         volumes:
-            - ".:/usr/src/app"
+            - "..:/usr/src/app"
         command: renewal_backend.crawlers.article
 
     crawler.images:
-        build: .
+        build:
+            context: ..
+            dockerfile: docker/Dockerfile
         environment:
             RABBITMQ_HOST: rabbitmq
             RABBITMQ_PORT: 5672
         depends_on:
             - rabbitmq
         volumes:
-            - ".:/usr/src/app"
+            - "..:/usr/src/app"
         command: renewal_backend.crawlers.image
 
     scraper:
-        build: .
+        build:
+            context: ..
+            dockerfile: docker/Dockerfile
         environment:
             RABBITMQ_HOST: rabbitmq
             RABBITMQ_PORT: 5672
         depends_on:
             - rabbitmq
         volumes:
-            - ".:/usr/src/app"
+            - "..:/usr/src/app"
         command: renewal_backend.scraper
 
     web:
-        build: .
+        build:
+            context: ..
+            dockerfile: docker/Dockerfile
         environment:
             RABBITMQ_HOST: rabbitmq
             RABBITMQ_PORT: 5672
@@ -91,7 +103,7 @@ services:
             - rabbitmq
             - mongo
         volumes:
-            - ".:/usr/src/app"
+            - "..:/usr/src/app"
         ports:
             - "8080:8080"
         command: renewal_backend.web

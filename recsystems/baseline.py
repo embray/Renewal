@@ -331,7 +331,7 @@ def main(api_base_uri, token, log_level):
         api_base_uri += '/'
 
     log.info(f'starting up {RECSYS_NAME} recsystem on {api_base_uri}')
-    token = token.read()
+    token = token.read().strip()
     loop = asyncio.get_event_loop()
     try:
         loop.run_until_complete(initialize(api_base_uri, token))

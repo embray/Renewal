@@ -51,7 +51,10 @@ class feeds:
     @click.option('--no-header', is_flag=True,
                   help='for table and csv formats, omit the header')
     def list(self, format, no_header):
-        print(self.rpc.feeds_list(format=format, header=not no_header))
+        output = self.rpc.feeds_list(format=format, header=not no_header)
+        if output:
+            # Prevent printing a newline if there is nothing to output
+            print(output)
 
     @feeds.command(help='register list of feeds from a JSON document')
     @click.argument('filename', type=click.File())
@@ -110,6 +113,18 @@ class recsys:
             raise click.ClickException(msg)
 
         print(token)
+
+    @recsys.command()
+    @click.option('--format', type=click.Choice(['table', 'json', 'csv']),
+                  default='table',
+                  help='format in which to list the registered feeds')
+    @click.option('--no-header', is_flag=True,
+                  help='for table and csv formats, omit the header')
+    def list(self, format, no_header):
+        output = self.rpc.recsystem_list(format=format, header=not no_header)
+        if output:
+            # Prevent printing a newline if there is nothing to output
+            print(output)
 
 
 class _RpcProxy:

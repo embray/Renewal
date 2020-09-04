@@ -489,27 +489,8 @@ class Controller(Agent, MongoMixin):
             proj[column] = True
 
         feeds = self.db.feeds.find({}, proj)
-
-        if format == 'json':
-            return json.dumps(list(feeds), indent=2)
-        elif format == 'csv':
-            out = io.StringIO()
-            writer = csv.writer(out)
-            if header:
-                writer.writerow(columns)
-            for feed in feeds:
-                writer.writerow([feed[c] for c in columns])
-            return out.getvalue().rstrip()
-        elif format == 'table':
-            table = prettytable.PrettyTable(
-                    field_names=columns, header=header)
-            table.align['url'] = 'l'
-            for feed in feeds:
-                table.add_row([feed[c] for c in columns])
-            return table.get_string()
-        else:
-            raise ValueError(
-                    "format must be one of 'table', 'json', 'csv'")
+        return self._list_documents(feeds, columns, format=format,
+                header=header)
 
     @rpc
     async def feeds_load(self, *, feeds):
@@ -613,6 +594,46 @@ class Controller(Agent, MongoMixin):
         self.db.recsystems.update_one({'_id': recsystem['_id']},
                                       {'$set': {'token_id': token_id}})
         return token
+
+    @rpc
+    async def recsystem_list(self, *, format='table', header=True):
+        columns = ['name', 'is_baseline', 'owners']
+        proj = {'_id': False}
+        for column in columns:
+            proj[column] = True
+
+        # TODO: match user IDs from the owners field to their names/e-mail
+        # addresses
+        recsystems = self.db.recsystems.find({}, proj)
+        return self._list_documents(recsystems, columns, format=format,
+                header=header)
+
+    def _list_documents(self, docs, columns, format='table', header=True):
+        """
+        Helper to implement RPC commands like ``feeds_list`` and
+        ``recsys_list``.
+        """
+
+        if format == 'json':
+            return json.dumps(list(docs), indent=2)
+        elif format == 'csv':
+            out = io.StringIO()
+            writer = csv.writer(out)
+            if header:
+                writer.writerow(columns)
+            for doc in docs:
+                writer.writerow([doc[c] for c in columns])
+            return out.getvalue().rstrip()
+        elif format == 'table':
+            table = prettytable.PrettyTable(
+                    field_names=columns, header=header)
+            table.align['url'] = 'l'
+            for doc in docs:
+                table.add_row([doc[c] for c in columns])
+            return table.get_string()
+        else:
+            raise ValueError(
+                    "format must be one of 'table', 'json', 'csv'")
 
     async def register_rpcs(self, connection):
         rpc = await self.create_rpc(connection, 'controller_rpc')

@@ -7,7 +7,7 @@ now) the HTTP API as well.
 
 Keeping all services in a single package will, for now, keep development
 easier, and deployment of an individual service is just a matter of
-installing this package and its depenencies, and starting just that service.
+installing this package and its dependencies, and starting just that service.
 Each service will be implemented as a sub-module or package and will have
 `main()` functions that can be started by running:
 

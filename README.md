@@ -180,3 +180,156 @@ settings).
 4. Select a "Cloud Firestore location" that is conveniently local to you.
 
 5. TODO: Configure the access control rules.
+
+### Backend
+
+TODO: Finish architecture diagram.
+
+The Renewal backend is built on a microservice architecture, with services
+communicating over the [RabbitMQ](https://www.rabbitmq.com/) message broker
+services.  As documented in the above diagram, it currently consists of the
+following services (listed by the Python module that implements them):
+
+* `renewal_backend.controller`--this is the central orchestrator of the
+  backend.  It is responsible for managing feeds, scheduling crawling of
+  feeds and articles, inserting results from the crawlers and scrapers into
+  the database, managing user assignments to recommendation systems, among
+  other tasks.  The present design assumes only one controller will ever be
+  running at a given time.
+
+* `renewal_backend.crawlers.feed`--this is the feed crawler service
+  responsible for downloading and parsing data from feeds (currently only
+  RSS feeds but other types will be added) and producing links to new
+  articles from those feeds.
+
+* `renewal_backend.crawlers.article`--this is the article crawler service;
+  at present it mostly just downloads the raw contents of individual
+  articles that are discovered by the feed crawlers.  Parsing of the article
+  contents is handled by the scraper service.
+
+* `renewal_backend.crawlers.image`--this is the image crawler service;
+  it is responsible for downloading all images that are cached by the
+  backend.  At present it is only used for downloading news site icons that
+  are displayed to the user by the app, though in the future it may also be
+  used to cache article images.
+
+* `renewal_backend.scraper`--this is the article scraper service.  At
+  present there is only one article scraper implementation based on
+  [newspaper3k](https://newspaper.readthedocs.io/en/latest/) though others
+  may be added later.  This parses the raw contents of crawled articles and
+  produces additional article metadata such as the article title,
+  publication date, top image, summary, etc.  Currently most of this
+  information is not used directly by the system, but may be used by
+  recommendation systems to improve their predictions.
+
+* `renewal_backend.web`--implements the HTTP API which consists of a RESTful
+  API and a Websocket API.  The REST interface is used both by the mobile
+  app and by recommendation systems, while the Websocket API is how
+  recommendation systems communicate with the backend.
+
+* recommendation systems (recsystems)--the other services needed for the
+  backend to function are the recommendation systems themselves, which are
+  currently not part of the `renewal_backend` package (TODO: It might be good
+  to add the baseline recsystem to the standard package as it is necessary to
+  have at least one recsystem).  With the exception of one or more baseline
+  recsystems run on the backend, all other recsystems will be provided
+  externally by challenge participants.
+
+With the exception of the Controller, which is currently designed to be run
+as a single instance, all other services can be run in any number of
+instances to allow load balancing.  This includes the web server, though
+balancing of the web service will require an additional load-balancing
+proxy, which is not documented here (that will be documented as part of the
+production deployment documentation).
+
+
+#### Backend configuration
+
+All of the backend services are configured via a single config file, named
+`renewal.yaml` by default.  Each service can also take an alternative path
+to the config file as a command-line argument.
+
+The default configuration can be found in the file
+`renewal_backend/config.py` and is mostly sufficient for a development/test
+deployment.  However, there are a few settings that need to be specified
+manually by writing a `renewal.yaml`.  At present these are:
+
+```yaml
+web:
+    firebase:
+        project_id: <firebase-project-id>
+        service_account_key_file: <path-to-service-account-file.json>
+        app_options:
+            databaseURL: https://<firebase-project-id>.firebaseio.com
+```
+
+All of these settings were obtained from the Firebase configuration in the
+previous section.  The `web.firebase.service_account_key_file` should be the
+name of the private key JSON file downloaded in the "Service account"
+section of the Firebase configuration.  To give a more concrete example:
+
+```yaml
+web:
+    firebase:
+        project_id: renewal-dev
+        service_account_key_file: renewal-dev-firebase-adminsdk-xxxxx-xxxxxxxxxx.json
+        app_options:
+            databaseURL: https://renewal-dev.firebaseio.com
+```
+
+The default configuration also assumes MongoDB and RabbitMQ running on
+localhost on the default ports and the default security settings.
+
+
+#### Running services
+
+To run individual backend services manually, it is necessary to first
+install the `renewal_backend` Python package and its dependencies.  The
+following assumes you are in the `backend/` directory.
+
+It is a good idea to create a virtual environment or Conda environment for
+this purpose.  Note: The minimum Python version is 3.6.  For example:
+
+```bash
+$ mkdir ~/.virtualenvs
+$ python3.6 -m venv ~/.virtualenvs/renewal
+$ source ~/.virtualenvs/renewal/bin/activate
+```
+
+To install the dependencies run:
+
+```bash
+$ pip install -r requirements.txt
+```
+
+Then install the package.  For development it is useful to install it in
+"editable" mode:
+
+```bash
+$ pip install -e .
+```
+
+Individual services can be started by running:
+
+```bash
+$ python -m renewal_backend.<service_name>
+```
+
+For example,
+
+```bash
+$ python -m renewal_backend.controller
+```
+
+Although each service can be run individually, it is of course necessary to
+start all services in order for the system to be fully functioning.  This
+can be a hassle when starting services manually, so a
+[docker-compose](https://docs.docker.com/compose/) file is provided for
+starting up all or some of the services (see the next section).  However,
+it can still be useful to start individual services manually for testing and
+debugging.
+
+
+#### Running with Docker
+
+

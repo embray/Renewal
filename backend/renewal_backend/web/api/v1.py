@@ -26,43 +26,15 @@ def index():
     return jsonify({'version': 1})
 
 
-@v1.route('/articles')
-@check_auth(['admin', 'recsystem'])
-def articles():
-    limit = g.config.api.v1.articles.default_limit
-    limit = int(request.args.get('limit', limit))
+def get_articles(filter={}, limit=None):
+    """Return all articles from the database matching the given filter."""
 
-    if limit < 1:
-        # TODO: Or return an error code?
-        limit = 1
-
-    match = [{'article_id': {'$exists': True}}]
-
-    since_id = int(request.args.get('since_id', -1))
-    if since_id >= 0:
-        match.append({'article_id': {'$gt': since_id}})
-
-    # TODO: Raise a request error if max_id < since_id which doesn't make sense
-    max_id = int(request.args.get('max_id', -1))
-    if max_id >= 0:
-        match.append({'article_id': {'$lt': max_id}})
-
-    if len(match) == 1:
-        match = match[0]
-    else:
-        match = {'$and': match}
-
-    # TODO: This is where we would make a request to the recommendation system
-    # to return article IDs, and then we would return an aggregation based on
-    # only those article IDs.  However, absent a real recommendation system
-    # right now we just use a "dummy" response drawn from the entire articles
-    # collection.  This might also be useful in some cases for a cold start
     icon_base_url = request.base_url.rsplit('/', 1)[0] + '/images/icons/'
 
     cursor = g.db.articles.aggregate([
         # Select all articles with an article_id (i.e. articles that have been
         # scraped)
-        {'$match': match},
+        {'$match': filter},
         # Replace the 'site' property with the contents of the 'sites' document
         # with the corresponding _id
         {'$lookup': {
@@ -103,10 +75,36 @@ def articles():
         {'$limit': limit}
     ])
 
-    # TODO: The app currently expects the sites to be in a dict called
-    # 'sources' (as in, the article sources); perhaps we should try to
-    # make this nomenclature more consistent in favor of one or the other
     return jsonify(list(cursor))
+
+
+@v1.route('/articles')
+@check_auth(['admin', 'recsystem'])
+def articles():
+    limit = g.config.api.v1.articles.default_limit
+    limit = int(request.args.get('limit', limit))
+
+    if limit < 1:
+        # TODO: Or return an error code?
+        limit = 1
+
+    match = [{'article_id': {'$exists': True}}]
+
+    since_id = int(request.args.get('since_id', -1))
+    if since_id >= 0:
+        match.append({'article_id': {'$gt': since_id}})
+
+    # TODO: Raise a request error if max_id < since_id which doesn't make sense
+    max_id = int(request.args.get('max_id', -1))
+    if max_id >= 0:
+        match.append({'article_id': {'$lt': max_id}})
+
+    if len(match) == 1:
+        match = match[0]
+    else:
+        match = {'$and': match}
+
+    return get_articles(filter=match, limit=limit)
 
 
 @v1.route('/articles/interactions/<Int64:article_id>', methods=['GET', 'POST'])
@@ -245,7 +243,8 @@ async def recommendations():
             'recommend', user_id=g.auth['user_id'],
             limit=limit, since_id=since_id, max_id=max_id)
 
-    return jsonify(response.data.result)
+    return get_articles({'article_id': {'$in': response.data.result}},
+                        limit=limit)
 
 
 recsystems_manager = None

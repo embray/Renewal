@@ -80,12 +80,18 @@ async def recommend(user_id, limit=RECOMMEND_DEFAULT_LIMIT, since_id=None,
 
     # Currently just supports the 'random' strategy: Take a random selection
     # of up to limit articles from the given range.
-    start = since_id + 1 if since_id is not None else None
+    if since_id is None:
+        # If no since_id is given (i.e. we are being asked for the most recent
+        # articles, just take the top `limit * 2` articles and then take a
+        # random selection from them
+        start = -2 * limit
+    else:
+        start = since_id + 1
     end = max_id
     selection = articles[start:end]
     limit = min(limit, len(selection))
-    sample = sorted(random.sample(range(len(selection)), limit))
-    return [selection[idx] for idx in sample]
+    sample = sorted(random.sample(range(len(selection)), limit), reverse=True)
+    return [selection[idx]['article_id'] for idx in sample]
 
 
 # websocket server loops

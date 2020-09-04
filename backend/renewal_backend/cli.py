@@ -20,6 +20,17 @@ class RenewalCLI(Agent):
     def get_exchanges(self):
         return ['controller_rpc']
 
+    @main.command(help='returns a zero exit code if the renewal controller '
+                       'can be contacted; and 1 otherwise')
+    def status(self):
+        try:
+            ok = self.rpc.status()
+        except Exception as exc:
+            print('could not contact the controller: ${exc}', file=sys.stderr)
+            sys.exit(1)
+
+        sys.exit(int(not ok))
+
     async def start_loop(self, connection):
         rpc = await self.create_rpc(connection, 'controller_rpc')
         self.rpc = _RpcProxy(rpc)

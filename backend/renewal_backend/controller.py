@@ -468,6 +468,17 @@ class Controller(Agent, MongoMixin):
                     connection, exchange_name)
 
     @rpc
+    async def status(self):
+        """
+        Currently just a no-op that can be used to 'ping' the controller to
+        test that its RPC interface is up-and-running.
+
+        .. todo: Have this return some useful status information.
+        """
+
+        return True
+
+    @rpc
     async def feeds_list(self, *, format='table', header=True):
         """List all feeds registered in the backend."""
 

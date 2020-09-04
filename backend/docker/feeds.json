@@ -1,0 +1,457 @@
+[
+  {
+    "url": "http://www.andybudd.com/index.rdf",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.redflymarketing.com/redfly",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/Clagnut",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://girlwithaonetrackmind.blogspot.com/feeds/posts/default",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/benmetcalfecombined",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/Littlemummycom",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/blogstorm",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://www.kryogenix.org/days/feed",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://rachelnorthlondon.blogspot.com/feeds/posts/default",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/liveside",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/Tallskinnykiwi",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/f1fanatic",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/ShaolinTiger",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://designersblock.blogspot.com/feeds/posts/default",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/london-underground-blog",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/BadLanguage",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/arseblog",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/Hecklerspray",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/AffiliateMarketingBlogFromUkOfferMedia",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/Thebaglady",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/Gadgetspy",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/seoptimise",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/TechcrunchUK",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/coppersblog",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/Mashable",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://www.thingsmagazine.net/index.rdf",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/blogspot/UfcP",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/RussellDavies",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/BiasedBBC",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://eureferendum.blogspot.com/feeds/posts/default",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://belledejour-uk.blogspot.com/feeds/posts/default",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/RecedingHairline",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/currybet",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/org/eHSW",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/petiteanglaise/GExg",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/TheCartoonBlog",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/boris-johnson",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://rss.sciam.com/ScientificAmerican-News",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.newscientist.com/today-on-ns",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.latimes.com/latimes/news/science",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://www.judgehype.com/nouvelles.xml",
+    "lang": "fr",
+    "type": "rss"
+  },
+  {
+    "url": "https://www.rhyswynne.co.uk/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://www.popjustice.com/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://www.badscience.net/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://webgazette.co.uk/feed/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://follow.it/nevillehobson",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://www.eurekalert.org/rss.php",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://www.sciencemag.org/about/email-alerts-and-rss-feeds",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.newscientist.com/science-news/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/Science.xml",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://www.lefigaro.fr/rss/figaro_actualites.xml",
+    "lang": "fr",
+    "type": "rss"
+  },
+  {
+    "url": "https://londonist.com/feed",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://ruangbisnis.co.id/feed/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://ww17.spamula.net/blog/index.xml",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://www.bloggerheads.com/feed/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://www.nationalacademies.org/about/rss.html",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://ww1.chickyog.net/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://www.aaas.org/news/rss",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://simonwillison.net/atom/everything/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://www.samizdata.net/feed/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://www7.politicalbetting.com/index.php/feed/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://www.gapingvoid.com/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://b3ta.com/xml/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://feeds.feedburner.com/TechDigest",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/infovoredotorg",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://feeds.feedburner.com/shinyshiny/IbAC",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://www.iaindale.com/feed",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/writerswrite",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://adactio.com/journal/rss",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://www.labspaces.net/error.php",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://www.iamcal.com/rss/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://www.binarymoon.co.uk/feed/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://plasticbag.org/feed/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://mindhacks.com/feed/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://rss.allaboutsymbian.com/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://timworstall.typepad.com/timworstall/atom.xml",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://www.distilled.net/feed/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://www.coolest-gadgets.com/feed/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://www.weblogcartoons.com/feed/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://www.cornwallseo.com/search/feed/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://www.anenglishmanscastle.com/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://www.chrisg.com/feed/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://allinthehead.com/rss/index.php",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://feeds.feedburner.com/SelfMadeMinds",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://xo.typepad.com/blog/atom.xml",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://johnbakersblog.co.uk/feed/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://blogjam.com/feed/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://www.chromasia.com/iblog/index.xml",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://fadtastic.net/",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "http://www.leninology.co.uk/feeds/posts/default",
+    "lang": "en",
+    "type": "rss"
+  },
+  {
+    "url": "https://warrenellis.com/",
+    "lang": "en",
+    "type": "rss"
+  }
+]

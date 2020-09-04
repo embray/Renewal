@@ -1,6 +1,31 @@
 # docker-compose file for development only; do not use in production
 version: "3.6"
 services:
+    # This is a special service that runs some setup commands and exits,
+    # freeing the user of this docker-compose file from having to perform
+    # these steps manually.  In particular it
+    #
+    # * Installs a default list of feeds from feeds.json
+    # * Registers a baseline recsystem (just one for now, maybe more later)
+    #   and stores its token in a volume which is mounted by the
+    #   recsys_baseline service.
+    #
+    # These steps use the renewalctl admin CLI, which requires the controller
+    # to already be running before the commands can be called.
+    init:
+        build:
+            context: ..
+            dockerfile: docker/Dockerfile
+        depends_on:
+            - controller
+        environment:
+            RABBITMQ_HOST: rabbitmq
+            RABBITMQ_PORT: 5672
+        volumes:
+            - "renewal_config:/etc/renewal"
+        entrypoint: ""
+        command: [ "/bin/bash", "docker/init.sh" ]
+
     rabbitmq:
         image: rabbitmq:3.7-management-alpine
         ports:
@@ -108,5 +133,23 @@ services:
             - "8080:8080"
         command: renewal_backend.web
 
+    # One random baseline recommendation system; we need at least one
+    # baseline recommender to make everything work.
+    recsys_baseline:
+        build:
+            context: ../../recsystems
+        depends_on:
+            - init
+            - web
+        environment:
+            RENEWAL_API_BASE_URI: http://web:8080/api/v1/
+            RENEWAL_TOKEN: /etc/renewal/baseline-random-1.jwt
+        volumes:
+            - "renewal_config:/etc/renewal"
+        # The token file might not be available immediately which will result
+        # in an error; restart until we can get up-and-running
+        restart: "on-failure"
+
 volumes:
     mongo:
+    renewal_config:

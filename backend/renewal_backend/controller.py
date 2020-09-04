@@ -194,7 +194,8 @@ class Controller(Agent, MongoMixin):
         else:
             self.log.info('inserted new article')
             # Send new article to the crawlers
-            self.producers['articles'].proxy.crawl_article(resource=article)
+            producer = self.producers['articles']
+            await producer.proxy.crawl_article(resource=article)
 
     async def update_resource(self, *, collection, resource, type, status,
                               updates={}):

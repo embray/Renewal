@@ -95,16 +95,27 @@ class Controller(Agent, MongoMixin):
 
         feeds = self.db['feeds'].find(filt)
         for feed in feeds:
-            if feed['_id'] in self.queues['crawl_feeds']:
-                continue
-            else:
-                self.queues['crawl_feeds'].add(feed['_id'])
+            await self._crawl_feed(producer, feed)
 
-            self.log.info(f'producing {feed["type"]} feed at {feed["url"]}')
-            self.log.debug(
-                f'len(queues.crawl_feeds) = '
-                f'{len(self.queues["crawl_feeds"])}')
-            await producer.proxy.crawl_feed(resource=feed)
+    async def _crawl_feed(self, producer, feed, _id=None):
+        """
+        Send a single feed to be crawled, and added it to the set of pending
+        crawl_feeds.
+        """
+
+        if _id is None:
+            _id = feed['_id']
+
+        queue = self.queues['crawl_feeds']
+        if _id in queue:
+            return
+        else:
+            queue.add(_id)
+
+        self.log.info(
+            f'sending {feed["type"]} feed at {feed["url"]} to be crawled')
+        self.log.debug(f'len(queues.crawl_feeds) = {len(queue)}')
+        await producer.proxy.crawl_feed(resource=feed)
 
     async def queue_crawl_articles(self, producer, since=None):
         """
@@ -346,7 +357,8 @@ class Controller(Agent, MongoMixin):
 
         # Prepare a NEW_ARTICLE event for the event stream and send it
         if 'site' in article:
-            site = self.db.sites.find_one({'_id': article['site']}) or {}
+            site = self.db.sites.find_one({'_id': article['site']},
+                    {'_id': False}) or {}
         else:
             site = {}
 
@@ -497,13 +509,16 @@ class Controller(Agent, MongoMixin):
         """
         Register feeds from a list of dicts.
 
+        Each added feed is immediately queued to be crawled.
+
         Returns a list of warning/error messages for feeds that cannot be
         loaded.
         """
         messages = []
+        producer = self.producers['feeds']
         for feed in feeds:
             try:
-                self.db.feeds.insert_one(feed)
+                result = self.db.feeds.insert_one(feed)
             except pymongo.errors.DuplicateKeyError:
                 messages.append(
                     f'WARNING: feed {feed["url"]} is already registered; '
@@ -511,6 +526,8 @@ class Controller(Agent, MongoMixin):
             except Exception as exc:
                 messages.append(
                     f'ERROR: could not load feed {feed}: {exc}')
+            else:
+                await self._crawl_feed(producer, feed, _id=result.inserted_id)
         return messages
 
     @rpc

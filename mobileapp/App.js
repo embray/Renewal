@@ -12,7 +12,7 @@ import { Root } from 'native-base';
 import Roboto from 'native-base/Fonts/Roboto.ttf'
 import RobotoMedium from 'native-base/Fonts/Roboto_medium.ttf'
 import React, { Component } from 'react';
-import { Button, ImageBackground, View, StyleSheet } from 'react-native';
+import { Dimensions, Button, ImageBackground, View, StyleSheet } from 'react-native';
 import { purgeStoredState } from 'redux-persist';
 import { Provider, connect } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react'

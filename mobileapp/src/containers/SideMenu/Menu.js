@@ -13,7 +13,7 @@ import {
   View
 } from 'native-base';
 import React, { Component } from 'react';
-import { StyleSheet } from 'react-native';
+import { Dimensions, Platform, StyleSheet } from 'react-native';
 import {
   DrawerContentScrollView,
   DrawerItemList
@@ -24,13 +24,34 @@ import { signOut } from '../../auth';
 import { persistConfig } from '../../storage';
 
 
+// This logic is copied from the DrawerView.tsx sources in
+// @react-navigation/drawer; I can't figure out if there is an easier way to
+// determine the default drawer width
+function getDefaultDrawerWidth() {
+  const { width, height } = Dimensions.get('window');
+  const smallerAxisSize = Math.min(height, width);
+  const isLandscape = width > height;
+  const isTablet = smallerAxisSize >= 600;
+  const appBarHeight = Platform.OS === 'ios' ? (isLandscape ? 32 : 44) : 56;
+  const maxWidth = isTablet ? 320 : 280;
+
+  return Math.min(smallerAxisSize - appBarHeight, maxWidth);
+}
+
+
 export default function Menu(props) {
+  // Use up to 90% of the drawer width for the title
+  const titleWidth = getDefaultDrawerWidth() * 0.9;
+
   return (
     <Container>
       <Header style={ styles.header }>
-        <Left />
         <Body>
-          <Title style={ styles.headerTitle }>Renewal</Title>
+          <Title adjustsFontSizeToFit
+                 style={[ styles.headerTitle, { width: titleWidth } ]}
+          >
+            Renewal
+          </Title>
         </Body>
         <Right />
       </Header>

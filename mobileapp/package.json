@@ -2,7 +2,8 @@
   "main": "node_modules/expo/AppEntry.js",
   "private": true,
   "scripts": {
-    "start": "expo-cli start"
+    "start": "expo-cli start",
+    "build": "RENEWAL_ENV=${npm_config_rc:-dev} expo-cli build:${npm_config_target:-android} --release-channel ${npm_config_rc:-default}"
   },
   "dependencies": {
     "@expo/vector-icons": "^10.0.0",

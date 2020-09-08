@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "renewal",
-    "description": "A evaluation platform for news recommender systems",
+    "name": "Renewal",
+    "description": "An evaluation platform for news recommender systems",
     "slug": "renewal",
     "privacy": "public",
     "platforms": [

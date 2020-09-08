@@ -332,4 +332,57 @@ debugging.
 
 #### Running with Docker
 
+The `backend/docker` directory contains a `Dockerfile` for building an image
+appropriate for running all of the backend services, as well as a
+`docker-compose.yml` file to quickly get a minimal set of all services up
+and running, including at least one (more can be added later) baseline
+recommendation system.
 
+There are a couple of prerequisites to complete before starting the
+docker-compose file:
+
+* All [Firebase](#firebase) configuration should be completed.
+* There should be an existing [`renewal.yaml`](#backend-configuration) file
+  in the `backend/` directory with the correct configuration filled in based
+  on the Firebase configuration.
+
+Then to build the images and start the service containers, run (from the
+`backend/` directory):
+
+```bash
+$ docker-compose -p renewal -f docker/docker-compose.yml up
+```
+
+Here the `-p renewal` flag sets the "project name" to "renewal".  Otherwise
+`docker-compose` takes the default project name from the name of the
+directory the `docker-compose.yml` file is in, which in this case will be
+just "docker", which is rather unclear.
+
+The `docker-compose.yml` mounts the backend source directory as a volume
+inside the containers it launches, e.g. like `--volume ..:/usr/src/app`
+(it uses `..` because this is relative to the location of
+`docker-compose.yml`).  This means that when the services start they will
+read your local `renewal.yaml` file.  It's also a convenient way to test
+changes to the sources.
+
+For example, say you make some edits to `renewal_backend/controller.py`.
+You can then restart the controller service by running:
+
+```bash
+$ docker-compose -p renewal -f docker/docker-compose.yml restart controller
+```
+
+The controller service will restart and your code changes are immediately
+reflected without having to rebuild the service.
+
+To speed things up, you can avoid some of the extra `docker-compose` flags
+as follows:
+
+* Create a [`.env`](https://docs.docker.com/compose/environment-variables/#the-env-file)
+  file in the `docker/` directory like:
+  `echo 'COMPOSE_PROJECT_NAME=renewal' > docker/.env`
+
+* Run `cd docker/` so that you're already in the `docker/` directory.  By
+  default `docker-compose` looks for a `docker-compose.yml` file in the
+  current directory.  So now you can just run, for example:
+  `docker-compose restart controller` without any additional flags.

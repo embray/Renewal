@@ -68,6 +68,7 @@ class RenewalAPI {
         if (this.client === null && __DEV__) {
           return params;
         }
+        params = { ...params, timestamp: new Date().toISOString() };
         const url = `/articles/interactions/${articleId}`;
         return this.client.post(url, params).then((response) =>
           response.data

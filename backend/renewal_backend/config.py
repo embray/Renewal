@@ -38,6 +38,12 @@ mongodb = {
             ],
             'schema': schemas.ARTICLE
         },
+        'articles.events': {
+            'indices': [
+                [('user_id', pymongo.DESCENDING),
+                 ('article_id', pymongo.ASCENDING)]
+            ]
+        },
         'articles.interactions': {
             'indices': [
                 # I think a hashed index would be more useful here since

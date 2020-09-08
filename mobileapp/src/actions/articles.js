@@ -39,9 +39,12 @@ export const initialState = {
 
 /* Action creators for articles */
 const actions = {
-  setRating: createAsyncThunk(SET_RATING, async (arg, { rejectWithValue }) => {
+  setRating: createAsyncThunk(SET_RATING, async (arg, { getState, rejectWithValue }) => {
     const { articleId, rating } = arg;
-    return await articleInteraction(articleId, { rating }, rejectWithValue);
+    const articles = getState().articles.articles;
+    const prevRating = articles[articleId].prevRating || 0;
+    const interaction = { rating, prev_rating: prevRating };
+    return await articleInteraction(articleId, interaction, rejectWithValue);
   }),
 
   toggleBookmarked: createAsyncThunk(TOGGLE_BOOKMARKED, async (arg, { getState, rejectWithValue }) => {

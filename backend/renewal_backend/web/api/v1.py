@@ -1,8 +1,10 @@
 import asyncio
 import random
+from datetime import datetime
 from http import HTTPStatus
 
 import pymongo
+from pymongo import ReturnDocument
 from quart import Blueprint, g, request, websocket, abort, jsonify, json
 
 from .recsystems import RecsystemsManager
@@ -117,6 +119,8 @@ async def articles_interactions(article_id):
     user_id = g.auth['user_id']
     filt = {'user_id': user_id, 'article_id': article_id}
     proj = {'_id': False}
+    interaction['user_id'] = user_id
+    interaction['article_id'] = article_id
 
     # TODO: It would be better if all various database updates were hidden
     # behind an API abstraction rather than implemented directly in the web
@@ -127,17 +131,21 @@ async def articles_interactions(article_id):
         if interactions is None:
             abort(HTTPStatus.NOT_FOUND)
     else:
+        # Save the interaction in the article events
         try:
-            # We return the user's previous interactions with this article
-            # (if any) so we can make a diff with the new interaction in order
-            # to update article metrics
-            prev_interactions = g.db.articles.interactions.find_one_and_update(
-                    filt, {'$set': interaction}, projection=proj, upsert=True)
+            g.db.articles.events.insert_one(interaction)
 
-            if prev_interactions is None:
-                prev_interactions = filt.copy()
-
+            # PyMongo also modifies the document-inplace with its _id when you
+            # call insert_one()
+            del interaction['_id']
+            # Delete the timestamp from the interaction object since it doesn't
+            # go into the articles.interactions collection
+            del interaction['timestamp']
+            interactions = g.db.articles.interactions.find_one_and_update(
+                    filt, {'$set': interaction}, upsert=True,
+                    return_document=ReturnDocument.AFTER)
         except pymongo.errors.OperationFailure:
+            raise
             abort(HTTPStatus.UNPROCESSABLE_ENTITY)
 
         # Deconstruct the interaction object into metrics updates for the
@@ -145,12 +153,14 @@ async def articles_interactions(article_id):
         metrics_inc = {}
         if 'rating' in interaction:
             rating = interaction['rating']
-            if 'rating' in prev_interactions:
-                # A previous rating was possibly unset
-                if prev_interactions['rating'] == -1:
-                    metrics_inc['metrics.dislikes'] = -1
-                elif prev_interactions['rating'] == 1:
-                    metrics_inc['metrics.likes'] = -1
+            # prev_rating *should* be included with ratings, but we give it a
+            # default value of 0 just in case
+            prev_rating = interaction.get('prev_rating', 0)
+            if prev_rating == -1:
+                metrics_inc['metrics.dislikes'] = -1
+            elif prev_rating == 1:
+                metrics_inc['metrics.likes'] = -1
+
             if rating == -1:
                 metrics_inc['metrics.dislikes'] = 1
             elif rating == 1:
@@ -166,15 +176,12 @@ async def articles_interactions(article_id):
 
         if metrics_inc:
             try:
-                g.db.articles.find_one_and_update({'article_id': article_id},
+                g.db.articles.update_one({'article_id': article_id},
                         {'$inc': metrics_inc})
             except pymongo.errors.OperationFailure:
                 # This could happen if due to a bug or race condition of some
                 # kind, one of the metrics is decreased below zero
                 pass
-
-        interactions = prev_interactions.copy()
-        interactions.update(interaction)
 
         # Schedule a task to send an ARTICLE_INTERACTION event to the event
         # stream.  We could just put this event directly on g.event_queue but
@@ -182,12 +189,8 @@ async def articles_interactions(article_id):
         # instead so that any and all queues connected to that exchange can
         # receive the event (e.g. if we have multiple web server instances
         # handling websocket connections for different clients).
-        # TODO: Interaction events don't have a timestamp attached, but they
-        # should.
-        interaction['user_id'] = user_id
-        interaction['article_id'] = article_id
         asyncio.ensure_future(g.event_stream_producer.proxy.send_event(
-            event={'type': 'ARTICLE_INTERACTIONS', 'payload': interaction}))
+            event={'type': 'ARTICLE_INTERACTION', 'payload': interaction}))
 
     return jsonify(interactions)
 
@@ -229,9 +232,11 @@ async def recommendations():
     max_id = request.args.get('max_id')
     max_id = int(max_id) if max_id and int(max_id) >= 0 else None
 
+    user_id = g.auth['user_id']
+
     # Request the recsystems
     # TODO: User assignment is not implemented yet so just selecting a
-    # recsystem at random
+    # single recsystem at random
     if (recsystems_manager is None or
             not recsystems_manager.recsystem_rpc_clients):
         return (json.dumps({'error': 'no recsystems are available'}),
@@ -240,11 +245,17 @@ async def recommendations():
     recsystem_id = random.choice(
             list(recsystems_manager.recsystem_rpc_clients))
     response = await recsystems_manager.rpc(recsystem_id,
-            'recommend', user_id=g.auth['user_id'],
-            limit=limit, since_id=since_id, max_id=max_id)
+            'recommend', user_id=user_id, limit=limit,
+            since_id=since_id, max_id=max_id)
+    article_ids = response.data.result
 
-    return get_articles({'article_id': {'$in': response.data.result}},
-                        limit=limit)
+    timestamp = datetime.utcnow()
+    g.db.articles.events.insert_many([
+        {'user_id': user_id, 'article_id': article_id,
+         'recommended_by': [recsystem_id], 'timestamp': timestamp}
+        for article_id in article_ids])
+
+    return get_articles({'article_id': {'$in': article_ids}}, limit=limit)
 
 
 recsystems_manager = None
@@ -253,6 +264,10 @@ class RecsystemsManagerAPIv1(RecsystemsManager):
     async def handle_new_article_event(self, event_type, payload, rpc_client):
         """NEW_ARTICLE events are sent without expecting a response."""
         await rpc_client.notify('new_article', article=payload)
+
+    async def handle_article_interaction_event(self, event_type, payload,
+                                               rpc_client):
+        await rpc_client.notify('article_interaction', interaction=payload)
 
 
 @v1.websocket('/event_stream')

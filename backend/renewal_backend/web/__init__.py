@@ -8,7 +8,7 @@ import firebase_admin
 from quart import Quart, g
 
 from .api import v1
-from .utils import ObjectIdConverter, JSONEncoder
+from .utils import ObjectIdConverter, JSONEncoder, JSONDecoder
 from ..mongodb import MongoMixin
 from ..agent import AgentMixin
 from ..utils import load_config, DEFAULT_CONFIG_FILE
@@ -37,6 +37,7 @@ class RenewalAPI(AgentMixin, MongoMixin):
         self.app.before_websocket(self.before_websocket)
         self.app.url_map.converters['ObjectId'] = ObjectIdConverter
         self.app.json_encoder = JSONEncoder
+        self.app.json_decoder = JSONDecoder
 
         # Event stream management
         self.event_stream_producer = None

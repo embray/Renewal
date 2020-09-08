@@ -9,6 +9,7 @@ https://docs.mongodb.com/manual/reference/operator/query/jsonSchema/#json-schema
 ``$ref`` but we can implement the equivalence directly in Python instead).
 """
 
+import copy
 
 from .utils import dict_merge
 
@@ -235,7 +236,7 @@ ARTICLE = dict_merge(RESOURCE, {
 
 ARTICLE_INTERACTION = {
     'description':
-        'user interactions with articles (ratings, bookmarks)',
+        'all user interactions with a given article (ratings, bookmarks)',
     'properties': {
         'user_id': {'type': 'string'},
         'article_id': {'bsonType': 'long'},
@@ -245,10 +246,31 @@ ARTICLE_INTERACTION = {
         },
         'bookmarked': {'type': 'boolean'},
         'clicked': {'type': 'boolean'}
-        # TODO: Additional interactions (clicked, read, etc.)
+        # TODO: Additional interactions (read%, etc.)
     },
     'required': ['user_id', 'article_id']
 }
+
+
+# ARTICLE_EVENT is like ARTICLE_INTERACTION but for a single interaction event
+# (whereas ARTICLE_INTERACTION is the accumulation of a user's interactions
+# with a single article).  Each ARTICLE_EVENT also has a timestamp.
+ARTICLE_EVENT = copy.deepcopy(ARTICLE_INTERACTION)
+ARTICLE_EVENT['properties'].update({
+    'timestamp': {
+        'description': 'when the article event occurred',
+        'bsonType': 'date'
+    },
+    'recommended_by': {
+        'description':
+            'the article was recommended by the specified recsystem; '
+            'sometimes multiple recsystems can recommend the same article '
+            'simultaneously, so this is a list of IDs',
+        'type': 'array',
+        'items': {'bsonType': 'objectId'}
+    }
+})
+ARTICLE_EVENT['required'] = ['user_id', 'article_id', 'timestamp']
 
 
 IMAGE = dict_merge(RESOURCE, {

@@ -8,24 +8,10 @@
 import * as fs from 'fs';
 
 import { ArgumentParser } from 'argparse';
-import Constants from 'expo-constants';
 
 
 function envConfigFile(env) {
   return `./app.config.${env}.json`;
-}
-
-
-// The release channel determines what configuration environment we use
-// As far as I can tell there is no way to determine the release channel
-// except to parse it from the command line e.g. when running `expo publish`.
-// If not found (e.g. with expo start) then the default release channel
-// is 'dev'
-function getReleaseChannel() {
-  const parser = new ArgumentParser();
-  parser.addArgument('--release-channel', { defaultValue: 'dev' });
-  const [ args, rest ] = parser.parseKnownArgs();
-  return args.release_channel;
 }
 
 
@@ -70,7 +56,7 @@ function deepAssign(target, ...sources) {
 
 
 export default ({ config }) => {
-  const env = getReleaseChannel();
+  const env = process.env.RENEWAL_ENV || "dev";
   return deepAssign(config, getEnvConfig(env), {
     "extra": {
       "environment": env,

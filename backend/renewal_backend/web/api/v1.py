@@ -250,12 +250,15 @@ async def recommendations():
     article_ids = response.data.result
 
     timestamp = datetime.utcnow()
-    g.db.articles.events.insert_many([
-        {'user_id': user_id, 'article_id': article_id,
-         'recommended_by': [recsystem_id], 'timestamp': timestamp}
-        for article_id in article_ids])
+    if article_ids:
+        g.db.articles.events.insert_many([
+            {'user_id': user_id, 'article_id': article_id,
+             'recommended_by': [recsystem_id], 'timestamp': timestamp}
+            for article_id in article_ids])
 
-    return get_articles({'article_id': {'$in': article_ids}}, limit=limit)
+        return get_articles({'article_id': {'$in': article_ids}}, limit=limit)
+    else:
+        return jsonify([])
 
 
 recsystems_manager = None

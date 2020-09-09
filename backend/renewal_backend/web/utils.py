@@ -8,7 +8,7 @@ from bson.objectid import ObjectId
 from quart import abort
 from quart.json import JSONDecoder as _JSONDecoder
 from quart.json import JSONEncoder as _JSONEncoder
-from quart.routing import BaseConverter
+from werkzeug.routing import BaseConverter
 
 
 class ObjectIdConverter(BaseConverter):

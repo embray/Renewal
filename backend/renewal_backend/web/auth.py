@@ -1,6 +1,7 @@
 """Authentication handling functions."""
 
 
+import asyncio
 import functools
 from http import HTTPStatus
 
@@ -63,7 +64,7 @@ def _check_auth(func, roles=ROLES, request_obj=None):
         request_obj = request
 
     @functools.wraps(func)
-    def auth_wrapper(*args, **kwargs):
+    async def auth_wrapper(*args, **kwargs):
         if g.debug and 'X-Renewal-Debug-User-Id' in request_obj.headers:
             return _debug_check_auth(func, args, kwargs, roles, request_obj)
 
@@ -90,7 +91,10 @@ def _check_auth(func, roles=ROLES, request_obj=None):
 
         g.auth = claims
 
-        return func(*args, **kwargs)
+        if asyncio.iscoroutinefunction(func):
+            return await func(*args, **kwargs)
+        else:
+            return func(*args, **kwargs)
 
     return auth_wrapper
 

@@ -275,10 +275,10 @@ class RecsystemsManagerAPIv1(RecsystemsManager):
 
 @v1.websocket('/event_stream')
 @check_auth(['recsystem', 'admin'], request_obj=websocket)
-def event_stream():
+async def event_stream():
     global recsystems_manager
     if recsystems_manager is None:
         recsystems_manager = RecsystemsManagerAPIv1.install(
                 g.event_stream_queue)
 
-    return recsystems_manager.connect_client()
+    return await recsystems_manager.connect_client()

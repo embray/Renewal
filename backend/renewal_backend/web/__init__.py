@@ -44,9 +44,16 @@ class RenewalAPI(AgentMixin, MongoMixin):
         # Currently just one queue for all event stream events, and we later
         # decide which websocket clients to send individual events to when
         # reading from the queue
-        self.event_stream_queue = asyncio.Queue()
+        self.event_stream_queue = None
 
     async def before_first_request(self):
+        if self.event_stream_queue is None:
+            # Since Quart >= 0.10 the server runs in a different loop (via
+            # hypercorn) than the default main thread loop, so we must make
+            # sure not to set up any asyncio primitives until before the first
+            # request (and we are running on the correct event loop)
+            self.event_stream_queue = asyncio.Queue()
+
         connection = await self.connect_broker()
         self.event_stream_producer = await self.create_producer(
                 connection, 'event_stream')

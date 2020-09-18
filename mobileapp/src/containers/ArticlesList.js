@@ -1,4 +1,4 @@
-import { Icon, Text, View } from 'native-base';
+import { Icon, Text, Toast, View } from 'native-base';
 import React, { Component } from 'react';
 import {
   ActivityIndicator,
@@ -83,15 +83,25 @@ class ArticlesList extends Component {
     // TODO: It might make more sense if the API request were actually moved
     // into the async action creator
     const fetch = renewalAPI[listName].bind(renewalAPI);
-    const response = await fetch(fetchParams);
+    let endOfData = false;
 
-    if (!response.error) {
-      // TODO: Do something on error?  Fail quietly?
+    try {
+      const response = await fetch(fetchParams);
+
       if (old) {
         this.props.oldArticles(response);
       } else {
         this.props.newArticles(response);
       }
+
+      endOfData = old && response.length == 0;
+    } catch ({ error }) {
+      Toast.show({
+        text: `failed to get ${listName}: ${error}`,
+        type: 'danger'
+      });
+
+      endOfData = true;
     }
 
     this.setState((prevState) => ({
@@ -99,8 +109,7 @@ class ArticlesList extends Component {
       showRefreshHint: false,
       loading: false,
       loadingMore: false,
-      endOfData: (this.props.infiniteScroll ?
-        (old && (response.error || response.length == 0)) : true)
+      endOfData: (this.props.infiniteScroll ? endOfData : true)
     }));
   }
 

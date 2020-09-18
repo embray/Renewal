@@ -59,7 +59,8 @@
     "react-navigation": "^4.3.7",
     "react-redux": "^7.2.0",
     "redux-logger": "^3.0.6",
-    "redux-persist": "^6.0.0"
+    "redux-persist": "^6.0.0",
+    "expo-google-sign-in": "~8.1.0"
   },
   "devDependencies": {
     "argparse": "^1.0.10",

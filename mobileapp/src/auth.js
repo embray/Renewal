@@ -1,5 +1,6 @@
 import Constants from 'expo-constants';
-import * as Google from 'expo-google-app-auth';
+import * as GoogleAppAuth from 'expo-google-app-auth';
+import * as GoogleSignIn from 'expo-google-sign-in';
 import * as firebase from 'firebase/app';
 import 'firebase/auth';
 import 'firebase/firestore';
@@ -164,6 +165,28 @@ function deleteUser(user) {
 }
 
 
+async function googleGetIdToken() {
+  if (Constants.appOwnership === "standalone") {
+    // Using native Google sign-in
+    await GoogleSignIn.initAsync();
+    try {
+      await GoogleSignIn.askForPlayServicesAsync();
+      let { type, user } = await GoogleSignIn.signInAsync();
+      if (type === 'success') {
+        return user.auth.idToken;
+      }
+    } catch ({ message }) {
+      console.error(`login: Error: ${message}`);
+    }
+  } else {
+    // Using (sometimes flakey) web redirect sign-in
+    let clientId = getAuthConfig('google').clientId;
+    let creds = await GoogleAppAuth.logInAsync({ clientId });
+    return creds.idToken;
+  }
+}
+
+
 export function linkAccount(provider, credential = null) {
   if (!FIREBASE_ENABLED) {
     return;
@@ -173,9 +196,7 @@ export function linkAccount(provider, credential = null) {
   console.log(`linking account with the ${provider} provider`);
   switch (provider) {
     case 'google':
-      const clientId = getAuthConfig('google').clientId;
-      credentialPromise = Google.logInAsync({ clientId }).then((result) => {
-        const { idToken } = result;
+      credentialPromise = googleGetIdToken().then((idToken) => {
         return firebase.auth.GoogleAuthProvider.credential(idToken);
       });
       break;
